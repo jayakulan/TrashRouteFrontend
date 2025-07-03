@@ -49,24 +49,27 @@ const RouteActivation = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
         <nav className="container mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
+          <div className="flex items-center">
             {/* Logo */}
-            <div className="flex items-center space-x-2">
+            <div>
               <img src="/images/logo.png" alt="Logo" className="h-16 w-34" />
             </div>
-            {/* Navigation */}
-            <div className="flex items-center space-x-8">
+            {/* Navigation - right aligned */}
+            <div className="flex items-center space-x-8 ml-auto">
               <Link to="/dashboard" className="text-gray-700 hover:text-gray-900 font-medium">Dashboard</Link>
-              <Link to="/requests" className="text-gray-700 hover:text-gray-900 font-medium">Requests</Link>
-              <Link to="/schedule" className="text-gray-700 hover:text-gray-900 font-medium">Schedule</Link>
-              <Link to="/reports" className="text-gray-700 hover:text-gray-900 font-medium">Reports</Link>
-              <Link to="/settings" className="text-gray-700 hover:text-gray-900 font-medium">Settings</Link>
+              <Link to="/company/historylogs" className="text-gray-700 hover:text-gray-900 font-medium">Historylogs</Link>
+              {/* Notification Bell Icon */}
+              <button className="relative focus:outline-none" aria-label="Notifications">
+                <svg className="w-6 h-6 text-gray-700 hover:text-gray-900" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              </button>
+              {/* User Avatar Dropdown */}
+              <UserProfileDropdown />
             </div>
-            {/* User Avatar */}
-            <UserProfileDropdown />
           </div>
         </nav>
       </header>
@@ -245,6 +248,22 @@ const RouteActivation = () => {
           </div>
         </div>
       )}
+
+      {/* Footer */}
+      <footer className="bg-white border-t mt-12">
+        <div className="container mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between">
+          <div className="flex items-center space-x-2 mb-4 md:mb-0">
+            <img src="/images/logo.png" alt="Logo" className="h-10 w-10" />
+            <span className="text-lg font-bold text-gray-900">TrashRoute</span>
+          </div>
+          <div className="flex space-x-6">
+            <Link to="/dashboard" className="text-gray-600 hover:text-blue-600 transition">Dashboard</Link>
+            <Link to="/company/historylogs" className="text-gray-600 hover:text-blue-600 transition">Historylogs</Link>
+            <a href="mailto:support@trashroute.com" className="text-gray-600 hover:text-blue-600 transition">Support</a>
+          </div>
+          <div className="text-gray-500 text-sm mt-4 md:mt-0">&copy; {new Date().getFullYear()} TrashRoute. All rights reserved.</div>
+        </div>
+      </footer>
     </div>
   )
 }
