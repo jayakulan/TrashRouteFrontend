@@ -42,7 +42,7 @@ const SignUp = () => {
       address: formData.address,
     }
     try {
-      const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/Backend/api/request_otp.php", {
+      const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/request_otp.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
