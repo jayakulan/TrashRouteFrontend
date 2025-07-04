@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import { Diamond, Search, Plus, Minus, Navigation, Check } from "lucide-react"
 import reactLogo from "../assets/react.svg";
-import UserProfileDropdown from "./UserProfileDropdown";
+import UserProfileDropdowncom from "./UserProfileDropdowncom";
 
 const RouteMap = () => {
   const [searchQuery, setSearchQuery] = useState("")
@@ -103,7 +103,7 @@ const RouteMap = () => {
                 </svg>
               </button>
               {/* User Avatar Dropdown */}
-              <UserProfileDropdown />
+              <UserProfileDropdowncom />
             </div>
           </div>
         </nav>
