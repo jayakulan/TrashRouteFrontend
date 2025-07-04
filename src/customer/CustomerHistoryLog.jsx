@@ -101,22 +101,22 @@ const HistoryLog = () => {
               <tbody className="divide-y divide-gray-200">
                 {historyData.map((record, index) => (
                   <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm text-blue-600">{record.date}</td>
+                    <td className="px-6 py-4 text-sm text-theme-color">{record.date}</td>
                     <td className="px-6 py-4">
                       <button
                         onClick={() => handleWasteTypeClick(record.wasteType)}
-                        className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                        className="text-sm text-theme-color hover:text-theme-color-dark hover:underline"
                       >
                         {record.wasteType}
                       </button>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">{record.quantity}</td>
-                    <td className="px-6 py-4 text-sm text-blue-600">{record.requestDate}</td>
+                    <td className="px-6 py-4 text-sm text-theme-color">{record.requestDate}</td>
                     <td className="px-6 py-4 text-sm text-gray-900">{record.pickupStatus}</td>
                     <td className="px-6 py-4">
                       <button
                         onClick={() => handleCompanyClick(record.company)}
-                        className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                        className="text-sm text-theme-color hover:text-theme-color-dark hover:underline"
                       >
                         {record.company}
                       </button>
