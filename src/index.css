@@ -322,3 +322,176 @@ input[type="range"].slider::-moz-range-thumb {
 .text-theme-color-dark {
   color: #2e4c38 !important;
 }
+
+/* --- Vertical Progress Tracker Styles --- */
+.step-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.25rem;
+  box-shadow: 0 2px 8px 0 rgba(58, 95, 70, 0.10);
+  border: 3px solid #3a5f46;
+  background: #e5e7eb;
+  color: #3a5f46;
+  transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+  position: relative;
+  z-index: 2;
+}
+.step-circle.completed {
+  background: #3a5f46;
+  color: #fff;
+  box-shadow: 0 0 16px 2px #a8d59b;
+}
+.step-circle.active {
+  background: #3a5f46;
+  color: #fff;
+  animation: fade-bounce 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+  box-shadow: 0 0 16px 4px #a8d59b, 0 0 0 6px #3a5f4633;
+}
+.step-circle.pending {
+  background: #e5e7eb;
+  color: #bdbdbd;
+  border-color: #bdbdbd;
+}
+.step-number {
+  font-weight: bold;
+  font-size: 1.25rem;
+  color: inherit;
+}
+@keyframes fade-bounce {
+  0% { opacity: 0; transform: scale(0.7); }
+  60% { opacity: 1; transform: scale(1.15); }
+  80% { transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.animate-fade-bounce {
+  animation: fade-bounce 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+}
+@keyframes slide-in-left {
+  0% { opacity: 0; transform: translateX(-40px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+@keyframes slide-in-right {
+  0% { opacity: 0; transform: translateX(40px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+.animate-slide-in-left {
+  animation: slide-in-left 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+}
+.animate-slide-in-right {
+  animation: slide-in-right 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+}
+.progress-vertical {
+  transition: height 1s cubic-bezier(0.4,0,0.2,1);
+  z-index: 1;
+}
+/* --- End Vertical Progress Tracker Styles --- */
+
+/* --- Zig-Zag Progress Path Styles --- */
+.step-zigzag-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #3a5f46;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+  box-shadow: 0 2px 8px 0 rgba(58, 95, 70, 0.10);
+  position: relative;
+}
+.step-zigzag-circle.completed {
+  background: #fff;
+  color: #3a5f46;
+  border-color: #3a5f46;
+}
+.step-zigzag-circle.active {
+  background: #fff;
+  color: #3a5f46;
+  border-color: #3a5f46;
+  animation: step-bounce 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+  box-shadow: 0 0 16px 4px #a8d59b, 0 0 0 6px #3a5f4633;
+}
+.step-zigzag-circle.pending {
+  background: #fff;
+  color: #bdbdbd;
+  border-color: #bdbdbd;
+}
+@keyframes step-bounce {
+  0% { opacity: 0; transform: scale(0.7); }
+  60% { opacity: 1; transform: scale(1.15); }
+  80% { transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.animate-step-in-0 { animation: step-bounce 0.7s 0.05s both; }
+.animate-step-in-1 { animation: step-bounce 0.7s 0.15s both; }
+.animate-step-in-2 { animation: step-bounce 0.7s 0.25s both; }
+.animate-step-in-3 { animation: step-bounce 0.7s 0.35s both; }
+@keyframes truck-move {
+  0% { left: 0%; }
+  100% { left: 99%; }
+}
+.animate-truck-move {
+  transition: left 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+}
+@media (max-width: 640px) {
+  .w-full.max-w-2xl.mx-auto.flex.flex-col.sm\:flex-row.items-center.justify-between {
+    flex-direction: column !important;
+    height: 320px;
+  }
+  .step-zigzag-circle {
+    margin-bottom: 24px;
+  }
+  .absolute.top-1\/2.left-0.w-full.h-16.sm\:h-24.-z-10 {
+    height: 320px !important;
+    width: 60px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+}
+/* --- End Zig-Zag Progress Path Styles --- */
+
+/* --- Success Animation Styles --- */
+@keyframes fade-zoom {
+  0% { opacity: 0; transform: scale(0.7); }
+  80% { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.animate-fade-zoom {
+  animation: fade-zoom 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+}
+.success-checkmark svg {
+  display: block;
+}
+.checkmark-stroke {
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: checkmark-draw 0.7s 0.2s cubic-bezier(.68,-0.55,.27,1.55) forwards;
+}
+@keyframes checkmark-draw {
+  to { stroke-dashoffset: 0; }
+}
+.confetti {
+  pointer-events: none;
+  z-index: 100;
+}
+.confetti span {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: #3a5f46;
+  opacity: 0.8;
+  animation: confetti-fall 1.2s linear forwards;
+}
+@keyframes confetti-fall {
+  0% { transform: translateY(-40px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(300px) rotate(360deg); opacity: 0; }
+}
+/* --- End Success Animation Styles --- */
