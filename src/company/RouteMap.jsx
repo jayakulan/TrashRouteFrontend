@@ -1,10 +1,165 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Link } from "react-router-dom"
 import { Diamond, Search, Plus, Minus, Navigation, Check } from "lucide-react"
 import reactLogo from "../assets/react.svg";
 import UserProfileDropdowncom from "./UserProfileDropdowncom";
+import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+const GOOGLE_MAPS_API_KEY = "AIzaSyA5iEKgAwrJWVkCMAsD7_IilJ0YSVf_VGk";
+
+function getRandomLatLng(center, radius) {
+  // Generate random lat/lng within a radius (in meters) from center
+  const y0 = center.lat;
+  const x0 = center.lng;
+  const rd = radius / 111300; // about 111300 meters in one degree
+  const u = Math.random();
+  const v = Math.random();
+  const w = rd * Math.sqrt(u);
+  const t = 2 * Math.PI * v;
+  const x = w * Math.cos(t);
+  const y = w * Math.sin(t);
+  return { lat: y0 + y, lng: x0 + x };
+}
+
+// Simple nearest neighbor TSP heuristic
+function getOptimizedPath(points) {
+  if (points.length === 0) return [];
+  const visited = Array(points.length).fill(false);
+  const path = [0];
+  visited[0] = true;
+  for (let i = 1; i < points.length; i++) {
+    let last = path[path.length - 1];
+    let minDist = Infinity;
+    let next = -1;
+    for (let j = 0; j < points.length; j++) {
+      if (!visited[j]) {
+        const d = Math.hypot(points[last].lat - points[j].lat, points[last].lng - points[j].lng);
+        if (d < minDist) {
+          minDist = d;
+          next = j;
+        }
+      }
+    }
+    path.push(next);
+    visited[next] = true;
+  }
+  return path.map(idx => points[idx]);
+}
+
+const center = { lat: 20.5937, lng: 78.9629 };
+const randomLocations = Array.from({ length: 10 }, () => getRandomLatLng(center, 1000000));
+const optimizedLocations = getOptimizedPath(randomLocations);
+
+// Custom numbered icon
+function createNumberedIcon(number) {
+  return L.divIcon({
+    className: "custom-numbered-icon",
+    html: `<div style='background:#4285F4;color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:16px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.2);'>${number}</div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32],
+  });
+}
+
+function FitBounds({ locations }) {
+  const map = useMap();
+  useEffect(() => {
+    if (locations.length > 0) {
+      const bounds = L.latLngBounds(locations.map(l => [l.lat, l.lng]));
+      map.fitBounds(bounds, { padding: [40, 40] });
+    }
+  }, [locations, map]);
+  return null;
+}
+
+function RouteAnimation({ path }) {
+  const map = useMap();
+  const [idx, setIdx] = useState(0);
+  const markerRef = useRef();
+  useEffect(() => {
+    if (!path.length) return;
+    let i = 0;
+    const interval = setInterval(() => {
+      i = (i + 1) % path.length;
+      setIdx(i);
+      if (markerRef.current) {
+        markerRef.current.setLatLng(path[i]);
+      }
+    }, 800);
+    return () => clearInterval(interval);
+  }, [path]);
+  useEffect(() => {
+    if (markerRef.current && path.length) {
+      markerRef.current.setLatLng(path[idx]);
+    }
+  }, [idx, path]);
+  useEffect(() => {
+    if (!map || !path.length) return;
+    if (!markerRef.current) {
+      markerRef.current = L.marker(path[0], {
+        icon: L.divIcon({
+          className: "animated-marker",
+          html: `<div style='background:#34a853;color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:18px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.2);'>🚚</div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 28],
+        }),
+      }).addTo(map);
+    }
+    return () => {
+      if (markerRef.current) {
+        map.removeLayer(markerRef.current);
+        markerRef.current = null;
+      }
+    };
+  }, [map, path]);
+  return null;
+}
+
+function CustomLocateButton() {
+  const map = useMap();
+  const handleLocate = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          map.setView([latitude, longitude], 14, { animate: true });
+          L.marker([latitude, longitude], {
+            icon: L.divIcon({
+              className: "custom-numbered-icon",
+              html: `<div style='background:#34a853;color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:16px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.2);'>You</div>`,
+              iconSize: [32, 32],
+              iconAnchor: [16, 32],
+            }),
+          }).addTo(map);
+        },
+        () => alert("Could not get your location")
+      );
+    }
+  };
+  return (
+    <button
+      style={{
+        position: "absolute",
+        top: 16,
+        right: 16,
+        zIndex: 1000,
+        background: "#fff",
+        border: "1px solid #ccc",
+        borderRadius: 8,
+        padding: "8px 12px",
+        cursor: "pointer",
+        boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+      }}
+      onClick={handleLocate}
+    >
+      📍 Locate Me
+    </button>
+  );
+}
 
 const RouteMap = () => {
   const [searchQuery, setSearchQuery] = useState("")
@@ -45,6 +200,50 @@ const RouteMap = () => {
       collected: false,
     },
   ])
+
+  const mapRef = useRef(null);
+
+  useEffect(() => {
+    // Dynamically load Google Maps script
+    if (!window.google) {
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}`;
+      script.async = true;
+      script.onload = initMap;
+      document.body.appendChild(script);
+    } else {
+      initMap();
+    }
+
+    function initMap() {
+      if (!mapRef.current || !window.google) return;
+      // Center somewhere in India
+      const center = { lat: 20.5937, lng: 78.9629 };
+      const map = new window.google.maps.Map(mapRef.current, {
+        center,
+        zoom: 5.5,
+      });
+      // Generate 10 random locations
+      const locations = Array.from({ length: 10 }, () => getRandomLatLng(center, 1000000));
+      // Place markers
+      const markers = locations.map((loc, idx) =>
+        new window.google.maps.Marker({
+          position: loc,
+          map,
+          label: `${idx + 1}`,
+        })
+      );
+      // Draw polyline connecting the markers
+      new window.google.maps.Polyline({
+        path: locations,
+        geodesic: true,
+        strokeColor: "#4285F4",
+        strokeOpacity: 0.8,
+        strokeWeight: 4,
+        map,
+      });
+    }
+  }, []);
 
   const handleZoomIn = () => {
     console.log("Zoom in")
@@ -117,96 +316,28 @@ const RouteMap = () => {
           <p className="text-gray-600">View and manage your waste collection route.</p>
         </div>
 
-        {/* Map Section */}
+        {/* Leaflet Map Section */}
         <div className="bg-white rounded-2xl shadow-sm border overflow-hidden mb-8">
-          <div className="relative">
-            {/* Search Bar */}
-            <div className="absolute top-6 left-6 z-10 w-80">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Search locations..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-            </div>
-
-            {/* Map Controls */}
-            <div className="absolute top-6 right-6 z-10 flex flex-col space-y-2">
-              <button
-                onClick={handleZoomIn}
-                className="w-10 h-10 bg-white border border-gray-200 rounded-lg shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
-              >
-                <Plus className="w-5 h-5 text-gray-600" />
-              </button>
-              <button
-                onClick={handleZoomOut}
-                className="w-10 h-10 bg-white border border-gray-200 rounded-lg shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
-              >
-                <Minus className="w-5 h-5 text-gray-600" />
-              </button>
-              <button
-                onClick={handleLocationCenter}
-                className="w-10 h-10 bg-white border border-gray-200 rounded-lg shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
-              >
-                <Navigation className="w-5 h-5 text-gray-600" />
-              </button>
-            </div>
-
-            {/* Map Display */}
-            <div
-              className="w-full h-96 bg-gradient-to-br from-teal-500 to-teal-700 relative"
-              style={{
-                backgroundImage: `
-                  linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px),
-                  linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)
-                `,
-                backgroundSize: "20px 20px",
-              }}
-            >
-              {/* Street Grid Overlay */}
-              <div className="absolute inset-0 opacity-40">
-                <svg className="w-full h-full" viewBox="0 0 400 300">
-                  {/* Horizontal streets */}
-                  {[...Array(15)].map((_, i) => (
-                    <line key={`h-${i}`} x1="0" y1={i * 20} x2="400" y2={i * 20} stroke="white" strokeWidth="0.8" />
-                  ))}
-                  {/* Vertical streets */}
-                  {[...Array(20)].map((_, i) => (
-                    <line key={`v-${i}`} x1={i * 20} y1="0" x2={i * 20} y2="300" stroke="white" strokeWidth="0.8" />
-                  ))}
-                  {/* Main roads */}
-                  <line x1="0" y1="150" x2="400" y2="150" stroke="white" strokeWidth="2.5" />
-                  <line x1="200" y1="0" x2="200" y2="300" stroke="white" strokeWidth="2.5" />
-                  {/* Diagonal streets */}
-                  <line x1="50" y1="0" x2="350" y2="300" stroke="white" strokeWidth="1.5" opacity="0.7" />
-                </svg>
-              </div>
-
-              {/* Route markers */}
-              {filteredHouseholds.map((household, index) => (
-                <div
-                  key={household.id}
-                  className="absolute"
-                  style={{
-                    left: `${20 + index * 15}%`,
-                    top: `${30 + (index % 3) * 20}%`,
-                  }}
-                >
-                  <div
-                    className={`w-6 h-6 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-xs font-bold text-white ${
-                      household.collected ? "bg-green-500" : "bg-red-500"
-                    }`}
-                  >
-                    {household.id}
+          <MapContainer center={center} zoom={5.5} style={{ width: "100%", height: "500px" }} scrollWheelZoom={true}>
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <FitBounds locations={optimizedLocations} />
+            <CustomLocateButton />
+            {optimizedLocations.map((loc, idx) => (
+              <Marker key={idx} position={loc} icon={createNumberedIcon(idx + 1)}>
+                <Popup>
+                  <div>
+                    <strong>Pin {idx + 1}</strong>
+                    <br />Lat: {loc.lat.toFixed(4)}<br />Lng: {loc.lng.toFixed(4)}
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
+                </Popup>
+              </Marker>
+            ))}
+            <Polyline positions={optimizedLocations} color="#4285F4" weight={4} />
+            <RouteAnimation path={optimizedLocations} />
+          </MapContainer>
         </div>
 
         {/* Household Details Table */}
