@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Search, Plus, Minus, Navigation } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-import UserProfileDropdown from "../customer/UserProfileDropdown"
+import UserProfileDropdown from "./UserProfileDropdown"
 import { Link } from "react-router-dom"
 
 const RouteActivation = () => {
@@ -15,9 +15,9 @@ const RouteActivation = () => {
   const [cardName, setCardName] = useState("")
   const [expiry, setExpiry] = useState("")
   const [cvv, setCvv] = useState("")
-  const [amount, setAmount] = useState(25)
+  const [amount, setAmount] = useState(500)
 
-  const activationFee = 25
+  const activationFee = 500
   const navigate = useNavigate();
 
   const handleZoomIn = () => {
@@ -59,7 +59,7 @@ const RouteActivation = () => {
             </div>
             {/* Navigation - right aligned */}
             <div className="flex items-center space-x-8 ml-auto">
-              <Link to="/dashboard" className="text-gray-700 hover:text-gray-900 font-medium">Dashboard</Link>
+              <Link to="/company-waste-prefer" className="text-gray-700 hover:text-gray-900 font-medium">Dashboard</Link>
               <Link to="/company/historylogs" className="text-gray-700 hover:text-gray-900 font-medium">Historylogs</Link>
               {/* Notification Bell Icon */}
               <button className="relative focus:outline-none" aria-label="Notifications">
@@ -161,7 +161,7 @@ const RouteActivation = () => {
 
         {/* Status Message */}
         <div className="text-center">
-          <p className="text-lg font-semibold text-gray-900">Routes are locked. Activate your account to proceed.</p>
+          <p className="text-lg font-semibold text-gray-900">Routes are currently locked. Pay the subscription fee to access them.</p>
         </div>
 
         {/* Activation Card */}
@@ -171,7 +171,7 @@ const RouteActivation = () => {
 
           <div className="relative p-8 text-white">
             <h2 className="text-2xl font-bold mb-2">Activate Route Access</h2>
-            <p className="text-lg font-medium">Total fee: ${activationFee}</p>
+            <p className="text-lg font-medium">Total fee: Rs.{activationFee}</p>
           </div>
         </div>
 
@@ -181,17 +181,7 @@ const RouteActivation = () => {
 
           {/* Payment Options */}
           <div className="space-y-4 mb-8">
-            <label className="flex items-center space-x-3 cursor-pointer">
-              <input
-                type="radio"
-                name="paymentMethod"
-                value="card"
-                checked={selectedPaymentMethod === "card"}
-                onChange={(e) => setSelectedPaymentMethod(e.target.value)}
-                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-              />
-              <span className="text-gray-900 font-medium">Card</span>
-            </label>
+            {/* Card payment option removed as requested */}
           </div>
 
           {/* Pay Now Button */}
@@ -248,22 +238,6 @@ const RouteActivation = () => {
           </div>
         </div>
       )}
-
-      {/* Footer */}
-      <footer className="bg-white border-t mt-12">
-        <div className="container mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between">
-          <div className="flex items-center space-x-2 mb-4 md:mb-0">
-            <img src="/images/logo.png" alt="Logo" className="h-10 w-10" />
-            <span className="text-lg font-bold text-gray-900">TrashRoute</span>
-          </div>
-          <div className="flex space-x-6">
-            <Link to="/dashboard" className="text-gray-600 hover:text-blue-600 transition">Dashboard</Link>
-            <Link to="/company/historylogs" className="text-gray-600 hover:text-blue-600 transition">Historylogs</Link>
-            <a href="mailto:support@trashroute.com" className="text-gray-600 hover:text-blue-600 transition">Support</a>
-          </div>
-          <div className="text-gray-500 text-sm mt-4 md:mt-0">&copy; {new Date().getFullYear()} TrashRoute. All rights reserved.</div>
-        </div>
-      </footer>
     </div>
   )
 }

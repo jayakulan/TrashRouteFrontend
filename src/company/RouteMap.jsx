@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import { Diamond, Search, Plus, Minus, Navigation, Check } from "lucide-react"
 import reactLogo from "../assets/react.svg";
-import UserProfileDropdown from "../customer/UserProfileDropdown";
+import UserProfileDropdown from "./UserProfileDropdown";
 
 const RouteMap = () => {
   const [searchQuery, setSearchQuery] = useState("")
@@ -94,7 +94,7 @@ const RouteMap = () => {
             </div>
             {/* Navigation - right aligned */}
             <div className="flex items-center space-x-8 ml-auto">
-              <Link to="/dashboard" className="text-gray-700 hover:text-gray-900 font-medium">Dashboard</Link>
+              <Link to="/company-waste-prefer" className="text-gray-700 hover:text-gray-900 font-medium">Dashboard</Link>
               <Link to="/company/historylogs" className="text-gray-700 hover:text-gray-900 font-medium">Historylogs</Link>
               {/* Notification Bell Icon */}
               <button className="relative focus:outline-none" aria-label="Notifications">

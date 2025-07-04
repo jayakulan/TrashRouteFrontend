@@ -38,7 +38,7 @@ const CompanySignUp = () => {
       return;
     }
     try {
-      const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/request_otp.php", {
+      const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/request_otp_company.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -67,7 +67,7 @@ const CompanySignUp = () => {
   const handleOtpVerify = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/verify_otp_and_register.php", {
+      const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/verify_otp_registercompany.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
