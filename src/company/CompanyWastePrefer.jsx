@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Diamond } from "lucide-react"
-import UserProfileDropdown from "./UserProfileDropdown"
+import UserProfileDropdowncom from "./UserProfileDropdowncom"
 
 const WastePreferences = () => {
   const [selectedWasteType, setSelectedWasteType] = useState("")
@@ -65,7 +65,7 @@ const WastePreferences = () => {
                 </svg>
               </button>
               {/* User Avatar Dropdown */}
-              <UserProfileDropdown />
+              <UserProfileDropdowncom />
             </div>
           </div>
         </nav>

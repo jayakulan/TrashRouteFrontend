@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Recycle } from "lucide-react"
+import { useAuth } from "./context/AuthContext"
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -9,6 +10,7 @@ const Login = () => {
   })
   const [error, setError] = useState("")
   const navigate = useNavigate()
+  const { login } = useAuth()
 
   const handleChange = (e) => {
     setFormData({
@@ -21,30 +23,9 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
-    try {
-      const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/auth/login.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      })
-      const result = await response.json()
-      if (result.success) {
-        const role = result.data.user.role
-        if (role === "admin") {
-          navigate("/admin/dashboard")
-        } else if (role === "company") {
-          navigate("/company-waste-prefer")
-        } else if (role === "customer") {
-          sessionStorage.setItem("showMinimumWastePopup", "true");
-          navigate("/customer/trash-type")
-        } else {
-          setError("Unknown user role.")
-        }
-      } else {
-        setError(result.message || "Login failed")
-      }
-    } catch (err) {
-      setError("Server error")
+    const result = await login(formData.email, formData.password)
+    if (!result.success) {
+      setError(result.message || "Login failed")
     }
   }
 
