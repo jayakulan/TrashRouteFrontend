@@ -116,6 +116,110 @@ function ContactModal({ onClose }) {
   );
 }
 
+function WhyChooseUsSlider() {
+  const cards = [
+    [
+      {
+        icon: "♻️",
+        title: "Eco-Friendly Impact",
+        desc: "Every pickup reduces landfill waste."
+      },
+      {
+        icon: "🚚",
+        title: "No Middleman Needed",
+        desc: "Direct connection from people to industries."
+      }
+    ],
+    [
+      {
+        icon: "🕐",
+        title: "Time-Saving System",
+        desc: "Instant notifications and faster routes."
+      },
+      {
+        icon: "📱",
+        title: "Mobile Friendly",
+        desc: "Access the platform on any device."
+      }
+    ]
+  ];
+
+  const sliderRef = useRef(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  // Auto-scroll effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveIndex(prev => (prev + 1) % cards.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [cards.length]);
+
+  // Scroll to active card when index changes
+  useEffect(() => {
+    const slider = sliderRef.current;
+    if (slider) {
+      slider.scrollTo({
+        left: activeIndex * slider.offsetWidth,
+        behavior: 'smooth'
+      });
+    }
+  }, [activeIndex]);
+
+  return (
+    <section className="max-w-7xl mx-auto mt-16 px-4">
+      <h2 className="text-lg font-bold mb-6 text-[#2e4d3a]">Why Choose Us</h2>
+      <div
+        ref={sliderRef}
+        className="flex overflow-x-hidden relative"
+        style={{ scrollSnapType: 'x mandatory' }}
+      >
+        {cards.map((cardPair, idx) => (
+          <div
+            key={idx}
+            className="flex-shrink-0 w-full snap-center flex flex-row justify-center gap-6"
+            style={{ minWidth: "100%", transition: "transform 0.3s" }}
+          >
+            {cardPair.map((card, cidx) => (
+              <div
+                key={cidx}
+                className={`flex flex-col items-center rounded-xl p-10 m-4 shadow transition-transform duration-300 hover:scale-105 hover:shadow-[0_4px_32px_0_rgba(34,197,94,0.3)] w-full max-w-md h-72 relative ${['Eco-Friendly Impact','No Middleman Needed','Time-Saving System','Mobile Friendly'].includes(card.title) ? 'bg-cover bg-center' : 'bg-white hover:bg-gray-100'}`}
+                style={card.title === 'Eco-Friendly Impact'
+                  ? { backgroundImage: 'url(/public/images/image1.avif)' }
+                  : card.title === 'No Middleman Needed'
+                    ? { backgroundImage: 'url(/public/images/image2.avif)' }
+                    : card.title === 'Time-Saving System'
+                      ? { backgroundImage: 'url(/public/images/image3.jpg)' }
+                      : card.title === 'Mobile Friendly'
+                        ? { backgroundImage: 'url(/public/images/image4.jpeg)' }
+                        : {}}
+              >
+                {(card.title === 'Eco-Friendly Impact' || card.title === 'No Middleman Needed' || card.title === 'Time-Saving System' || card.title === 'Mobile Friendly') && (
+                  <div className="absolute inset-0 bg-white/80 rounded-xl z-0"></div>
+                )}
+                <div className="text-4xl mb-3 z-10">{card.icon}</div>
+                <div className="font-bold text-[#3a5f46] mb-2 text-center z-10">{card.title}</div>
+                <div className="text-gray-600 text-sm text-center z-10">{card.desc}</div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+      {/* Dots */}
+      <div className="flex justify-center mt-4 gap-2">
+        {cards.map((_, idx) => (
+          <button
+            key={idx}
+            className={`w-3 h-3 rounded-full ${activeIndex === idx ? 'bg-[#3a5f46]' : 'bg-gray-300'} transition`}
+            onClick={() => setActiveIndex(idx)}
+            aria-label={`Go to slide ${idx + 1}`}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function LandingPage() {
   const [userType, setUserType] = useState('customer')
   const [showFeature1Info, setShowFeature1Info] = useState(false)
@@ -124,6 +228,21 @@ function LandingPage() {
   const [showFeature4Info, setShowFeature4Info] = useState(false)
   const [showContactModal, setShowContactModal] = useState(false)
   const navigate = useNavigate()
+
+  // About Us intersection observer for slide-in effect
+  const aboutUsRef = useRef(null);
+  const aboutUsImgRef = useRef(null);
+  const [aboutUsVisible, setAboutUsVisible] = useState(false);
+
+  useEffect(() => {
+    document.title = 'Landing Page - TrashRoute';
+    const observer = new window.IntersectionObserver(
+      ([entry]) => setAboutUsVisible(entry.isIntersecting),
+      { threshold: 0.1 }
+    );
+    if (aboutUsImgRef.current) observer.observe(aboutUsImgRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   // Unsplash or similar royalty-free images
   const heroImg = 'https://images.unsplash.com/photo-1508873699372-7aeab60b44c9?auto=format&fit=crop&w=900&q=80' // recycling bins
@@ -315,36 +434,72 @@ function LandingPage() {
         )}
       </section>
 
-      {/* About Us */}
-      <section id="about" className="max-w-4xl mx-auto mt-16 px-4">
-        <h2 className="text-lg font-bold mb-2">About Us</h2>
-        <p className="text-gray-700">TrashRoute is a platform dedicated to improving waste management by connecting households with waste processing companies. Our goal is to create a more efficient and sustainable system for waste disposal and recycling.</p>
+      {/* Who Can Use TrashRoute? */}
+      <section className="max-w-7xl mx-auto mt-16 px-4">
+        <h2 className="text-xl font-extrabold mb-8 text-center text-[#2e4d3a] tracking-wide">Who Can Use TrashRoute?</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Local People */}
+          <div className="flex flex-col items-center bg-white/70 backdrop-blur-md rounded-3xl p-8 shadow-2xl border border-blue-100 hover:shadow-blue-200 hover:-translate-y-2 transition-all duration-300" style={{background: 'linear-gradient(135deg, #e0e7ff 60%, #f0fdfa 100%)'}}>
+            <div className="text-5xl mb-4">🏡</div>
+            <div className="font-bold text-lg text-blue-900 mb-2 text-center">Local People</div>
+            <div className="text-gray-700 text-base text-center">Recycle easily from home.</div>
+          </div>
+          {/* Industries */}
+          <div className="flex flex-col items-center bg-white/70 backdrop-blur-md rounded-3xl p-8 shadow-2xl border border-purple-100 hover:shadow-purple-200 hover:-translate-y-2 transition-all duration-300" style={{background: 'linear-gradient(135deg, #ede9fe 60%, #e0f2fe 100%)'}}>
+            <div className="text-5xl mb-4">🏭</div>
+            <div className="font-bold text-lg text-purple-900 mb-2 text-center">Industries</div>
+            <div className="text-gray-700 text-base text-center">Get recyclable materials directly.</div>
+          </div>
+          {/* Admin */}
+          <div className="flex flex-col items-center bg-white/70 backdrop-blur-md rounded-3xl p-8 shadow-2xl border border-cyan-100 hover:shadow-cyan-200 hover:-translate-y-2 transition-all duration-300" style={{background: 'linear-gradient(135deg, #cffafe 60%, #f3e8ff 100%)'}}>
+            <div className="text-5xl mb-4">🧑‍💼</div>
+            <div className="font-bold text-lg text-cyan-900 mb-2 text-center">Admin</div>
+            <div className="text-gray-700 text-base text-center">Monitor and manage the platform.</div>
+          </div>
+        </div>
       </section>
+
+      {/* About Us */}
+      <section id="about" ref={aboutUsRef} className="mt-16">
+        <h2 className="text-lg font-bold mb-2 max-w-7xl mx-auto px-4">About Us</h2>
+        <div className="relative w-full max-w-7xl mx-auto mb-8">
+          <img ref={aboutUsImgRef} src="/public/images/TrashCollecting1.jpg" alt="Trash Collecting" className="w-full rounded-2xl shadow-lg" />
+          <div className={`absolute left-0 bottom-0 m-6 transition-transform duration-700 ${aboutUsVisible ? 'translate-x-0 opacity-100' : '-translate-x-20 opacity-0'}`}>
+            <div className="bg-white/80 rounded-2xl shadow-lg p-6 max-w-2xl text-justify">
+              <p className="text-gray-700 text-base md:text-lg text-justify">
+                TrashRoute is an innovative web-based platform built to improve how recyclable waste is managed and reused. We connect everyday people who have recyclable materials—like plastic, paper, glass, and metal—with industries that can reuse those materials in their production.<br />
+                Instead of collecting and storing waste, our system allows local users to simply notify the platform when they have recyclable items. TrashRoute then creates an optimized and categorized route for these materials and offers it to registered industries. When an industry accepts a route, they collect the materials directly from the listed locations.<br />
+                By removing the need for middle collection points, we reduce costs, save time, and contribute to a cleaner environment. TrashRoute empowers communities and industries to work together toward a sustainable future—turning everyday waste into valuable resources.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Us */}
+      <WhyChooseUsSlider />
 
       {/* Our Features */}
       <section className="max-w-7xl mx-auto mt-16 px-4">
-        <h2 className="text-lg font-bold mb-6">Our Features</h2>
+        <h2 className="text-lg font-bold mb-6 text-[#2e4d3a]">Our Features</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl p-6 border flex flex-col items-start">
-            <div className="flex items-center mb-3">
-              <span className="material-icons text-2xl mr-2">category</span>
-              <span className="font-semibold">Smart Waste Categorization</span>
-            </div>
-            <div className="text-gray-500 text-sm">Our system intelligently categorizes waste to ensure proper handling and recycling.</div>
+          {/* Feature 1 */}
+          <div className="flex flex-col items-center bg-gradient-to-br from-[#e6f4ea] to-[#cfe3d6] rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-shadow duration-300 hover:scale-105 group cursor-pointer border border-[#d0e9d6]">
+            <div className="text-4xl mb-4 drop-shadow">🗂️</div>
+            <div className="font-bold text-[#3a5f46] text-lg mb-2 text-center group-hover:text-[#2e4d3a] transition-colors">Smart Waste Categorization</div>
+            <div className="text-gray-600 text-base text-center">Our system intelligently categorizes waste to ensure proper handling and recycling.</div>
           </div>
-          <div className="bg-white rounded-xl p-6 border flex flex-col items-start">
-            <div className="flex items-center mb-3">
-              <span className="material-icons text-2xl mr-2">local_shipping</span>
-              <span className="font-semibold">Efficient Pickup Service</span>
-            </div>
-            <div className="text-gray-500 text-sm">We provide a reliable and efficient pickup service, optimizing routes for timely collection.</div>
+          {/* Feature 2 */}
+          <div className="flex flex-col items-center bg-gradient-to-br from-[#e6f4ea] to-[#cfe3d6] rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-shadow duration-300 hover:scale-105 group cursor-pointer border border-[#d0e9d6]">
+            <div className="text-4xl mb-4 drop-shadow">🚛</div>
+            <div className="font-bold text-[#3a5f46] text-lg mb-2 text-center group-hover:text-[#2e4d3a] transition-colors">Efficient Pickup Service</div>
+            <div className="text-gray-600 text-base text-center">We provide a reliable and efficient pickup service, optimizing routes for timely collection.</div>
           </div>
-          <div className="bg-white rounded-xl p-6 border flex flex-col items-start">
-            <div className="flex items-center mb-3">
-              <span className="material-icons text-2xl mr-2">location_on</span>
-              <span className="font-semibold">Real-time Tracking</span>
-            </div>
-            <div className="text-gray-500 text-sm">Track your waste pickup in real-time, from notification to collection.</div>
+          {/* Feature 3 */}
+          <div className="flex flex-col items-center bg-gradient-to-br from-[#e6f4ea] to-[#cfe3d6] rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-shadow duration-300 hover:scale-105 group cursor-pointer border border-[#d0e9d6]">
+            <div className="text-4xl mb-4 drop-shadow">📍</div>
+            <div className="font-bold text-[#3a5f46] text-lg mb-2 text-center group-hover:text-[#2e4d3a] transition-colors">Real-time Tracking</div>
+            <div className="text-gray-600 text-base text-center">Track your waste pickup in real-time, from notification to collection.</div>
           </div>
         </div>
       </section>
