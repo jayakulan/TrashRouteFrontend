@@ -372,18 +372,37 @@ input[type="range"].slider::-moz-range-thumb {
   animation: fade-bounce 0.7s cubic-bezier(.68,-0.55,.27,1.55);
 }
 @keyframes slide-in-left {
-  0% { opacity: 0; transform: translateX(-40px); }
-  100% { opacity: 1; transform: translateX(0); }
+  0% { opacity: 0; transform: translateX(-60px) scale(0.95); }
+  60% { opacity: 1; transform: translateX(8px) scale(1.05); }
+  80% { transform: translateX(-2px) scale(0.98); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
 }
 @keyframes slide-in-right {
-  0% { opacity: 0; transform: translateX(40px); }
-  100% { opacity: 1; transform: translateX(0); }
+  0% { opacity: 0; transform: translateX(60px) scale(0.95); }
+  60% { opacity: 1; transform: translateX(-8px) scale(1.05); }
+  80% { transform: translateX(2px) scale(0.98); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes dot-bounce {
+  0% { transform: scale(0.7); }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }
 .animate-slide-in-left {
-  animation: slide-in-left 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+  animation: slide-in-left 0.8s cubic-bezier(.68,-0.55,.27,1.55) both;
 }
 .animate-slide-in-right {
-  animation: slide-in-right 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+  animation: slide-in-right 0.8s cubic-bezier(.68,-0.55,.27,1.55) both;
+}
+.animate-fade-in {
+  animation: fade-in 1s ease both;
+}
+.animate-dot-bounce {
+  animation: dot-bounce 0.7s cubic-bezier(.68,-0.55,.27,1.55) both;
 }
 .progress-vertical {
   transition: height 1s cubic-bezier(0.4,0,0.2,1);
@@ -495,3 +514,16 @@ input[type="range"].slider::-moz-range-thumb {
   100% { transform: translateY(300px) rotate(360deg); opacity: 0; }
 }
 /* --- End Success Animation Styles --- */
+
+.animate-pulse-current {
+  animation: pulse-current 1.2s infinite cubic-bezier(.68,-0.55,.27,1.55);
+}
+@keyframes pulse-current {
+  0% { box-shadow: 0 0 0 0 rgba(59,130,246,0.15); transform: scale(1); }
+  50% { box-shadow: 0 0 0 12px rgba(59,130,246,0.10); transform: scale(1.08); }
+  100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.15); transform: scale(1); }
+}
+.glow-current {
+  box-shadow: 0 0 16px 4px rgba(59,130,246,0.12), 0 2px 8px 0 rgba(59,130,246,0.10);
+  transition: box-shadow 0.3s;
+}
