@@ -1,55 +1,69 @@
 "use client"
 
-import { useNavigate, Link } from "react-router-dom"
-import { Recycle, Bell } from "lucide-react"
-import UserProfileDropdown from "./UserProfileDropdown"
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { Bell } from "lucide-react";
+import UserProfileDropdown from "./UserProfileDropdown";
 
-const CustomerTrackPickup = () => {
-  const navigate = useNavigate()
-  
-  const pickupRequests = [
-    {
-      id: 1,
-      wasteType: "Mixed Recyclables",
-      stages: [
-        { name: "Request Received", completed: true },
-        { name: "Scheduled", completed: true },
-        { name: "Ongoing", completed: true },
-        { name: "Completed", completed: true },
-      ],
-    },
-    {
-      id: 2,
-      wasteType: "Organic Waste",
-      stages: [
-        { name: "Request Received", completed: true },
-        { name: "Scheduled", completed: true },
-        { name: "Ongoing", completed: false, inProgress: true },
-        { name: "Completed", completed: false },
-      ],
-    },
-  ]
+const wasteTypes = [
+  { key: "plastics", label: "Plastics" },
+  { key: "paper", label: "Paper" },
+  { key: "glass", label: "Glass" },
+  { key: "metal", label: "Metal" },
+];
 
-  const handleGoToDashboard = () => {
-    navigate('/customer/trash-type')
-  }
+const steps = [
+  { label: "Select Waste", icon: "♻️" },
+  { label: "Set Quantity", icon: "⚖️" },
+  { label: "Schedule Pickup", icon: "📅" },
+  { label: "Confirm", icon: "✅" },
+];
 
-  const getProgressBarWidth = (stages) => {
-    const completedStages = stages.filter((stage) => stage.completed).length
-    const inProgressStages = stages.filter((stage) => stage.inProgress).length
+const statusLabels = ["Completed", "Completed", "In Progress", "Upcoming"];
+const statusColors = ["text-blue-500", "text-blue-500", "text-blue-500", "text-blue-400"];
 
-    if (completedStages === stages.length) {
-      return 100
-    }
+// Simulate progress for each waste type
+const progressByType = {
+  plastics: 2, // 0-based index: 0=first step, 1=second, etc.
+  paper: 1,
+  glass: 3,
+  metal: 0,
+};
 
-    const baseProgress = (completedStages / stages.length) * 100
-    const inProgressBonus = inProgressStages > 0 ? (0.5 / stages.length) * 100 : 0
-
-    return Math.min(baseProgress + inProgressBonus, 100)
-  }
-
+function VerticalStepper({ steps, currentStep }) {
   return (
-    <div className="min-h-screen bg-[#f7f9fb]">
+    <div className="flex flex-col relative pl-8">
+      {steps.map((step, idx) => {
+        const isCompleted = idx < currentStep;
+        const isCurrent = idx === currentStep;
+        const isUpcoming = idx > currentStep;
+        return (
+          <div key={idx} className="flex items-start relative min-h-[64px]">
+            {/* Vertical line */}
+            {idx < steps.length - 1 && (
+              <span className="absolute left-0 top-7 w-0.5 h-[48px] bg-gray-300" />
+            )}
+            {/* Icon */}
+            <span className={`flex items-center justify-center w-7 h-7 rounded-full text-xl font-bold ${isCompleted ? "bg-blue-100 text-blue-600" : isCurrent ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-400"}`}>{step.icon}</span>
+            <div className="ml-4 flex flex-col">
+              <span className={`font-semibold text-base ${isCurrent ? "text-black" : "text-gray-800"}`}>{step.label}</span>
+              <span className={`text-sm mt-1 ${isCompleted ? "text-blue-500" : isCurrent ? "text-blue-500" : "text-blue-400"}`}>{
+                isCompleted ? "Completed" : isCurrent ? "In Progress" : "Upcoming"
+              }</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export default function CustomerTrackPickup() {
+  const [selectedWaste, setSelectedWaste] = useState("plastics");
+  const navigate = useNavigate();
+  return (
+    <div className="min-h-screen bg-[#f7f9fb] flex flex-col">
+      {/* Header Bar */}
       <header className="bg-white border-b">
         <nav className="container mx-auto px-8 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -65,69 +79,24 @@ const CustomerTrackPickup = () => {
           </div>
         </nav>
       </header>
-
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Page Title */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Track Your Pickups</h1>
-          <p className="text-gray-600 mt-2">Monitor the status of your waste collection requests</p>
-        </div>
-
-        {/* Pickup Requests */}
-        <div className="space-y-6">
-          {pickupRequests.map((request) => (
-            <div key={request.id} className="bg-white rounded-xl p-6 shadow-sm border">
-              {/* Waste Type Header */}
-              <div className="mb-6">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Waste Type: {request.wasteType}
-                </h2>
-              </div>
-
-              {/* Progress Stages */}
-              <div className="space-y-4">
-                {request.stages.map((stage, index) => (
-                  <div key={index} className="relative">
-                    {/* Stage Label */}
-                    <div className="mb-2">
-                      <span className="text-gray-700 font-medium">{stage.name}</span>
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div className="w-full bg-gray-100 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full transition-all duration-500 ${
-                          stage.completed 
-                            ? "bg-green-600" 
-                            : stage.inProgress 
-                            ? "bg-blue-500" 
-                            : "bg-gray-200"
-                        }`}
-                        style={{
-                          width: stage.completed ? "100%" : stage.inProgress ? "60%" : "0%",
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+      <main className="flex-1 flex flex-col items-center py-10">
+        <div className="flex gap-4 mb-8">
+          {wasteTypes.map((wt) => (
+            <button
+              key={wt.key}
+              className={`px-4 py-2 rounded-lg font-bold transition-colors duration-200 ${selectedWaste === wt.key ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700"}`}
+              onClick={() => setSelectedWaste(wt.key)}
+            >
+              {wt.label}
+            </button>
           ))}
         </div>
-
-        {/* Action Button */}
-        <div className="flex justify-center mt-8">
-          <button
-            onClick={handleGoToDashboard}
-            className="next-btn"
-          >
-            Request New Pickup
-          </button>
+        <div className="w-full max-w-xl bg-white rounded-xl shadow p-6">
+          <h2 className="text-lg font-bold mb-6 text-center">{wasteTypes.find(wt => wt.key === selectedWaste).label} Pickup Route</h2>
+          <VerticalStepper steps={steps} currentStep={progressByType[selectedWaste]} />
         </div>
       </main>
     </div>
-  )
+  );
 }
-
-export default CustomerTrackPickup
