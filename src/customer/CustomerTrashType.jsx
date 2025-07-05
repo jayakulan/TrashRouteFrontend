@@ -6,10 +6,10 @@ import UserProfileDropdown from "./UserProfileDropdown"
 
 const CustomerTrashType = () => {
   const [wasteTypes, setWasteTypes] = useState({
-    plastics: { quantity: 3, selected: true },
-    paper: { quantity: 3, selected: true },
-    glass: { quantity: 3, selected: true },
-    metals: { quantity: 3, selected: true },
+    plastics: { quantity: 3, selected: false },
+    paper: { quantity: 3, selected: false },
+    glass: { quantity: 3, selected: false },
+    metals: { quantity: 3, selected: false },
   })
 
   const navigate = useNavigate()
@@ -17,12 +17,7 @@ const CustomerTrashType = () => {
   // Popup state
   const [isPopupOpen, setIsPopupOpen] = useState(() => {
     const hide = localStorage.getItem("hideMinimumWastePopup") === "true"
-    const shouldShow = sessionStorage.getItem("showMinimumWastePopup") === "true"
-    if (!hide && shouldShow) {
-      sessionStorage.removeItem("showMinimumWastePopup")
-      return true
-    }
-    return false
+    return !hide;
   })
 
   const handleClosePopup = () => setIsPopupOpen(false)
@@ -35,7 +30,7 @@ const CustomerTrashType = () => {
   }
 
   const updateQuantity = (type, newQuantity) => {
-    if (newQuantity >= 0 && newQuantity <= 50) {
+    if (wasteTypes[type].selected && newQuantity >= 0 && newQuantity <= 50) {
       setWasteTypes((prev) => ({
         ...prev,
         [type]: { ...prev[type], quantity: newQuantity },
@@ -47,12 +42,20 @@ const CustomerTrashType = () => {
     updateQuantity(type, Number.parseInt(value))
   }
 
+  const toggleWasteType = (type) => {
+    setWasteTypes((prev) => ({
+      ...prev,
+      [type]: { ...prev[type], selected: !prev[type].selected },
+    }))
+  }
+
   const wasteTypeData = [
     {
       id: "plastics",
       name: "Plastics",
       emoji: "🧴",
       description: "Plastic bottles, containers, and packaging",
+      image: "/images/plastictype.png",
       icon: (
         <div className="w-6 h-6 flex items-center justify-center">
           <svg viewBox="0 0 24 24" className="w-5 h-5 text-blue-600">
@@ -69,6 +72,7 @@ const CustomerTrashType = () => {
       name: "Paper",
       emoji: "📄",
       description: "Newspapers, magazines, cardboard, and paper packaging",
+      image: "/images/papertype.png",
       icon: (
         <div className="w-6 h-6 flex items-center justify-center">
           <svg viewBox="0 0 24 24" className="w-5 h-5 text-blue-600">
@@ -85,6 +89,7 @@ const CustomerTrashType = () => {
       name: "Glass",
       emoji: "🫙",
       description: "Glass bottles and jars",
+      image: "/images/glasstype.png",
       icon: (
         <div className="w-6 h-6 flex items-center justify-center">
           <svg viewBox="0 0 24 24" className="w-5 h-5 text-blue-600">
@@ -101,6 +106,7 @@ const CustomerTrashType = () => {
       name: "Metals",
       emoji: "🥫",
       description: "Aluminum and steel cans",
+      image: "/images/metaltype.png",
       icon: (
         <div className="w-6 h-6 flex items-center justify-center">
           <svg viewBox="0 0 24 24" className="w-5 h-5 text-blue-600">
@@ -171,7 +177,7 @@ const CustomerTrashType = () => {
       <main className="container mx-auto px-6 py-8 max-w-4xl">
         {/* Breadcrumb */}
         <div className="flex items-center space-x-2 text-sm text-gray-600 mb-8">
-          <Link to="/customer/trash-type" className="text-blue-600 hover:text-blue-700">
+          <Link to="/customer/trash-type" className="text-theme-color hover:text-theme-color-dark">
             Request Pickup
           </Link>
           <span>/</span>
@@ -198,62 +204,74 @@ const CustomerTrashType = () => {
 
         {/* Recyclables Section */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Recyclables</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">Choose Materials for Pickup & Processing </h2>
 
           <div className="space-y-6">
             {wasteTypeData.map((wasteType) => (
-              <div key={wasteType.id} className="bg-white rounded-lg border border-gray-200 p-6">
+              <div
+                key={wasteType.id}
+                className={`waste-card bg-white rounded-lg border border-gray-200 p-6 flex items-center transition-all duration-200 ${wasteTypes[wasteType.id].selected ? '' : 'opacity-60'}`}
+                onClick={() => toggleWasteType(wasteType.id)}
+                style={{ cursor: 'pointer' }}
+              >
+                {/* Toggle Button */}
+                <button
+                  className={`toggle-btn mr-6 ${wasteTypes[wasteType.id].selected ? 'selected' : ''}`}
+                  aria-label={wasteTypes[wasteType.id].selected ? `Deselect ${wasteType.name}` : `Select ${wasteType.name}`}
+                  type="button"
+                  tabIndex={-1}
+                  style={{ pointerEvents: 'none' }}
+                >
+                  <span className="toggle-check">&#10003;</span>
+                </button>
                 {/* Waste Type Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-4">
-                    {wasteType.icon}
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <h3 className="text-lg font-semibold text-gray-900">{wasteType.name}</h3>
-                        <span className="text-lg">{wasteType.emoji}</span>
-                      </div>
-                      <p className="text-gray-600 text-sm">{wasteType.description}</p>
+                <div className="flex-1">
+                  <div className="mb-4">
+                    <div className="flex items-center space-x-3">
+                      <img src={wasteType.image} alt={wasteType.name + ' icon'} className="w-10 h-10 rounded object-cover" />
+                      <h3 className="text-lg font-semibold text-gray-900">{wasteType.name}</h3>
                     </div>
+                    <p className="text-gray-600 text-sm">{wasteType.description}</p>
                   </div>
-
                   {/* Quantity Controls */}
-                  <div className="flex items-center space-x-3">
-                    <button
-                      onClick={() => updateQuantity(wasteType.id, wasteTypes[wasteType.id].quantity - 1)}
-                      className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 text-gray-600"
-                    >
-                      <Minus className="w-4 h-4" />
-                    </button>
-                    <span className="text-lg font-semibold text-gray-900 w-8 text-center">
-                      {wasteTypes[wasteType.id].quantity}
-                    </span>
-                    <button
-                      onClick={() => updateQuantity(wasteType.id, wasteTypes[wasteType.id].quantity + 1)}
-                      className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 text-gray-600"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Quantity Slider */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Quantity (kg)</span>
-                    <span className="text-sm font-semibold text-gray-900">{wasteTypes[wasteType.id].quantity}</span>
-                  </div>
-                  <div className="relative">
-                    <input
-                      type="range"
-                      min="0"
-                      max="50"
-                      value={wasteTypes[wasteType.id].quantity}
-                      onChange={(e) => handleSliderChange(wasteType.id, e.target.value)}
-                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                      style={{
-                        background: `linear-gradient(to right, #3a5f46 0%, #3a5f46 ${(wasteTypes[wasteType.id].quantity / 50) * 100}%, #e5e7eb ${(wasteTypes[wasteType.id].quantity / 50) * 100}%, #e5e7eb 100%)`,
-                      }}
-                    />
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700">Quantity (kg)</span>
+                    </div>
+                    <div className="relative flex items-center">
+                      <input
+                        type="range"
+                        min="0"
+                        max="50"
+                        value={wasteTypes[wasteType.id].quantity}
+                        onChange={(e) => handleSliderChange(wasteType.id, e.target.value)}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                        style={{
+                          background: `linear-gradient(to right, #3a5f46 0%, #3a5f46 ${(wasteTypes[wasteType.id].quantity / 50) * 100}%, #e5e7eb ${(wasteTypes[wasteType.id].quantity / 50) * 100}%, #e5e7eb 100%)`,
+                          opacity: wasteTypes[wasteType.id].selected ? 1 : 0.5,
+                        }}
+                        disabled={!wasteTypes[wasteType.id].selected}
+                      />
+                      <div className="flex items-center space-x-2 ml-4">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); updateQuantity(wasteType.id, wasteTypes[wasteType.id].quantity - 1) }}
+                          className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 text-gray-600"
+                          disabled={!wasteTypes[wasteType.id].selected}
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+                        <span className="text-lg font-semibold text-gray-900 w-8 text-center">
+                          {wasteTypes[wasteType.id].quantity}
+                        </span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); updateQuantity(wasteType.id, wasteTypes[wasteType.id].quantity + 1) }}
+                          className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 text-gray-600"
+                          disabled={!wasteTypes[wasteType.id].selected}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -263,7 +281,7 @@ const CustomerTrashType = () => {
 
         {/* Next Button */}
         <div className="flex justify-center">
-          <button onClick={() => navigate('/customer/location-pin')}>
+          <button className="next-btn" onClick={() => navigate('/customer/location-pin')}>
             Next
           </button>
         </div>

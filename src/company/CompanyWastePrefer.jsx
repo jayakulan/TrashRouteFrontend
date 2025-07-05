@@ -1,9 +1,10 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Diamond } from "lucide-react"
+import UserProfileDropdowncom from "./UserProfileDropdowncom"
 
 const WastePreferences = () => {
-  const [selectedWasteTypes, setSelectedWasteTypes] = useState(new Set())
+  const [selectedWasteType, setSelectedWasteType] = useState("")
   const navigate = useNavigate()
 
   const wasteTypes = [
@@ -34,17 +35,11 @@ const WastePreferences = () => {
   ]
 
   const toggleWasteType = (wasteTypeId) => {
-    const newSelected = new Set(selectedWasteTypes)
-    if (newSelected.has(wasteTypeId)) {
-      newSelected.delete(wasteTypeId)
-    } else {
-      newSelected.add(wasteTypeId)
-    }
-    setSelectedWasteTypes(newSelected)
+    setSelectedWasteType(wasteTypeId)
   }
 
   const handleSubmit = () => {
-    console.log("Selected waste types:", Array.from(selectedWasteTypes))
+    console.log("Selected waste type:", selectedWasteType)
     // Handle submission logic here
     navigate("/company/route-access")
   }
@@ -54,34 +49,23 @@ const WastePreferences = () => {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <nav className="container mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
+          <div className="flex items-center">
             {/* Logo */}
-            <div className="flex items-center space-x-2">
+            <div>
               <img src="/images/logo.png" alt="Logo" className="h-16 w-34" />
             </div>
-
-            {/* Navigation */}
-            <div className="flex items-center space-x-8">
-              <Link to="/dashboard" className="text-gray-700 hover:text-gray-900 font-medium">
-                Dashboard
-              </Link>
-              <Link to="/requests" className="text-gray-700 hover:text-gray-900 font-medium">
-                Requests
-              </Link>
-              <Link to="/schedule" className="text-gray-700 hover:text-gray-900 font-medium">
-                Schedule
-              </Link>
-              <Link to="/reports" className="text-gray-700 hover:text-gray-900 font-medium">
-                Reports
-              </Link>
-              <Link to="/settings" className="text-gray-700 hover:text-gray-900 font-medium">
-                Settings
-              </Link>
-            </div>
-
-            {/* User Avatar */}
-            <div className="w-8 h-8 bg-orange-400 rounded-full flex items-center justify-center">
-              <img src="/placeholder.svg?height=32&width=32" alt="User" className="w-8 h-8 rounded-full object-cover" />
+            {/* Navigation - right aligned */}
+            <div className="flex items-center space-x-8 ml-auto">
+              <Link to="/company-waste-prefer" className="text-gray-700 hover:text-gray-900 font-medium">Dashboard</Link>
+              <Link to="/company/historylogs" className="text-gray-700 hover:text-gray-900 font-medium">Historylogs</Link>
+              {/* Notification Bell Icon */}
+              <button className="relative focus:outline-none" aria-label="Notifications">
+                <svg className="w-6 h-6 text-gray-700 hover:text-gray-900" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              </button>
+              {/* User Avatar Dropdown */}
+              <UserProfileDropdowncom />
             </div>
           </div>
         </nav>
@@ -92,7 +76,7 @@ const WastePreferences = () => {
         {/* Title Section */}
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Waste Preferences</h1>
-          <p className="text-lg text-gray-600">Select the types of waste your company processes.</p>
+          <p className="text-lg text-gray-600">Select the type of waste your company processes.</p>
         </div>
 
         {/* Waste Type Cards Grid */}
@@ -103,7 +87,7 @@ const WastePreferences = () => {
               onClick={() => toggleWasteType(wasteType.id)}
               className={`
                 relative cursor-pointer rounded-2xl overflow-hidden transition-all duration-200 hover:scale-105 hover:shadow-lg
-                ${selectedWasteTypes.has(wasteType.id) ? "ring-4 ring-blue-500 ring-opacity-50" : "hover:shadow-md"}
+                ${selectedWasteType === wasteType.id ? "ring-4 ring-blue-500 ring-opacity-50" : "hover:shadow-md"}
               `}
             >
               {/* Card Image/Background */}
@@ -117,7 +101,7 @@ const WastePreferences = () => {
                 </div>
 
                 {/* Selection Indicator */}
-                {selectedWasteTypes.has(wasteType.id) && (
+                {selectedWasteType === wasteType.id && (
                   <div className="absolute top-4 right-4 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
                     <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                       <path
@@ -143,11 +127,11 @@ const WastePreferences = () => {
         <div className="flex justify-center">
           <button
             onClick={handleSubmit}
-            disabled={selectedWasteTypes.size === 0}
+            disabled={!selectedWasteType}
             className={`
               px-8 py-4 rounded-full font-semibold text-lg transition-all duration-200
               ${
-                selectedWasteTypes.size > 0
+                selectedWasteType
                   ? "bg-blue-500 hover:bg-blue-600 text-white shadow-lg hover:shadow-xl"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }
@@ -158,13 +142,10 @@ const WastePreferences = () => {
         </div>
 
         {/* Selection Summary */}
-        {selectedWasteTypes.size > 0 && (
+        {selectedWasteType && (
           <div className="mt-8 text-center">
             <p className="text-gray-600">
-              Selected:{" "}
-              {Array.from(selectedWasteTypes)
-                .map((id) => wasteTypes.find((type) => type.id === id)?.name)
-                .join(", ")}
+              Selected: {wasteTypes.find((type) => type.id === selectedWasteType)?.name}
             </p>
           </div>
         )}

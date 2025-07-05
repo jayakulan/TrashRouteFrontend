@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Search, Plus, Minus, Navigation } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-import UserProfileDropdown from "../customer/UserProfileDropdown"
+import UserProfileDropdowncom from "./UserProfileDropdowncom"
 import { Link } from "react-router-dom"
 
 const RouteActivation = () => {
@@ -15,9 +15,9 @@ const RouteActivation = () => {
   const [cardName, setCardName] = useState("")
   const [expiry, setExpiry] = useState("")
   const [cvv, setCvv] = useState("")
-  const [amount, setAmount] = useState(25)
+  const [amount, setAmount] = useState(500)
 
-  const activationFee = 25
+  const activationFee = 500
   const navigate = useNavigate();
 
   const handleZoomIn = () => {
@@ -49,24 +49,27 @@ const RouteActivation = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
         <nav className="container mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
+          <div className="flex items-center">
             {/* Logo */}
-            <div className="flex items-center space-x-2">
+            <div>
               <img src="/images/logo.png" alt="Logo" className="h-16 w-34" />
             </div>
-            {/* Navigation */}
-            <div className="flex items-center space-x-8">
-              <Link to="/dashboard" className="text-gray-700 hover:text-gray-900 font-medium">Dashboard</Link>
-              <Link to="/requests" className="text-gray-700 hover:text-gray-900 font-medium">Requests</Link>
-              <Link to="/schedule" className="text-gray-700 hover:text-gray-900 font-medium">Schedule</Link>
-              <Link to="/reports" className="text-gray-700 hover:text-gray-900 font-medium">Reports</Link>
-              <Link to="/settings" className="text-gray-700 hover:text-gray-900 font-medium">Settings</Link>
+            {/* Navigation - right aligned */}
+            <div className="flex items-center space-x-8 ml-auto">
+              <Link to="/company-waste-prefer" className="text-gray-700 hover:text-gray-900 font-medium">Dashboard</Link>
+              <Link to="/company/historylogs" className="text-gray-700 hover:text-gray-900 font-medium">Historylogs</Link>
+              {/* Notification Bell Icon */}
+              <button className="relative focus:outline-none" aria-label="Notifications">
+                <svg className="w-6 h-6 text-gray-700 hover:text-gray-900" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              </button>
+              {/* User Avatar Dropdown */}
+              <UserProfileDropdowncom />
             </div>
-            {/* User Avatar */}
-            <UserProfileDropdown />
           </div>
         </nav>
       </header>
@@ -158,7 +161,7 @@ const RouteActivation = () => {
 
         {/* Status Message */}
         <div className="text-center">
-          <p className="text-lg font-semibold text-gray-900">Routes are locked. Activate your account to proceed.</p>
+          <p className="text-lg font-semibold text-gray-900">Routes are currently locked. Pay the subscription fee to access them.</p>
         </div>
 
         {/* Activation Card */}
@@ -168,7 +171,7 @@ const RouteActivation = () => {
 
           <div className="relative p-8 text-white">
             <h2 className="text-2xl font-bold mb-2">Activate Route Access</h2>
-            <p className="text-lg font-medium">Total fee: ${activationFee}</p>
+            <p className="text-lg font-medium">Total fee: Rs.{activationFee}</p>
           </div>
         </div>
 
@@ -178,17 +181,7 @@ const RouteActivation = () => {
 
           {/* Payment Options */}
           <div className="space-y-4 mb-8">
-            <label className="flex items-center space-x-3 cursor-pointer">
-              <input
-                type="radio"
-                name="paymentMethod"
-                value="card"
-                checked={selectedPaymentMethod === "card"}
-                onChange={(e) => setSelectedPaymentMethod(e.target.value)}
-                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-              />
-              <span className="text-gray-900 font-medium">Card</span>
-            </label>
+            {/* Card payment option removed as requested */}
           </div>
 
           {/* Pay Now Button */}
