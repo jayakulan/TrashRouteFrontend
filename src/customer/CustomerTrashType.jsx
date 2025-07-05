@@ -281,7 +281,7 @@ const CustomerTrashType = () => {
 
         {/* Next Button */}
         <div className="flex justify-center">
-          <button className="next-btn py-4 px-12 rounded-full text-lg" onClick={() => navigate('/customer/location-pin')}>
+          <button className="next-btn" onClick={() => navigate('/customer/location-pin')}>
             Next
           </button>
         </div>
