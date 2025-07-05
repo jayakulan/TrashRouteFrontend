@@ -37,7 +37,7 @@ const PinLocation = () => {
   }
 
   const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: 'AIzaSyA5iEKgAwrJWVkCMAsD7_IilJ0YSVf_VGk',
+            googleMapsApiKey: 'AIzaSyAPU0AGbc-aFDts3rgDelAThInlph_ZBYI',
   });
 
   const mapContainerStyle = {
