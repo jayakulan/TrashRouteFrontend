@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { Recycle, Bell, Minus, Plus } from "lucide-react"
 import MinimumWastePopup from "./MinimumWastePopup"
 import UserProfileDropdown from "./UserProfileDropdown"
+import CustomerNotification from "./CustomerNotification"
 
 const CustomerTrashType = () => {
   const [wasteTypes, setWasteTypes] = useState({
@@ -167,7 +168,7 @@ const CustomerTrashType = () => {
             <Link to="/customer/trash-type" className="text-gray-700 hover:text-gray-900 font-medium">Request Pickup</Link>
             <Link to="/customer/track-pickup" className="text-gray-700 hover:text-gray-900 font-medium">Track Pickup</Link>
             <Link to="/customer/history-log" className="text-gray-700 hover:text-gray-900 font-medium">History Log</Link>
-            <Link to="/customer/notification-log" className="text-gray-700 hover:text-gray-900 font-medium" aria-label="Notification Log"><Bell className="w-5 h-5" /></Link>
+            <CustomerNotification onViewDetails={() => navigate('/customer/track-pickup')} />
             <UserProfileDropdown />
           </div>
         </nav>

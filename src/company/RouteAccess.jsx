@@ -8,48 +8,27 @@ import { Link } from "react-router-dom"
 
 const RouteActivation = () => {
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("card")
   const [showModal, setShowModal] = useState(false)
   const [cardType, setCardType] = useState("")
   const [cardNumber, setCardNumber] = useState("")
   const [cardName, setCardName] = useState("")
   const [expiry, setExpiry] = useState("")
   const [cvv, setCvv] = useState("")
-  const [amount, setAmount] = useState(500)
+  const [amount] = useState(500)
 
-  const activationFee = 500
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
-  const handleZoomIn = () => {
-    console.log("Zoom in")
-  }
-
-  const handleZoomOut = () => {
-    console.log("Zoom out")
-  }
-
-  const handleLocationCenter = () => {
-    console.log("Center on user location")
-  }
-
-  const handlePayNow = () => {
-    setShowModal(true)
-  }
-
+  const handlePayNow = () => setShowModal(true)
+  const handleCloseModal = () => setShowModal(false)
   const handleProceed = (e) => {
     e.preventDefault()
-    // Here you would handle the payment logic
     setShowModal(false)
-    // Optionally reset fields or show a success message
-    navigate("/company/route-map");
-  }
-
-  const handleCloseModal = () => {
-    setShowModal(false)
+    navigate("/company/route-map")
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <nav className="container mx-auto px-6 py-4">
           <div className="flex items-center">
@@ -73,128 +52,87 @@ const RouteActivation = () => {
           </div>
         </nav>
       </header>
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Map Section */}
-        <div className="relative bg-white rounded-2xl overflow-hidden shadow-lg">
-          {/* Search Bar */}
+
+      {/* Map Section */}
+      <section className="max-w-4xl mx-auto px-4 py-10">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-[#3a5f46] mb-2 flex items-center gap-2">
+            <span>Route Access</span>
+            <span className="inline-block bg-[#e6f4ea] text-[#3a5f46] px-2 py-1 rounded text-xs font-semibold">Company</span>
+          </h1>
+          <p className="text-gray-600 mb-4">Unlock and manage your waste collection routes. Pay the subscription fee to activate access and optimize your company's workflow.</p>
+        </div>
+        <div className="relative bg-white rounded-2xl shadow-xl border border-[#e6f4ea] overflow-hidden">
+          {/* Search Input */}
           <div className="absolute top-6 left-6 right-24 z-10">
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className="absolute left-4 top-3 text-[#3a5f46]" />
               <input
                 type="text"
                 placeholder="Search for an address or a place"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-white border-0 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 placeholder-gray-500"
+                className="w-full pl-12 pr-4 py-3 rounded-xl border border-[#e6f4ea] bg-[#f7faf9] focus:ring-[#3a5f46] focus:ring-2 shadow-sm"
               />
             </div>
           </div>
 
-          {/* Map Controls */}
+          {/* Map Control Buttons */}
           <div className="absolute top-6 right-6 z-10 flex flex-col space-y-3">
-            <button
-              onClick={handleZoomIn}
-              className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
-            >
-              <Plus className="w-6 h-6 text-gray-600" />
-            </button>
-            <button
-              onClick={handleZoomOut}
-              className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
-            >
-              <Minus className="w-6 h-6 text-gray-600" />
-            </button>
-            <button
-              onClick={handleLocationCenter}
-              className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
-            >
-              <Navigation className="w-6 h-6 text-gray-600" />
-            </button>
+            {[{icon: Plus, label: "Zoom In"}, {icon: Minus, label: "Zoom Out"}, {icon: Navigation, label: "Center"}].map(({icon: Icon, label}, i) => (
+              <button key={i} className="bg-[#f7faf9] p-3 rounded-full shadow hover:bg-[#e6f4ea] group transition" title={label}>
+                <Icon className="text-[#3a5f46] w-5 h-5 group-hover:scale-110 transition" />
+              </button>
+            ))}
           </div>
 
-          {/* Map Display */}
-          <div
-            className="w-full h-80 bg-gradient-to-br from-teal-500 to-teal-700 relative"
-            style={{
-              backgroundImage: `
-                linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)
-              `,
-              backgroundSize: "25px 25px",
-            }}
-          >
-            {/* Street Grid Overlay */}
-            <div className="absolute inset-0 opacity-40">
-              <svg className="w-full h-full" viewBox="0 0 400 320">
-                {/* City grid pattern */}
-                {[...Array(16)].map((_, i) => (
-                  <line key={`h-${i}`} x1="0" y1={i * 20} x2="400" y2={i * 20} stroke="white" strokeWidth="0.8" />
-                ))}
-                {[...Array(20)].map((_, i) => (
-                  <line key={`v-${i}`} x1={i * 20} y1="0" x2={i * 20} y2="320" stroke="white" strokeWidth="0.8" />
-                ))}
-                {/* Main arterial roads */}
-                <line x1="0" y1="160" x2="400" y2="160" stroke="white" strokeWidth="3" />
-                <line x1="200" y1="0" x2="200" y2="320" stroke="white" strokeWidth="3" />
-                {/* Diagonal roads */}
-                <line x1="0" y1="0" x2="400" y2="320" stroke="white" strokeWidth="2" opacity="0.6" />
-                <line x1="400" y1="0" x2="0" y2="320" stroke="white" strokeWidth="2" opacity="0.6" />
-              </svg>
-            </div>
-
-            {/* Locked overlay */}
-            <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
-              <div className="text-white text-center">
-                <div className="w-16 h-16 mx-auto mb-4 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
+          {/* Locked Map Display */}
+          <div className="w-full h-80 bg-gradient-to-br from-[#e6f4ea] to-[#cfe3d6] relative flex items-center justify-center">
+            <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+              <div className="bg-white bg-opacity-30 rounded-full p-6 shadow-lg">
+                <svg className="w-12 h-12 text-[#3a5f46]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 17v.01M17 8V7a5 5 0 00-10 0v1a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2z" />
+                </svg>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Status Message */}
-        <div className="text-center">
-          <p className="text-lg font-semibold text-gray-900">Routes are currently locked. Pay the subscription fee to access them.</p>
+        {/* Route Status */}
+        <div className="flex items-center gap-2 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 px-4 py-3 rounded mt-8 mb-8 shadow">
+          <svg className="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z" />
+          </svg>
+          <span>Routes are currently locked. Pay the subscription fee to access them.</span>
         </div>
+      </section>
 
-        {/* Activation Card */}
-        <div className="relative bg-gradient-to-r from-yellow-400 via-green-400 to-green-600 rounded-2xl overflow-hidden shadow-lg">
-          {/* Blurred background effect */}
-          <div className="absolute inset-0 bg-black bg-opacity-20 backdrop-blur-sm"></div>
-
-          <div className="relative p-8 text-white">
-            <h2 className="text-2xl font-bold mb-2">Activate Route Access</h2>
-            <p className="text-lg font-medium">Total fee: Rs.{activationFee}</p>
+      {/* Subscription & Payment Card */}
+      <section className="max-w-4xl mx-auto px-4 mb-16 space-y-6">
+        <div className="rounded-2xl bg-gradient-to-r from-yellow-400 via-green-500 to-green-600 p-6 text-white text-center shadow-md border-2 border-[#e6f4ea] flex flex-col items-center">
+          <div className="flex items-center justify-center mb-2">
+            <svg className="w-8 h-8 text-white bg-[#3a5f46] rounded-full p-1 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2l4-4" />
+            </svg>
+            <h2 className="text-2xl font-bold">Activate Route Access</h2>
           </div>
-        </div>
-
-        {/* Payment Section */}
-        <div className="bg-white rounded-2xl p-8 shadow-lg">
-          <h3 className="text-xl font-semibold text-gray-900 mb-6">Payment Method</h3>
-
-          {/* Payment Options */}
-          <div className="space-y-4 mb-8">
-            {/* Card payment option removed as requested */}
-          </div>
-
-          {/* Pay Now Button */}
+          <p className="text-lg mb-2">Total fee: <span className="font-bold">Rs.500</span></p>
+          <div className="w-full border-t border-white/30 my-4"></div>
+          <h3 className="text-xl font-semibold mb-4 text-white">Payment Method</h3>
           <button
             onClick={handlePayNow}
-            className="w-full bg-blue-200 hover:bg-blue-300 text-blue-800 font-semibold py-4 px-6 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="bg-[#3a5f46] hover:bg-[#2e4d3a] text-white py-3 px-6 rounded-xl font-semibold w-full flex items-center justify-center gap-2 shadow transition"
           >
-            Pay Now
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <rect x="2" y="7" width="20" height="10" rx="2" fill="#fff" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2 9h20M2 15h20" />
+            </svg>
+            <span>Pay Now</span>
           </button>
         </div>
-      </div>
+      </section>
 
-      {/* Modal Popup */}
+      {/* Payment Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md relative">
@@ -231,9 +169,9 @@ const RouteActivation = () => {
               </div>
               <div>
                 <label className="block text-gray-700 font-medium mb-1">Amount</label>
-                <input type="number" value={amount} readOnly className="w-full border rounded-lg px-3 py-2 bg-gray-100" />
+                <input type="text" value={`Rs.${amount}`} readOnly className="w-full border rounded-lg px-3 py-2 bg-gray-100" />
               </div>
-              <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">Proceed</button>
+              <button type="submit" className="w-full bg-[#3a5f46] hover:bg-[#2e4d3a] text-white font-semibold py-3 rounded-lg transition">Proceed</button>
             </form>
           </div>
         </div>

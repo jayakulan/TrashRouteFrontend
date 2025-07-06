@@ -1,256 +1,419 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Link } from "react-router-dom"
-import { Diamond, Search, Plus, Minus, Navigation, Check } from "lucide-react"
-import reactLogo from "../assets/react.svg";
-import UserProfileDropdowncom from "./UserProfileDropdowncom";
+import { Plus, Minus, Navigation, Check } from "lucide-react"
+import { GoogleMap, LoadScript, Polyline } from "@react-google-maps/api"
+import UserProfileDropdowncom from "./UserProfileDropdowncom"
+
+const GOOGLE_MAPS_API_KEY = "AIzaSyAPU0AGbc-aFDts3rgDelAThInlph_ZBYI"
+const GOOGLE_MAPS_LIBRARIES = ["marker"]
+const GOOGLE_MAPS_MAP_ID = "DEMO_MAP_ID" // You'll need to create a Map ID in Google Cloud Console
+
+function getRandomLatLng(center, radius) {
+  const y0 = center.lat
+  const x0 = center.lng
+  const rd = radius / 111300
+  const u = Math.random()
+  const v = Math.random()
+  const w = rd * Math.sqrt(u)
+  const t = 2 * Math.PI * v
+  const x = w * Math.cos(t)
+  const y = w * Math.sin(t)
+  return { lat: y0 + y, lng: x0 + x }
+}
+
+function getOptimizedPath(points) {
+  if (points.length === 0) return []
+  const visited = Array(points.length).fill(false)
+  const path = [0]
+  visited[0] = true
+  for (let i = 1; i < points.length; i++) {
+    let last = path[path.length - 1]
+    let minDist = Infinity
+    let next = -1
+    for (let j = 0; j < points.length; j++) {
+      if (!visited[j]) {
+        const d = Math.hypot(points[last].lat - points[j].lat, points[last].lng - points[j].lng)
+        if (d < minDist) {
+          minDist = d
+          next = j
+        }
+      }
+    }
+    path.push(next)
+    visited[next] = true
+  }
+  return path.map(idx => points[idx])
+}
 
 const RouteMap = () => {
+  const mapRef = useRef(null)
+  const [map, setMap] = useState(null)
+  const [currentLocation, setCurrentLocation] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const [optimizedLocations, setOptimizedLocations] = useState([])
+  const [markers, setMarkers] = useState([])
+  const [apiError, setApiError] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+
   const [households, setHouseholds] = useState([
-    {
-      id: 1,
-      address: "123 Elm Street, Apt 4B",
-      contact: "Sarah Miller (555) 123-4567",
-      notes: "Leave bins by the curb",
-      collected: false,
-    },
-    {
-      id: 2,
-      address: "456 Oak Avenue",
-      contact: "David Lee (555) 987-6543",
-      notes: "Backyard gate code: 7890",
-      collected: false,
-    },
-    {
-      id: 3,
-      address: "789 Pine Lane, Unit 1A",
-      contact: "Emily Chen (555) 246-8012",
-      notes: "Bins behind the garage",
-      collected: false,
-    },
-    {
-      id: 4,
-      address: "101 Maple Drive",
-      contact: "Robert Green (555) 369-1470",
-      notes: "Contactless pickup preferred",
-      collected: false,
-    },
-    {
-      id: 5,
-      address: "222 Cedar Court",
-      contact: "Jessica White (555) 802-5678",
-      notes: "Bins near the side entrance",
-      collected: false,
-    },
+    { id: 1, address: "123 Elm Street", contact: "Sarah Miller", notes: "Leave bins by the curb", collected: false },
+    { id: 2, address: "456 Oak Avenue", contact: "David Lee", notes: "Backyard gate code: 7890", collected: false },
+    { id: 3, address: "789 Pine Lane", contact: "Emily Chen", notes: "Bins behind the garage", collected: false },
+    { id: 4, address: "101 Maple Drive", contact: "Robert Green", notes: "Contactless pickup preferred", collected: false },
+    { id: 5, address: "222 Cedar Court", contact: "Jessica White", notes: "Bins near the side entrance", collected: false }
   ])
 
-  const handleZoomIn = () => {
-    console.log("Zoom in")
+  useEffect(() => {
+    const center = { lat: 20.5937, lng: 78.9629 }
+    const locations = Array.from({ length: 10 }, () => getRandomLatLng(center, 1000000))
+    const optimized = getOptimizedPath(locations)
+    setOptimizedLocations(optimized)
+  }, [])
+
+  const onLoad = (map) => {
+    setMap(map)
+    setIsLoading(false)
+    
+    // Create advanced markers after map loads
+    if (window.google && optimizedLocations.length > 0) {
+      try {
+        const newMarkers = optimizedLocations.map((location, index) => {
+          const labelDiv = document.createElement("div")
+          labelDiv.style.background = "#4285F4"
+          labelDiv.style.color = "#fff"
+          labelDiv.style.borderRadius = "50%"
+          labelDiv.style.width = "30px"
+          labelDiv.style.height = "30px"
+          labelDiv.style.display = "flex"
+          labelDiv.style.justifyContent = "center"
+          labelDiv.style.alignItems = "center"
+          labelDiv.style.fontWeight = "bold"
+          labelDiv.style.fontSize = "14px"
+          labelDiv.textContent = `${index + 1}`
+
+          return new window.google.maps.marker.AdvancedMarkerElement({
+            map: map,
+            position: location,
+            content: labelDiv,
+            title: `Location ${index + 1}`
+          })
+        })
+        
+        setMarkers(newMarkers)
+        
+        // Fit bounds to show all markers
+        const bounds = new window.google.maps.LatLngBounds()
+        optimizedLocations.forEach(loc => bounds.extend(loc))
+        map.fitBounds(bounds)
+      } catch (error) {
+        console.error("Error creating advanced markers:", error)
+        // Fallback to regular markers if Advanced Markers fail
+        createRegularMarkers(map)
+      }
+    }
   }
 
-  const handleZoomOut = () => {
-    console.log("Zoom out")
+  const createRegularMarkers = (map) => {
+    const newMarkers = optimizedLocations.map((location, index) => {
+      return new window.google.maps.Marker({
+        position: location,
+        map: map,
+        label: {
+          text: `${index + 1}`,
+          color: 'white',
+          fontWeight: 'bold'
+        },
+        icon: {
+          path: window.google.maps.SymbolPath.CIRCLE,
+          scale: 12,
+          fillColor: '#4285F4',
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 2
+        }
+      })
+    })
+    setMarkers(newMarkers)
   }
 
+  const onError = (error) => {
+    console.error("Google Maps API Error:", error)
+    setApiError(true)
+    setIsLoading(false)
+  }
+
+  const handleLocateMe = () => {
+    if (navigator.geolocation && map) {
+      navigator.geolocation.getCurrentPosition(
+        ({ coords }) => {
+          const userLoc = { lat: coords.latitude, lng: coords.longitude }
+          setCurrentLocation(userLoc)
+          
+          try {
+            // Try to create advanced marker first
+            const userLabelDiv = document.createElement("div")
+            userLabelDiv.style.background = "#34A853"
+            userLabelDiv.style.color = "#fff"
+            userLabelDiv.style.borderRadius = "50%"
+            userLabelDiv.style.width = "28px"
+            userLabelDiv.style.height = "28px"
+            userLabelDiv.style.display = "flex"
+            userLabelDiv.style.justifyContent = "center"
+            userLabelDiv.style.alignItems = "center"
+            userLabelDiv.style.fontWeight = "bold"
+            userLabelDiv.style.fontSize = "12px"
+            userLabelDiv.textContent = "You"
+
+            new window.google.maps.marker.AdvancedMarkerElement({
+              map: map,
+              position: userLoc,
+              content: userLabelDiv,
+              title: "Your Location"
+            })
+          } catch (error) {
+            // Fallback to regular marker
+            new window.google.maps.Marker({
+              position: userLoc,
+              map: map,
+              label: {
+                text: 'You',
+                color: 'white',
+                fontWeight: 'bold'
+              },
+              icon: {
+                path: window.google.maps.SymbolPath.CIRCLE,
+                scale: 10,
+                fillColor: '#34A853',
+                fillOpacity: 1,
+                strokeColor: '#ffffff',
+                strokeWeight: 2
+              }
+            })
+          }
+          
+          map.setCenter(userLoc)
+          map.setZoom(14)
+        },
+        (err) => {
+          console.error("Location error:", err)
+          alert("Location access denied or unavailable.")
+        }
+      )
+    }
+  }
+
+  const handleZoomIn = () => map && map.setZoom(map.getZoom() + 1)
+  const handleZoomOut = () => map && map.setZoom(map.getZoom() - 1)
   const handleLocationCenter = () => {
-    console.log("Center on user location")
+    if (map && optimizedLocations.length > 0) {
+      const bounds = new window.google.maps.LatLngBounds()
+      optimizedLocations.forEach(loc => bounds.extend(loc))
+      map.fitBounds(bounds)
+    }
   }
 
-  const toggleCollected = (householdId) => {
-    setHouseholds((prev) =>
-      prev.map((household) =>
-        household.id === householdId ? { ...household, collected: !household.collected } : household,
-      ),
+  const toggleCollected = (id) => {
+    setHouseholds(prev =>
+      prev.map(h => (h.id === id ? { ...h, collected: !h.collected } : h))
     )
   }
 
-  const handleCompleteRoute = () => {
-    console.log("Completing route...")
-    // Handle route completion logic
+  const collectedCount = households.filter(h => h.collected).length
+  const totalCount = households.length
+  const filteredHouseholds = households.filter(h =>
+    h.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    h.contact.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    h.notes.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const mapContainerStyle = {
+    width: '100%',
+    height: '400px'
   }
 
-  const collectedCount = households.filter((h) => h.collected).length
-  const totalCount = households.length
+  const center = { lat: 20.5937, lng: 78.9629 }
 
-  // Filtered households based on search query
-  const filteredHouseholds = households.filter(
-    (household) =>
-      household.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      household.contact.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      household.notes.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  if (apiError) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white shadow-sm border-b">
+          <nav className="container mx-auto px-6 py-4 flex justify-between">
+            <img src="/images/logo.png" className="h-16" alt="Logo" />
+            <div className="flex space-x-6 items-center">
+              <Link to="/company-waste-prefer">Dashboard</Link>
+              <Link to="/company/historylogs">Historylogs</Link>
+              <UserProfileDropdowncom />
+            </div>
+          </nav>
+        </header>
+
+        <main className="container mx-auto px-6 py-8">
+          <h1 className="text-3xl font-bold mb-2">Route Map</h1>
+          <p className="text-gray-600 mb-6">View and manage your waste collection route.</p>
+
+          <div className="bg-white border rounded-2xl shadow-sm p-8 text-center">
+            <div className="text-6xl mb-4">🗺️</div>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">Google Maps API Error</h3>
+            <p className="text-gray-500 mb-4">
+              There was an issue loading the Google Maps API. Please check your API key configuration.
+            </p>
+            <div className="text-sm text-gray-400 mb-4">
+              <p>Common issues:</p>
+              <ul className="list-disc list-inside">
+                <li>API key is invalid or restricted</li>
+                <li>Maps JavaScript API is not enabled</li>
+                <li>Billing is not set up for the project</li>
+              </ul>
+            </div>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="bg-[#3a5f46] text-white px-4 py-2 rounded hover:bg-[#2e4d3a]"
+            >
+              Retry
+            </button>
+          </div>
+        </main>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white shadow-sm border-b">
-        <nav className="container mx-auto px-6 py-4">
-          <div className="flex items-center">
-            {/* Logo */}
-            <div>
-              <img src="/images/logo.png" alt="Logo" className="h-16 w-34" />
-            </div>
-            {/* Navigation - right aligned */}
-            <div className="flex items-center space-x-8 ml-auto">
-              <Link to="/company-waste-prefer" className="text-gray-700 hover:text-gray-900 font-medium">Dashboard</Link>
-              <Link to="/company/historylogs" className="text-gray-700 hover:text-gray-900 font-medium">Historylogs</Link>
-              {/* Notification Bell Icon */}
-              <button className="relative focus:outline-none" aria-label="Notifications">
-                <svg className="w-6 h-6 text-gray-700 hover:text-gray-900" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-              </button>
-              {/* User Avatar Dropdown */}
+        <nav className="container mx-auto px-6 py-4 flex justify-between">
+          <img src="/images/logo.png" className="h-16" alt="Logo" />
+          <div className="flex space-x-6 items-center">
+            <Link to="/company-waste-prefer">Dashboard</Link>
+            <Link to="/company/historylogs">Historylogs</Link>
               <UserProfileDropdowncom />
-            </div>
           </div>
         </nav>
       </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-6 py-8 max-w-7xl">
-        {/* Title Section */}
+      <main className="container mx-auto px-6 py-8">
+        {/* Title and Description */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Route Map</h1>
-          <p className="text-gray-600">View and manage your waste collection route.</p>
+          <h1 className="text-3xl font-bold text-[#3a5f46] mb-2 flex items-center gap-2">
+            <span>Route Map</span>
+            <span className="inline-block bg-[#e6f4ea] text-[#3a5f46] px-2 py-1 rounded text-xs font-semibold">Company</span>
+          </h1>
+          <p className="text-gray-600 mb-4">View, manage, and complete your waste collection route. Use the map and controls to optimize your workflow.</p>
         </div>
 
-        {/* Map Section */}
-        <div className="bg-white rounded-2xl shadow-sm border overflow-hidden mb-8">
-          <div className="relative">
-            {/* Search Bar */}
-            <div className="absolute top-6 left-6 z-10 w-80">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Search locations..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+        {/* Map Card */}
+        <div className="relative bg-white rounded-2xl shadow-xl border border-[#e6f4ea] overflow-hidden mb-10">
+          {/* Map Control Buttons */}
+          <div className="absolute top-6 left-6 z-10 flex flex-col space-y-3">
+            <button onClick={handleZoomIn} className="bg-[#f7faf9] p-3 rounded-full shadow hover:bg-[#e6f4ea] group transition" title="Zoom In">
+              <Plus className="text-[#3a5f46] w-5 h-5 group-hover:scale-110 transition" />
+            </button>
+            <button onClick={handleZoomOut} className="bg-[#f7faf9] p-3 rounded-full shadow hover:bg-[#e6f4ea] group transition" title="Zoom Out">
+              <Minus className="text-[#3a5f46] w-5 h-5 group-hover:scale-110 transition" />
+            </button>
+            <button onClick={handleLocationCenter} className="bg-[#f7faf9] p-3 rounded-full shadow hover:bg-[#e6f4ea] group transition" title="Center">
+              <Navigation className="text-[#3a5f46] w-5 h-5 group-hover:scale-110 transition" />
+            </button>
+          </div>
+          <button
+            onClick={handleLocateMe}
+            className="absolute top-6 right-6 z-10 bg-[#3a5f46] px-4 py-2 rounded shadow hover:bg-[#2e4d3a] flex items-center space-x-2 text-white font-semibold transition"
+          >
+            <span className="text-lg">📍</span>
+            <span className="text-sm font-medium">Locate Me</span>
+          </button>
+
+          {isLoading && (
+            <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-20">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3a5f46] mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading map...</p>
               </div>
             </div>
+          )}
 
-            {/* Map Controls */}
-            <div className="absolute top-6 right-6 z-10 flex flex-col space-y-2">
-              <button
-                onClick={handleZoomIn}
-                className="w-10 h-10 bg-white border border-gray-200 rounded-lg shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
-              >
-                <Plus className="w-5 h-5 text-gray-600" />
-              </button>
-              <button
-                onClick={handleZoomOut}
-                className="w-10 h-10 bg-white border border-gray-200 rounded-lg shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
-              >
-                <Minus className="w-5 h-5 text-gray-600" />
-              </button>
-              <button
-                onClick={handleLocationCenter}
-                className="w-10 h-10 bg-white border border-gray-200 rounded-lg shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
-              >
-                <Navigation className="w-5 h-5 text-gray-600" />
-              </button>
-            </div>
-
-            {/* Map Display */}
-            <div
-              className="w-full h-96 bg-gradient-to-br from-teal-500 to-teal-700 relative"
-              style={{
-                backgroundImage: `
-                  linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px),
-                  linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)
-                `,
-                backgroundSize: "20px 20px",
+          <LoadScript 
+            googleMapsApiKey={GOOGLE_MAPS_API_KEY}
+            onError={onError}
+            libraries={GOOGLE_MAPS_LIBRARIES}
+          >
+            <GoogleMap
+              mapContainerStyle={mapContainerStyle}
+              center={center}
+              zoom={5}
+              onLoad={onLoad}
+              mapId={GOOGLE_MAPS_MAP_ID}
+              options={{
+                mapTypeId: 'roadmap',
+                streetViewControl: true,
+                fullscreenControl: true,
+                zoomControl: false
               }}
             >
-              {/* Street Grid Overlay */}
-              <div className="absolute inset-0 opacity-40">
-                <svg className="w-full h-full" viewBox="0 0 400 300">
-                  {/* Horizontal streets */}
-                  {[...Array(15)].map((_, i) => (
-                    <line key={`h-${i}`} x1="0" y1={i * 20} x2="400" y2={i * 20} stroke="white" strokeWidth="0.8" />
-                  ))}
-                  {/* Vertical streets */}
-                  {[...Array(20)].map((_, i) => (
-                    <line key={`v-${i}`} x1={i * 20} y1="0" x2={i * 20} y2="300" stroke="white" strokeWidth="0.8" />
-                  ))}
-                  {/* Main roads */}
-                  <line x1="0" y1="150" x2="400" y2="150" stroke="white" strokeWidth="2.5" />
-                  <line x1="200" y1="0" x2="200" y2="300" stroke="white" strokeWidth="2.5" />
-                  {/* Diagonal streets */}
-                  <line x1="50" y1="0" x2="350" y2="300" stroke="white" strokeWidth="1.5" opacity="0.7" />
-                </svg>
-              </div>
-
-              {/* Route markers */}
-              {filteredHouseholds.map((household, index) => (
-                <div
-                  key={household.id}
-                  className="absolute"
-                  style={{
-                    left: `${20 + index * 15}%`,
-                    top: `${30 + (index % 3) * 20}%`,
-                  }}
-                >
-                  <div
-                    className={`w-6 h-6 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-xs font-bold text-white ${
-                      household.collected ? "bg-green-500" : "bg-red-500"
-                    }`}
-                  >
-                    {household.id}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+              {optimizedLocations.length > 1 && (
+                <Polyline
+                  path={optimizedLocations}
+                  geodesic={true}
+                  strokeColor="#4285F4"
+                  strokeOpacity={0.8}
+                  strokeWeight={4}
+                />
+              )}
+            </GoogleMap>
+          </LoadScript>
         </div>
 
-        {/* Household Details Table */}
-        <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">Household Details</h2>
+        {/* Household Details Card */}
+        <div className="bg-white border rounded-2xl shadow-xl">
+          <div className="p-6 border-b flex items-center justify-between">
+            <h2 className="text-xl font-bold text-[#3a5f46] flex items-center gap-2">
+              <span>Household Details</span>
+              <span className="inline-block bg-[#e6f4ea] text-[#3a5f46] px-2 py-1 rounded text-xs font-semibold">Route</span>
+            </h2>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Progress:</span>
+              <div className="w-40 h-3 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-3 rounded-full bg-[#3a5f46] transition-all"
+                  style={{ width: `${(collectedCount / totalCount) * 100}%` }}
+                ></div>
+              </div>
+              <span className="text-sm text-gray-700 font-semibold">{collectedCount}/{totalCount}</span>
+            </div>
           </div>
-
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-[#f7faf9] text-xs font-medium text-[#3a5f46] uppercase tracking-wider">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Address
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Contact
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Notes
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Collected
-                  </th>
+                  <th className="px-6 py-3 text-left">#</th>
+                  <th className="px-6 py-3 text-left">Address</th>
+                  <th className="px-6 py-3 text-left">Contact</th>
+                  <th className="px-6 py-3 text-left">Notes</th>
+                  <th className="px-6 py-3 text-left">Collected</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredHouseholds.map((household) => (
-                  <tr key={household.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{household.id}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{household.address}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{household.contact}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{household.notes}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+              <tbody className="bg-white divide-y divide-gray-100">
+                {filteredHouseholds.map((h, idx) => (
+                  <tr key={h.id} className={idx % 2 === 0 ? "bg-[#f7faf9]" : "bg-white"}>
+                    <td className="px-6 py-4 font-semibold text-gray-700">{h.id}</td>
+                    <td className="px-6 py-4">{h.address}</td>
+                    <td className="px-6 py-4">{h.contact}</td>
+                    <td className="px-6 py-4">{h.notes}</td>
+                    <td className="px-6 py-4">
                       <button
-                        onClick={() => toggleCollected(household.id)}
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                          household.collected
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800 hover:bg-red-200"
-                        } transition-colors`}
+                        onClick={() => toggleCollected(h.id)}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 transition-colors shadow-sm ${
+                          h.collected
+                            ? "bg-green-100 text-green-800 border border-green-300"
+                            : "bg-red-100 text-red-800 border border-red-300 hover:bg-red-200"
+                        }`}
                       >
-                        {household.collected ? "Collected" : "Not Collected"}
+                        {h.collected ? (
+                          <span className="inline-flex items-center"><Check className="w-4 h-4 mr-1" />Collected</span>
+                        ) : (
+                          <span className="inline-flex items-center"><span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>Not Collected</span>
+                        )}
                       </button>
                     </td>
                   </tr>
@@ -258,22 +421,21 @@ const RouteMap = () => {
               </tbody>
             </table>
           </div>
-
-          {/* Complete Route Button */}
-          <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
-            <div className="text-sm text-gray-600">
-              Progress: {collectedCount} of {totalCount} households collected
+          <div className="p-6 bg-[#f7faf9] flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="text-sm text-gray-700 font-medium flex items-center gap-2">
+              <span>Route Completion:</span>
+              <span className="font-bold text-[#3a5f46]">{collectedCount} of {totalCount} households collected</span>
             </div>
             <button
-              onClick={handleCompleteRoute}
+              onClick={() => alert("Route completed!")}
               disabled={collectedCount !== totalCount}
-              className={`inline-flex items-center px-6 py-3 rounded-lg font-semibold transition-colors ${
-                collectedCount === totalCount
-                  ? "bg-blue-500 hover:bg-blue-600 text-white"
-                  : "bg-blue-100 text-blue-400 cursor-not-allowed"
-              }`}
+              className={`px-8 py-3 rounded-full font-bold text-lg flex items-center gap-2 shadow transition-colors duration-200
+                ${collectedCount === totalCount
+                  ? "bg-[#3a5f46] text-white hover:bg-[#2e4d3a]"
+                  : "bg-gray-200 text-gray-400 cursor-not-allowed"}
+              `}
             >
-              <Check className="w-4 h-4 mr-2" />
+              <Check className="inline w-6 h-6" />
               Complete Route
             </button>
           </div>
