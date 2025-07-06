@@ -87,7 +87,7 @@ const UserProfileDropdowncom = () => {
           <img src={user?.profileImage || "https://randomuser.me/api/portraits/men/44.jpg"} alt="User" className="w-16 h-16 rounded-full object-cover mb-3" />
           <div className="font-semibold text-gray-900 text-lg mb-1">{user?.name || "Company Name"}</div>
           <div className="text-sm text-gray-500 mb-4">{user?.email || "company@email.com"}</div>
-          <button onClick={() => setShowEditModal(true)} className="w-full text-center px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition mb-2">Edit Profile</button>
+          <button onClick={() => setShowEditModal(true)} className="w-full text-center px-4 py-2 bg-[#3a5f46] text-white rounded hover:bg-[#2e4d3a] transition mb-2">Edit Profile</button>
           <button onClick={logout} className="w-full text-center px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition">Logout</button>
         </div>
       )}
@@ -148,7 +148,7 @@ const UserProfileDropdowncom = () => {
               </div>
               {editError && <div className="text-red-600 text-sm text-center">{editError}</div>}
               {editSuccess && <div className="text-green-600 text-sm text-center">{editSuccess}</div>}
-              <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">Save Changes</button>
+              <button type="submit" className="w-full bg-[#3a5f46] hover:bg-[#2e4d3a] text-white font-semibold py-3 rounded-lg transition">Save Changes</button>
             </form>
           </div>
         </div>

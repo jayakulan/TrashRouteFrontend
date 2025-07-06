@@ -168,7 +168,15 @@ function WhyChooseUsSlider() {
 
   return (
     <section className="max-w-7xl mx-auto mt-16 px-4">
-      <h2 className="text-lg font-bold mb-6 text-[#2e4d3a]">Why Choose Us</h2>
+      <div className="text-center mb-12">
+        <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#3a5f46] mb-4 animate-fade-in-up">
+          Why Choose Us
+        </h2>
+        <div className="w-24 h-1 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] mx-auto rounded-full animate-pulse"></div>
+        <p className="text-gray-600 text-lg mt-4 max-w-2xl mx-auto animate-fade-in-up animation-delay-200">
+          Discover what makes TrashRoute the leading choice for waste management
+        </p>
+      </div>
       <div
         ref={sliderRef}
         className="flex overflow-x-hidden relative"
@@ -229,6 +237,31 @@ function LandingPage() {
   const [showContactModal, setShowContactModal] = useState(false)
   const navigate = useNavigate()
 
+  // Add custom animations
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .animate-fade-in-up {
+        animation: fadeInUp 0.8s ease-out forwards;
+      }
+      .animation-delay-200 {
+        animation-delay: 0.2s;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
+  }, []);
+
   // About Us intersection observer for slide-in effect
   const aboutUsRef = useRef(null);
   const aboutUsImgRef = useRef(null);
@@ -269,45 +302,71 @@ function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="flex justify-center mt-10">
-        <div className="w-full max-w-4xl rounded-2xl overflow-hidden relative" style={{background:'#cfe3d6'}}>
-          <div className="flex justify-center w-full">
-            <video
-              src="/homevedio.mp4"
-              className="w-full max-w-5xl h-80 object-cover object-center opacity-85"
-              autoPlay
-              loop
-              muted
-              playsInline
-            >
-              Your browser does not support the video tag.
-            </video>
-          </div>
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-            <h1 className="text-[#2e4d3a] text-3xl md:text-5xl font-extrabold drop-shadow-lg">Revolutionizing Waste Management</h1>
-            <p className="text-black text-base md:text-lg mt-2 mb-6 drop-shadow">Connecting households with responsible waste processing companies for a cleaner, greener future.</p>
-            <div className="flex gap-4">
+      {/* Hero Section - Video right after header */}
+      <section className="relative w-full overflow-hidden bg-[#f7f9fb]" style={{ height: 'calc(90vh - 64px)' }}>
+        <div className="max-w-7xl mx-auto px-4 h-full relative bg-[#f7f9fb]">
+          <video
+            src="/homevedio.mp4"
+            className="w-full h-full object-cover object-center z-0"
+            autoPlay
+            loop
+            muted
+            playsInline
+            onError={(e) => console.error('Video error:', e)}
+            onLoadStart={() => console.log('Video loading started')}
+            onCanPlay={() => console.log('Video can play')}
+          >
+            Your browser does not support the video tag.
+          </video>
+        </div>
+        
+        {/* Overlay for better text readability */}
+        <div className="absolute inset-0 bg-[#f7f9fb]/40 z-10"></div>
+        
+        {/* Content overlay */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 z-10">
+          <div className="max-w-4xl mx-auto">
+            <p className="text-[#3a5f46] text-xl md:text-2xl lg:text-3xl mb-8 font-bold leading-relaxed tracking-wide">
+              Connecting households with responsible waste processing companies for a cleaner, greener future.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => { setUserType('customer'); navigate('/login'); }}
-                className={`px-6 py-2 rounded-full font-semibold text-white ${userType==='customer' ? 'bg-blue-600' : 'bg-white text-gray-800'} shadow transition`}
+                className="px-8 py-3 rounded-full font-bold text-base bg-[#3a5f46] text-white shadow-lg hover:bg-[#2e4d3a] transition-all duration-300 transform hover:scale-105 border-2 border-[#3a5f46] hover:border-[#2e4d3a] hover:shadow-xl"
               >
                 Sign In
               </button>
               <button
                 onClick={() => { setUserType('company'); navigate('/signup'); }}
-                className="px-6 py-2 rounded-full font-semibold text-white bg-blue-600 shadow transition"
+                className="px-8 py-3 rounded-full font-bold text-base bg-transparent text-[#3a5f46] shadow-lg hover:bg-[#3a5f46] hover:text-white transition-all duration-300 transform hover:scale-105 border-2 border-[#3a5f46] hover:shadow-xl"
               >
                 Sign up
               </button>
             </div>
           </div>
         </div>
+        
+        {/* Headline positioned within the video */}
+        <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-10">
+          <h1 className="text-[#3a5f46] text-4xl md:text-6xl lg:text-7xl font-extrabold drop-shadow-2xl text-center px-4">
+            Revolutionizing Waste Management
+          </h1>
+        </div>
+        
+       
       </section>
 
       {/* How It Works */}
       <section className="max-w-7xl mx-auto mt-16 px-4">
-        <h2 className="text-xl font-bold mb-6">How It Works</h2>
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#3a5f46] mb-4 animate-fade-in-up">
+            How It Works
+          </h2>
+          <div className="w-24 h-1 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] mx-auto rounded-full animate-pulse"></div>
+          <p className="text-gray-600 text-lg mt-4 max-w-2xl mx-auto animate-fade-in-up animation-delay-200">
+            Discover our innovative waste management process in four simple steps
+          </p>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
           {/* Feature 1: Notify Trash Availability */}
           <div className="group bg-white rounded-xl p-0 flex flex-col items-center shadow transition-transform duration-300 hover:scale-105 hover:shadow-2xl overflow-hidden hover:bg-[#3a5f46]" style={{ minHeight: '270px', height: '270px' }}>
@@ -436,7 +495,15 @@ function LandingPage() {
 
       {/* Who Can Use TrashRoute? */}
       <section className="max-w-7xl mx-auto mt-16 px-4">
-        <h2 className="text-xl font-extrabold mb-8 text-center text-[#2e4d3a] tracking-wide">Who Can Use TrashRoute?</h2>
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#3a5f46] mb-4 animate-fade-in-up">
+            Who Can Use TrashRoute?
+          </h2>
+          <div className="w-24 h-1 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] mx-auto rounded-full animate-pulse"></div>
+          <p className="text-gray-600 text-lg mt-4 max-w-2xl mx-auto animate-fade-in-up animation-delay-200">
+            Our platform serves three key user groups for comprehensive waste management
+          </p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Local People */}
           <div className="flex flex-col items-center bg-white/70 backdrop-blur-md rounded-3xl p-8 shadow-2xl border border-blue-100 hover:shadow-blue-200 hover:-translate-y-2 transition-all duration-300" style={{background: 'linear-gradient(135deg, #e0e7ff 60%, #f0fdfa 100%)'}}>
@@ -461,7 +528,15 @@ function LandingPage() {
 
       {/* About Us */}
       <section id="about" ref={aboutUsRef} className="mt-16">
-        <h2 className="text-lg font-bold mb-2 max-w-7xl mx-auto px-4">About Us</h2>
+        <div className="text-center mb-12 max-w-7xl mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#3a5f46] mb-4 animate-fade-in-up">
+            About Us
+          </h2>
+          <div className="w-24 h-1 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] mx-auto rounded-full animate-pulse"></div>
+          <p className="text-gray-600 text-lg mt-4 max-w-2xl mx-auto animate-fade-in-up animation-delay-200">
+            Learn about our mission to revolutionize waste management
+          </p>
+        </div>
         <div className="relative w-full max-w-7xl mx-auto mb-8">
           <img ref={aboutUsImgRef} src="/public/images/TrashCollecting1.jpg" alt="Trash Collecting" className="w-full rounded-2xl shadow-lg" />
           <div className={`absolute left-0 bottom-0 m-6 transition-transform duration-700 ${aboutUsVisible ? 'translate-x-0 opacity-100' : '-translate-x-20 opacity-0'}`}>
@@ -481,7 +556,15 @@ function LandingPage() {
 
       {/* Our Features */}
       <section className="max-w-7xl mx-auto mt-16 px-4">
-        <h2 className="text-lg font-bold mb-6 text-[#2e4d3a]">Our Features</h2>
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#3a5f46] mb-4 animate-fade-in-up">
+            Our Features
+          </h2>
+          <div className="w-24 h-1 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] mx-auto rounded-full animate-pulse"></div>
+          <p className="text-gray-600 text-lg mt-4 max-w-2xl mx-auto animate-fade-in-up animation-delay-200">
+            Explore the powerful tools that make waste management efficient and effective
+          </p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Feature 1 */}
           <div className="flex flex-col items-center bg-gradient-to-br from-[#e6f4ea] to-[#cfe3d6] rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-shadow duration-300 hover:scale-105 group cursor-pointer border border-[#d0e9d6]">

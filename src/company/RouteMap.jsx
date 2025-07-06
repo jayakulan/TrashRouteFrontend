@@ -6,7 +6,7 @@ import { Plus, Minus, Navigation, Check } from "lucide-react"
 import { GoogleMap, LoadScript, Polyline } from "@react-google-maps/api"
 import UserProfileDropdowncom from "./UserProfileDropdowncom"
 
-const GOOGLE_MAPS_API_KEY = "AIzaSyA5iEKgAwrJWVkCMAsD7_IilJ0YSVf_VGk"
+const GOOGLE_MAPS_API_KEY = "AIzaSyAPU0AGbc-aFDts3rgDelAThInlph_ZBYI"
 const GOOGLE_MAPS_LIBRARIES = ["marker"]
 const GOOGLE_MAPS_MAP_ID = "DEMO_MAP_ID" // You'll need to create a Map ID in Google Cloud Console
 
@@ -269,7 +269,7 @@ const RouteMap = () => {
             </div>
             <button 
               onClick={() => window.location.reload()} 
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              className="bg-[#3a5f46] text-white px-4 py-2 rounded hover:bg-[#2e4d3a]"
             >
               Retry
             </button>
@@ -287,44 +287,52 @@ const RouteMap = () => {
           <div className="flex space-x-6 items-center">
             <Link to="/company-waste-prefer">Dashboard</Link>
             <Link to="/company/historylogs">Historylogs</Link>
-            <UserProfileDropdowncom />
+              <UserProfileDropdowncom />
           </div>
         </nav>
       </header>
 
       <main className="container mx-auto px-6 py-8">
-        <h1 className="text-3xl font-bold mb-2">Route Map</h1>
-        <p className="text-gray-600 mb-6">View and manage your waste collection route.</p>
+        {/* Title and Description */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-[#3a5f46] mb-2 flex items-center gap-2">
+            <span>Route Map</span>
+            <span className="inline-block bg-[#e6f4ea] text-[#3a5f46] px-2 py-1 rounded text-xs font-semibold">Company</span>
+          </h1>
+          <p className="text-gray-600 mb-4">View, manage, and complete your waste collection route. Use the map and controls to optimize your workflow.</p>
+        </div>
 
-        <div className="bg-white border rounded-2xl shadow-sm relative mb-8">
-          <div className="absolute top-4 left-4 z-10 flex flex-col space-y-2">
-            <button onClick={handleZoomIn} className="bg-white p-2 rounded shadow hover:bg-gray-50">
-              <Plus className="w-5 h-5 text-gray-700" />
+        {/* Map Card */}
+        <div className="relative bg-white rounded-2xl shadow-xl border border-[#e6f4ea] overflow-hidden mb-10">
+          {/* Map Control Buttons */}
+          <div className="absolute top-6 left-6 z-10 flex flex-col space-y-3">
+            <button onClick={handleZoomIn} className="bg-[#f7faf9] p-3 rounded-full shadow hover:bg-[#e6f4ea] group transition" title="Zoom In">
+              <Plus className="text-[#3a5f46] w-5 h-5 group-hover:scale-110 transition" />
             </button>
-            <button onClick={handleZoomOut} className="bg-white p-2 rounded shadow hover:bg-gray-50">
-              <Minus className="w-5 h-5 text-gray-700" />
+            <button onClick={handleZoomOut} className="bg-[#f7faf9] p-3 rounded-full shadow hover:bg-[#e6f4ea] group transition" title="Zoom Out">
+              <Minus className="text-[#3a5f46] w-5 h-5 group-hover:scale-110 transition" />
             </button>
-            <button onClick={handleLocationCenter} className="bg-white p-2 rounded shadow hover:bg-gray-50">
-              <Navigation className="w-5 h-5 text-gray-700" />
+            <button onClick={handleLocationCenter} className="bg-[#f7faf9] p-3 rounded-full shadow hover:bg-[#e6f4ea] group transition" title="Center">
+              <Navigation className="text-[#3a5f46] w-5 h-5 group-hover:scale-110 transition" />
             </button>
           </div>
           <button
             onClick={handleLocateMe}
-            className="absolute top-4 right-4 z-10 bg-white px-4 py-2 rounded shadow hover:bg-gray-50 flex items-center space-x-2"
+            className="absolute top-6 right-6 z-10 bg-[#3a5f46] px-4 py-2 rounded shadow hover:bg-[#2e4d3a] flex items-center space-x-2 text-white font-semibold transition"
           >
             <span className="text-lg">📍</span>
-            <span className="text-sm font-medium text-gray-700">Locate Me</span>
+            <span className="text-sm font-medium">Locate Me</span>
           </button>
-          
+
           {isLoading && (
             <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-20">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3a5f46] mx-auto mb-4"></div>
                 <p className="text-gray-600">Loading map...</p>
               </div>
             </div>
           )}
-          
+
           <LoadScript 
             googleMapsApiKey={GOOGLE_MAPS_API_KEY}
             onError={onError}
@@ -356,13 +364,27 @@ const RouteMap = () => {
           </LoadScript>
         </div>
 
-        <div className="bg-white border rounded-2xl shadow-sm">
-          <div className="p-4 border-b">
-            <h2 className="text-xl font-semibold">Household Details</h2>
+        {/* Household Details Card */}
+        <div className="bg-white border rounded-2xl shadow-xl">
+          <div className="p-6 border-b flex items-center justify-between">
+            <h2 className="text-xl font-bold text-[#3a5f46] flex items-center gap-2">
+              <span>Household Details</span>
+              <span className="inline-block bg-[#e6f4ea] text-[#3a5f46] px-2 py-1 rounded text-xs font-semibold">Route</span>
+            </h2>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Progress:</span>
+              <div className="w-40 h-3 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-3 rounded-full bg-[#3a5f46] transition-all"
+                  style={{ width: `${(collectedCount / totalCount) * 100}%` }}
+                ></div>
+              </div>
+              <span className="text-sm text-gray-700 font-semibold">{collectedCount}/{totalCount}</span>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <thead className="bg-[#f7faf9] text-xs font-medium text-[#3a5f46] uppercase tracking-wider">
                 <tr>
                   <th className="px-6 py-3 text-left">#</th>
                   <th className="px-6 py-3 text-left">Address</th>
@@ -371,21 +393,27 @@ const RouteMap = () => {
                   <th className="px-6 py-3 text-left">Collected</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredHouseholds.map((h) => (
-                  <tr key={h.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">{h.id}</td>
+              <tbody className="bg-white divide-y divide-gray-100">
+                {filteredHouseholds.map((h, idx) => (
+                  <tr key={h.id} className={idx % 2 === 0 ? "bg-[#f7faf9]" : "bg-white"}>
+                    <td className="px-6 py-4 font-semibold text-gray-700">{h.id}</td>
                     <td className="px-6 py-4">{h.address}</td>
                     <td className="px-6 py-4">{h.contact}</td>
                     <td className="px-6 py-4">{h.notes}</td>
                     <td className="px-6 py-4">
                       <button
                         onClick={() => toggleCollected(h.id)}
-                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                          h.collected ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800 hover:bg-red-200"
+                        className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 transition-colors shadow-sm ${
+                          h.collected
+                            ? "bg-green-100 text-green-800 border border-green-300"
+                            : "bg-red-100 text-red-800 border border-red-300 hover:bg-red-200"
                         }`}
                       >
-                        {h.collected ? "Collected" : "Not Collected"}
+                        {h.collected ? (
+                          <span className="inline-flex items-center"><Check className="w-4 h-4 mr-1" />Collected</span>
+                        ) : (
+                          <span className="inline-flex items-center"><span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>Not Collected</span>
+                        )}
                       </button>
                     </td>
                   </tr>
@@ -393,20 +421,21 @@ const RouteMap = () => {
               </tbody>
             </table>
           </div>
-          <div className="p-4 bg-gray-50 flex justify-between items-center">
-            <div className="text-sm text-gray-600">
-              Progress: {collectedCount} of {totalCount} households collected
+          <div className="p-6 bg-[#f7faf9] flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="text-sm text-gray-700 font-medium flex items-center gap-2">
+              <span>Route Completion:</span>
+              <span className="font-bold text-[#3a5f46]">{collectedCount} of {totalCount} households collected</span>
             </div>
             <button
               onClick={() => alert("Route completed!")}
               disabled={collectedCount !== totalCount}
-              className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
-                collectedCount === totalCount
-                  ? "bg-blue-500 text-white hover:bg-blue-600"
-                  : "bg-blue-100 text-blue-400 cursor-not-allowed"
-              }`}
+              className={`px-8 py-3 rounded-full font-bold text-lg flex items-center gap-2 shadow transition-colors duration-200
+                ${collectedCount === totalCount
+                  ? "bg-[#3a5f46] text-white hover:bg-[#2e4d3a]"
+                  : "bg-gray-200 text-gray-400 cursor-not-allowed"}
+              `}
             >
-              <Check className="inline mr-2" />
+              <Check className="inline w-6 h-6" />
               Complete Route
             </button>
           </div>
