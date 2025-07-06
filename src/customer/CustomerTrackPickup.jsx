@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Bell } from "lucide-react";
 import UserProfileDropdown from "./UserProfileDropdown";
+import CustomerNotification from "./CustomerNotification";
 
 const wasteTypes = [
   { key: "plastics", label: "Plastics" },
@@ -95,7 +96,7 @@ export default function CustomerTrackPickup() {
             <Link to="/customer/trash-type" className="text-gray-700 hover:text-gray-900 font-medium">Request Pickup</Link>
             <Link to="/customer/track-pickup" className="text-gray-700 hover:text-gray-900 font-medium">Track Pickup</Link>
             <Link to="/customer/history-log" className="text-gray-700 hover:text-gray-900 font-medium">History Log</Link>
-            <Link to="/customer/notification-log" className="text-gray-700 hover:text-gray-900 font-medium" aria-label="Notification Log"><Bell className="w-5 h-5" /></Link>
+            <CustomerNotification onViewDetails={() => navigate('/customer/track-pickup')} />
             <UserProfileDropdown />
           </div>
         </nav>

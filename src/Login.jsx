@@ -144,7 +144,22 @@ const Login = () => {
               <Link to="/services" className="text-gray-700 hover:text-gray-900 font-medium">
                 Services
               </Link>
-              <Link to="/about" className="text-gray-700 hover:text-gray-900 font-medium">
+              <Link to="/" className="text-gray-700 hover:text-gray-900 font-medium" onClick={(e) => {
+                e.preventDefault();
+                navigate('/');
+                // Wait for navigation to complete, then scroll to about section
+                setTimeout(() => {
+                  const aboutSection = document.getElementById('about');
+                  if (aboutSection) {
+                    const navHeight = 64; // Height of the fixed navigation bar
+                    const aboutPosition = aboutSection.offsetTop - navHeight;
+                    window.scrollTo({
+                      top: aboutPosition,
+                      behavior: 'smooth'
+                    });
+                  }
+                }, 100);
+              }}>
                 About Us
               </Link>
               <Link to="/contact" className="text-gray-700 hover:text-gray-900 font-medium">

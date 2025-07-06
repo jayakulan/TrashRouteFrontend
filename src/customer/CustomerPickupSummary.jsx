@@ -3,6 +3,7 @@ import { Recycle, Bell } from "lucide-react"
 import { useState } from "react"
 import UserProfileDropdown from "./UserProfileDropdown"
 import binIcon from '/images/bin.png';
+import CustomerNotification from "./CustomerNotification";
 
 const ConfirmPickup = () => {
   const [confirmed, setConfirmed] = useState(false)
@@ -37,7 +38,7 @@ const ConfirmPickup = () => {
             <Link to="/customer/trash-type" className="text-gray-700 hover:text-gray-900 font-medium">Request Pickup</Link>
             <Link to="/customer/track-pickup" className="text-gray-700 hover:text-gray-900 font-medium">Track Pickup</Link>
             <Link to="/customer/history-log" className="text-gray-700 hover:text-gray-900 font-medium">History Log</Link>
-            <Link to="/customer/notification-log" className="text-gray-700 hover:text-gray-900 font-medium" aria-label="Notification Log"><Bell className="w-5 h-5" /></Link>
+            <CustomerNotification onViewDetails={() => navigate('/customer/track-pickup')} />
             <UserProfileDropdown />
           </div>
         </nav>

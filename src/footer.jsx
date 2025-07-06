@@ -1,6 +1,23 @@
-import React from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import PrivacyPolicy from "./PrivacyPolicy";
 
-const Footer = () => (
+const Footer = () => {
+  const navigate = useNavigate();
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+
+  const handleContactClick = (e) => {
+    e.preventDefault();
+    // Navigate to landing page and trigger contact modal
+    navigate('/', { state: { showContactModal: true } });
+  };
+
+  const handlePrivacyPolicyClick = (e) => {
+    e.preventDefault();
+    setShowPrivacyPolicy(true);
+  };
+
+  return (
   <footer className="mt-20 bg-[#3a5f46] py-10 text-white border-t">
     <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start gap-8 px-4">
       {/* Brand/About */}
@@ -13,8 +30,8 @@ const Footer = () => (
         <div className="font-bold text-lg mb-2">Quick Links</div>
         <ul className="space-y-1 text-sm">
           <li><a href="#about" className="hover:underline text-white">About Us</a></li>
-          <li><a href="#contact" className="hover:underline text-white">Contact</a></li>
-          <li><a href="#" className="hover:underline text-white">Privacy Policy</a></li>
+          <li><a href="#contact" className="hover:underline text-white" onClick={handleContactClick}>Contact</a></li>
+          <li><a href="#" className="hover:underline text-white" onClick={handlePrivacyPolicyClick}>Privacy Policy</a></li>
           <li><a href="#" className="hover:underline text-white">Terms of Service</a></li>
         </ul>
       </div>
@@ -49,7 +66,14 @@ const Footer = () => (
     <div className="text-center text-xs text-gray-300 mt-8">
       © 2025 TrashRoute. All rights reserved.
     </div>
+    
+    {/* Privacy Policy Popup */}
+    <PrivacyPolicy 
+      isOpen={showPrivacyPolicy} 
+      onClose={() => setShowPrivacyPolicy(false)} 
+    />
   </footer>
-);
+  );
+};
 
 export default Footer;
