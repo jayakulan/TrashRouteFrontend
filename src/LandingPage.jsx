@@ -270,7 +270,16 @@ function LandingPage() {
                 behavior: 'smooth'
               });
             }}>About</a>
-            <a href="#services" className="hover:text-green-600">Services</a>
+            <a href="#services" className="hover:text-green-600" onClick={(e) => {
+              e.preventDefault();
+              const servicesSection = document.getElementById('services');
+              const navHeight = 64; // Height of the fixed navigation bar
+              const servicesPosition = servicesSection.offsetTop - navHeight;
+              window.scrollTo({
+                top: servicesPosition,
+                behavior: 'smooth'
+              });
+            }}>Services</a>
             <button type="button" onClick={() => setShowContactModal(true)} className="hover:text-green-600 focus:outline-none bg-transparent">Contact</button>
           </div>
         </div>
@@ -528,22 +537,10 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Why Choose Us */}
-      <WhyChooseUsSlider />
 
       {/* Our Features */}
       <section className="max-w-7xl mx-auto mt-16 px-4">
-
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#3a5f46] mb-4 animate-fade-in-up">
-            Our Features
-          </h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] mx-auto rounded-full animate-pulse"></div>
-          <p className="text-gray-600 text-lg mt-4 max-w-2xl mx-auto animate-fade-in-up animation-delay-200">
-            Explore the powerful tools that make waste management efficient and effective
-          </p>
-        </div>
-
+        <h2 className="text-lg font-bold mb-6 text-[#2e4d3a] text-center">Our Features</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Feature 1 */}
           <div className="flex flex-col items-center bg-gradient-to-br from-[#e6f4ea] to-[#cfe3d6] rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-shadow duration-300 hover:scale-105 group cursor-pointer border border-[#d0e9d6]">
@@ -565,6 +562,9 @@ function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Why Choose Us */}
+      <WhyChooseUsSlider />
 
       <ScrollToTopButton />
 

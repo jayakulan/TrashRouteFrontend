@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PrivacyPolicy from "./PrivacyPolicy";
+import TermsOfService from "./TermsOfService";
 
 const Footer = () => {
   const navigate = useNavigate();
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [showTermsOfService, setShowTermsOfService] = useState(false);
 
   const handleContactClick = (e) => {
     e.preventDefault();
@@ -15,6 +17,11 @@ const Footer = () => {
   const handlePrivacyPolicyClick = (e) => {
     e.preventDefault();
     setShowPrivacyPolicy(true);
+  };
+
+  const handleTermsOfServiceClick = (e) => {
+    e.preventDefault();
+    setShowTermsOfService(true);
   };
 
   return (
@@ -29,10 +36,19 @@ const Footer = () => {
       <div className="flex-1 mb-6 md:mb-0">
         <div className="font-bold text-lg mb-2">Quick Links</div>
         <ul className="space-y-1 text-sm">
-          <li><a href="#about" className="hover:underline text-white">About Us</a></li>
+          <li><a href="#about" className="hover:text-green-600" onClick={(e) => {
+              e.preventDefault();
+              const aboutSection = document.getElementById('about');
+              const navHeight = 64; // Height of the fixed navigation bar
+              const aboutPosition = aboutSection.offsetTop - navHeight;
+              window.scrollTo({
+                top: aboutPosition,
+                behavior: 'smooth'
+              });
+            }}>About</a></li>
           <li><a href="#contact" className="hover:underline text-white" onClick={handleContactClick}>Contact</a></li>
           <li><a href="#" className="hover:underline text-white" onClick={handlePrivacyPolicyClick}>Privacy Policy</a></li>
-          <li><a href="#" className="hover:underline text-white">Terms of Service</a></li>
+          <li><a href="#" className="hover:underline text-white" onClick={handleTermsOfServiceClick}>Terms of Service</a></li>
         </ul>
       </div>
       {/* Contact Us */}
@@ -71,6 +87,12 @@ const Footer = () => {
     <PrivacyPolicy 
       isOpen={showPrivacyPolicy} 
       onClose={() => setShowPrivacyPolicy(false)} 
+    />
+    
+    {/* Terms of Service Popup */}
+    <TermsOfService 
+      isOpen={showTermsOfService} 
+      onClose={() => setShowTermsOfService(false)} 
     />
   </footer>
   );
