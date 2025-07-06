@@ -236,7 +236,16 @@ function LandingPage() {
                 behavior: 'smooth'
               });
             }}>About</a>
-            <a href="#services" className="hover:text-green-600">Services</a>
+            <a href="#services" className="hover:text-green-600" onClick={(e) => {
+              e.preventDefault();
+              const servicesSection = document.getElementById('services');
+              const navHeight = 64; // Height of the fixed navigation bar
+              const servicesPosition = servicesSection.offsetTop - navHeight;
+              window.scrollTo({
+                top: servicesPosition,
+                behavior: 'smooth'
+              });
+            }}>Services</a>
             <button type="button" onClick={() => setShowContactModal(true)} className="hover:text-green-600 focus:outline-none bg-transparent">Contact</button>
           </div>
         </div>
@@ -449,11 +458,9 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Why Choose Us */}
-      <WhyChooseUsSlider />
 
       {/* Our Features */}
-      <section className="max-w-7xl mx-auto mt-16 px-4">
+      <section id="services" className="max-w-7xl mx-auto mt-16 px-4">
         <h2 className="text-lg font-bold mb-6 text-[#2e4d3a] text-center">Our Features</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Feature 1 */}
@@ -476,6 +483,9 @@ function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Why Choose Us */}
+      <WhyChooseUsSlider />
 
       <ScrollToTopButton />
 

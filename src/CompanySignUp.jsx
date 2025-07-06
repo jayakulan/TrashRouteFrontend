@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Recycle } from "lucide-react"
+import ContactModal from "./ContactForm"
 
 const CompanySignUp = () => {
   const [formData, setFormData] = useState({
@@ -19,6 +20,7 @@ const CompanySignUp = () => {
   const [showOtpModal, setShowOtpModal] = useState(false)
   const [otp, setOtp] = useState("")
   const [otpError, setOtpError] = useState("")
+  const [showContactModal, setShowContactModal] = useState(false)
   const CORRECT_OTP = "123456" // Simulated correct OTP
   const navigate = useNavigate()
 
@@ -100,21 +102,53 @@ const CompanySignUp = () => {
           <div className="flex justify-between items-center">
             <Link to="/" className="flex items-center space-x-2">
               <img src="/images/logo.png" alt="Logo" className="h-16 w-34" />
-              <span className="text-xl font-bold text-gray-900">TrashRoute</span>
             </Link>
             <div className="flex items-center space-x-8">
               <Link to="/" className="text-gray-700 hover:text-gray-900 font-medium">
                 Home
               </Link>
-              <Link to="/services" className="text-gray-700 hover:text-gray-900 font-medium">
+              <Link to="/" className="text-gray-700 hover:text-gray-900 font-medium" onClick={(e) => {
+                e.preventDefault();
+                navigate('/');
+                // Wait for navigation to complete, then scroll to services section
+                setTimeout(() => {
+                  const servicesSection = document.getElementById('services');
+                  if (servicesSection) {
+                    const navHeight = 64; // Height of the fixed navigation bar
+                    const servicesPosition = servicesSection.offsetTop - navHeight;
+                    window.scrollTo({
+                      top: servicesPosition,
+                      behavior: 'smooth'
+                    });
+                  }
+                }, 100);
+              }}>
                 Services
               </Link>
-              <Link to="/about" className="text-gray-700 hover:text-gray-900 font-medium">
+              <Link to="/" className="text-gray-700 hover:text-gray-900 font-medium" onClick={(e) => {
+                e.preventDefault();
+                navigate('/');
+                // Wait for navigation to complete, then scroll to about section
+                setTimeout(() => {
+                  const aboutSection = document.getElementById('about');
+                  if (aboutSection) {
+                    const navHeight = 64; // Height of the fixed navigation bar
+                    const aboutPosition = aboutSection.offsetTop - navHeight;
+                    window.scrollTo({
+                      top: aboutPosition,
+                      behavior: 'smooth'
+                    });
+                  }
+                }, 100);
+              }}>
                 About Us
               </Link>
-              <Link to="/contact" className="text-gray-700 hover:text-gray-900 font-medium">
+              <button 
+                onClick={() => setShowContactModal(true)}
+                className="text-gray-700 hover:text-gray-900 font-medium"
+              >
                 Contact
-              </Link>
+              </button>
               <Link to="/login" className="text-gray-700 hover:text-gray-900 font-medium">
                 Login
               </Link>
@@ -310,6 +344,11 @@ const CompanySignUp = () => {
                 </form>
               </div>
             </div>
+          )}
+
+          {/* Contact Modal */}
+          {showContactModal && (
+            <ContactModal onClose={() => setShowContactModal(false)} />
           )}
         </div>
       </div>
