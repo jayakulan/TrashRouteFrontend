@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { Recycle, Search, Plus, Minus, Navigation, Bell } from "lucide-react"
 import UserProfileDropdown from "./UserProfileDropdown"
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
+import CustomerNotification from "./CustomerNotification";
 
 const PinLocation = () => {
   const [coordinates, setCoordinates] = useState({
@@ -37,7 +38,7 @@ const PinLocation = () => {
   }
 
   const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: 'AIzaSyA5iEKgAwrJWVkCMAsD7_IilJ0YSVf_VGk',
+            googleMapsApiKey: 'AIzaSyAPU0AGbc-aFDts3rgDelAThInlph_ZBYI',
   });
 
   const mapContainerStyle = {
@@ -61,10 +62,10 @@ const PinLocation = () => {
           </div>
           <div className="flex items-center space-x-8">
             <Link to="/" className="text-gray-700 hover:text-gray-900 font-medium">Home</Link>
-            <Link to="/customer/trash-type" className="text-theme-color hover:text-theme-color-dark font-medium">Request Pickup</Link>
+            <Link to="/customer/trash-type" className="text-gray-700 hover:text-gray-900 font-medium">Request Pickup</Link>
             <Link to="/customer/track-pickup" className="text-gray-700 hover:text-gray-900 font-medium">Track Pickup</Link>
             <Link to="/customer/history-log" className="text-gray-700 hover:text-gray-900 font-medium">History Log</Link>
-            <Link to="/customer/notification-log" className="text-gray-700 hover:text-gray-900 font-medium" aria-label="Notification Log"><Bell className="w-5 h-5" /></Link>
+            <CustomerNotification onViewDetails={() => navigate('/customer/track-pickup')} />
             <UserProfileDropdown />
           </div>
         </nav>

@@ -87,7 +87,7 @@ const WastePreferences = () => {
               onClick={() => toggleWasteType(wasteType.id)}
               className={`
                 relative cursor-pointer rounded-2xl overflow-hidden transition-all duration-200 hover:scale-105 hover:shadow-lg
-                ${selectedWasteType === wasteType.id ? "ring-4 ring-blue-500 ring-opacity-50" : "hover:shadow-md"}
+                ${selectedWasteType === wasteType.id ? "ring-4 ring-[#3a5f46] ring-opacity-50" : "hover:shadow-md"}
               `}
             >
               {/* Card Image/Background */}
@@ -102,7 +102,7 @@ const WastePreferences = () => {
 
                 {/* Selection Indicator */}
                 {selectedWasteType === wasteType.id && (
-                  <div className="absolute top-4 right-4 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                  <div className="absolute top-4 right-4 w-6 h-6 bg-[#3a5f46] rounded-full flex items-center justify-center">
                     <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                       <path
                         fillRule="evenodd"
@@ -132,7 +132,7 @@ const WastePreferences = () => {
               px-8 py-4 rounded-full font-semibold text-lg transition-all duration-200
               ${
                 selectedWasteType
-                  ? "bg-blue-500 hover:bg-blue-600 text-white shadow-lg hover:shadow-xl"
+                  ? "bg-[#3a5f46] hover:bg-[#2e4d3a] text-white shadow-lg hover:shadow-xl"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }
             `}
