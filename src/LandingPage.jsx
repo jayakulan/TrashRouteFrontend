@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
+import ContactModal from './ContactForm'
 
 function ScrollToTopButton() {
   const [visible, setVisible] = useState(false);
@@ -12,7 +13,7 @@ function ScrollToTopButton() {
       const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
       const percent = docHeight > 0 ? scrollTop / docHeight : 0;
       setProgress(percent);
-      setVisible(scrollTop > 100);
+      setVisible(scrollTop > 50);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -69,53 +70,6 @@ function ScrollToTopButton() {
   );
 }
 
-function ContactModal({ onClose }) {
-  // Close modal when clicking outside the content
-  const modalRef = useRef();
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (modalRef.current && !modalRef.current.contains(event.target)) {
-        onClose();
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [onClose]);
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div ref={modalRef} className="bg-white rounded-xl shadow-2xl max-w-3xl w-full mx-4 p-8 relative flex flex-col md:flex-row gap-6">
-        <button
-          className="absolute top-4 right-4 text-2xl text-gray-400 hover:text-gray-700"
-          onClick={onClose}
-          aria-label="Close"
-        >
-          &times;
-        </button>
-        {/* Left: Form */}
-        <div className="flex-1 bg-gray-50 rounded-lg p-6 flex flex-col">
-          <div className="font-semibold text-xl mb-4">Send us a Message</div>
-          <form className="flex flex-col gap-4">
-            <input type="text" placeholder="Name *" className="border rounded px-4 py-2 bg-white" required />
-            <input type="email" placeholder="Email *" className="border rounded px-4 py-2 bg-white" required />
-            <input type="text" placeholder="Subject *" className="border rounded px-4 py-2 bg-white" required />
-            <textarea placeholder="Message *" className="border rounded px-4 py-2 bg-white min-h-[80px]" required />
-            <button type="submit" className="mt-2 bg-[#3a5f46] text-white font-semibold py-2 rounded shadow hover:bg-[#2e4d3a] transition">Send Message</button>
-          </form>
-        </div>
-        {/* Right: Contact Info */}
-        <div className="flex-1 bg-gray-50 rounded-lg p-6 flex flex-col">
-          <div className="font-semibold text-xl mb-4">Contact Information</div>
-          <div className="mb-2"><span className="font-bold">Email:</span> support@trashroute.com</div>
-          <div className="mb-2"><span className="font-bold">Phone:</span> (555) 123-4567</div>
-          <div className="mb-2"><span className="font-bold">Address:</span><br />123 Green Street<br />Eco City, EC 12345</div>
-          <div className="mt-4"><span className="font-bold">Business Hours:</span><br />Monday - Friday: 9:00 AM - 6:00 PM<br />Saturday: 10:00 AM - 4:00 PM<br />Sunday: Closed</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function WhyChooseUsSlider() {
   const cards = [
     [
@@ -168,6 +122,7 @@ function WhyChooseUsSlider() {
 
   return (
     <section className="max-w-7xl mx-auto mt-16 px-4">
+
       <div className="text-center mb-12">
         <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#3a5f46] mb-4 animate-fade-in-up">
           Why Choose Us
@@ -191,7 +146,7 @@ function WhyChooseUsSlider() {
             {cardPair.map((card, cidx) => (
               <div
                 key={cidx}
-                className={`flex flex-col items-center rounded-xl p-10 m-4 shadow transition-transform duration-300 hover:scale-105 hover:shadow-[0_4px_32px_0_rgba(34,197,94,0.3)] w-full max-w-md h-72 relative ${['Eco-Friendly Impact','No Middleman Needed','Time-Saving System','Mobile Friendly'].includes(card.title) ? 'bg-cover bg-center' : 'bg-white hover:bg-gray-100'}`}
+                className={`flex flex-col items-center rounded-xl p-10 m-4 shadow transition-transform duration-300 hover:scale-105 hover:shadow-[0_4px_32px_0_#3a5f46] w-full max-w-md h-72 relative ${['Eco-Friendly Impact','No Middleman Needed','Time-Saving System','Mobile Friendly'].includes(card.title) ? 'bg-cover bg-center' : 'bg-white hover:bg-gray-100'}`}
                 style={card.title === 'Eco-Friendly Impact'
                   ? { backgroundImage: 'url(/public/images/image1.avif)' }
                   : card.title === 'No Middleman Needed'
@@ -236,6 +191,7 @@ function LandingPage() {
   const [showFeature4Info, setShowFeature4Info] = useState(false)
   const [showContactModal, setShowContactModal] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
 
   // Add custom animations
   useEffect(() => {
@@ -277,6 +233,15 @@ function LandingPage() {
     return () => observer.disconnect();
   }, []);
 
+  // Check if we should show contact modal from navigation state
+  useEffect(() => {
+    if (location.state?.showContactModal) {
+      setShowContactModal(true);
+      // Clear the state to prevent showing modal on refresh
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, navigate, location.pathname]);
+
   // Unsplash or similar royalty-free images
   const heroImg = 'https://images.unsplash.com/photo-1508873699372-7aeab60b44c9?auto=format&fit=crop&w=900&q=80' // recycling bins
   const howItWorksImgs = [
@@ -295,7 +260,16 @@ function LandingPage() {
             <img src="/public/images/logo.png" alt="Logo" className="h-16 w-34" />
           </div>
           <div className="hidden md:flex space-x-8 text-gray-700 font-medium">
-            <a href="#about" className="hover:text-green-600">About</a>
+            <a href="#about" className="hover:text-green-600" onClick={(e) => {
+              e.preventDefault();
+              const aboutSection = document.getElementById('about');
+              const navHeight = 64; // Height of the fixed navigation bar
+              const aboutPosition = aboutSection.offsetTop - navHeight;
+              window.scrollTo({
+                top: aboutPosition,
+                behavior: 'smooth'
+              });
+            }}>About</a>
             <a href="#services" className="hover:text-green-600">Services</a>
             <button type="button" onClick={() => setShowContactModal(true)} className="hover:text-green-600 focus:outline-none bg-transparent">Contact</button>
           </div>
@@ -358,6 +332,7 @@ function LandingPage() {
 
       {/* How It Works */}
       <section className="max-w-7xl mx-auto mt-16 px-4">
+
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#3a5f46] mb-4 animate-fade-in-up">
             How It Works
@@ -528,6 +503,7 @@ function LandingPage() {
 
       {/* About Us */}
       <section id="about" ref={aboutUsRef} className="mt-16">
+
         <div className="text-center mb-12 max-w-7xl mx-auto px-4">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#3a5f46] mb-4 animate-fade-in-up">
             About Us
@@ -537,8 +513,9 @@ function LandingPage() {
             Learn about our mission to revolutionize waste management
           </p>
         </div>
+
         <div className="relative w-full max-w-7xl mx-auto mb-8">
-          <img ref={aboutUsImgRef} src="/public/images/TrashCollecting1.jpg" alt="Trash Collecting" className="w-full rounded-2xl shadow-lg" />
+          <img ref={aboutUsImgRef} src="/public/images/TrashCollect.png" alt="Trash Collecting" className="w-full rounded-2xl shadow-lg" />
           <div className={`absolute left-0 bottom-0 m-6 transition-transform duration-700 ${aboutUsVisible ? 'translate-x-0 opacity-100' : '-translate-x-20 opacity-0'}`}>
             <div className="bg-white/80 rounded-2xl shadow-lg p-6 max-w-2xl text-justify">
               <p className="text-gray-700 text-base md:text-lg text-justify">
@@ -556,6 +533,7 @@ function LandingPage() {
 
       {/* Our Features */}
       <section className="max-w-7xl mx-auto mt-16 px-4">
+
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#3a5f46] mb-4 animate-fade-in-up">
             Our Features
@@ -565,6 +543,7 @@ function LandingPage() {
             Explore the powerful tools that make waste management efficient and effective
           </p>
         </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Feature 1 */}
           <div className="flex flex-col items-center bg-gradient-to-br from-[#e6f4ea] to-[#cfe3d6] rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-shadow duration-300 hover:scale-105 group cursor-pointer border border-[#d0e9d6]">
