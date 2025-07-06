@@ -72,6 +72,15 @@ function ScrollToTopButton() {
 function ContactModal({ onClose }) {
   // Close modal when clicking outside the content
   const modalRef = useRef();
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null); // 'success', 'error', or null
+
   useEffect(() => {
     function handleClickOutside(event) {
       if (modalRef.current && !modalRef.current.contains(event.target)) {
@@ -81,6 +90,48 @@ function ContactModal({ onClose }) {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [onClose]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus(null);
+
+    try {
+      const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/contactus.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setSubmitStatus('success');
+        setFormData({ name: '', email: '', subject: '', message: '' });
+        // Close modal after 2 seconds on success
+        setTimeout(() => {
+          onClose();
+        }, 2000);
+      } else {
+        setSubmitStatus('error');
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -95,12 +146,71 @@ function ContactModal({ onClose }) {
         {/* Left: Form */}
         <div className="flex-1 bg-gray-50 rounded-lg p-6 flex flex-col">
           <div className="font-semibold text-xl mb-4">Send us a Message</div>
-          <form className="flex flex-col gap-4">
-            <input type="text" placeholder="Name *" className="border rounded px-4 py-2 bg-white" required />
-            <input type="email" placeholder="Email *" className="border rounded px-4 py-2 bg-white" required />
-            <input type="text" placeholder="Subject *" className="border rounded px-4 py-2 bg-white" required />
-            <textarea placeholder="Message *" className="border rounded px-4 py-2 bg-white min-h-[80px]" required />
-            <button type="submit" className="mt-2 bg-[#3a5f46] text-white font-semibold py-2 rounded shadow hover:bg-[#2e4d3a] transition">Send Message</button>
+          
+          {/* Success/Error Messages */}
+          {submitStatus === 'success' && (
+            <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+              Your message has been sent successfully! We will get back to you soon.
+            </div>
+          )}
+          
+          {submitStatus === 'error' && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              Failed to send message. Please try again.
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <input 
+              type="text" 
+              name="name"
+              placeholder="Name *" 
+              value={formData.name}
+              onChange={handleInputChange}
+              className="border rounded px-4 py-2 bg-white" 
+              required 
+              disabled={isSubmitting}
+            />
+            <input 
+              type="email" 
+              name="email"
+              placeholder="Email *" 
+              value={formData.email}
+              onChange={handleInputChange}
+              className="border rounded px-4 py-2 bg-white" 
+              required 
+              disabled={isSubmitting}
+            />
+            <input 
+              type="text" 
+              name="subject"
+              placeholder="Subject *" 
+              value={formData.subject}
+              onChange={handleInputChange}
+              className="border rounded px-4 py-2 bg-white" 
+              required 
+              disabled={isSubmitting}
+            />
+            <textarea 
+              name="message"
+              placeholder="Message *" 
+              value={formData.message}
+              onChange={handleInputChange}
+              className="border rounded px-4 py-2 bg-white min-h-[80px]" 
+              required 
+              disabled={isSubmitting}
+            />
+            <button 
+              type="submit" 
+              disabled={isSubmitting}
+              className={`mt-2 font-semibold py-2 rounded shadow transition ${
+                isSubmitting 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-[#3a5f46] hover:bg-[#2e4d3a] text-white'
+              }`}
+            >
+              {isSubmitting ? 'Sending...' : 'Send Message'}
+            </button>
           </form>
         </div>
         {/* Right: Contact Info */}
