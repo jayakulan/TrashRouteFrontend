@@ -2,9 +2,11 @@ import { Link } from "react-router-dom"
 import { Recycle, Bell } from "lucide-react"
 import { useState } from "react"
 import UserProfileDropdown from "./UserProfileDropdown"
+import binIcon from '/images/bin.png';
 
 const ConfirmPickup = () => {
   const [confirmed, setConfirmed] = useState(false)
+  const [showPopup, setShowPopup] = useState(false);
   const pickupSummary = {
     wasteTypes: "Recyclables, Organics",
     quantities: "2 bags, 1 bin",
@@ -14,10 +16,13 @@ const ConfirmPickup = () => {
 
   const handleConfirmSchedule = () => {
     setConfirmed(true)
+    setShowPopup(true);
     console.log("Pickup schedule confirmed")
     // Handle schedule confirmation logic here
     // This would typically submit the pickup request to the backend
   }
+
+  const handleClosePopup = () => setShowPopup(false);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -42,15 +47,15 @@ const ConfirmPickup = () => {
       <main className="container mx-auto px-6 py-8 max-w-4xl">
         {/* Breadcrumb */}
         <div className="flex items-center space-x-2 text-sm text-gray-600 mb-8">
-          <Link to="/request-pickup" className="text-blue-600 hover:text-blue-700">
+          <Link to="/request-pickup" className="text-theme-color hover:text-theme-color-dark font-medium">
             Request Pickup
           </Link>
           <span>/</span>
-          <Link to="/select-waste-type" className="text-blue-600 hover:text-blue-700">
+          <Link to="/select-waste-type" className="text-theme-color hover:text-theme-color-dark font-medium">
             Select Waste Type
           </Link>
           <span>/</span>
-          <Link to="/pin-location" className="text-blue-600 hover:text-blue-700">
+          <Link to="/pin-location" className="text-theme-color hover:text-theme-color-dark font-medium">
             Pin Location
           </Link>
           <span>/</span>
@@ -63,7 +68,7 @@ const ConfirmPickup = () => {
             <span className="text-sm font-medium text-gray-900">Step 3 of 3</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="h-2 rounded-full" style={{ width: "33.33%", background: '#3a5f46' }}></div>
+            <div className="h-2 rounded-full" style={{ width: "100%", background: '#3a5f46' }}></div>
           </div>
         </div>
 
@@ -80,25 +85,25 @@ const ConfirmPickup = () => {
             <div className="divide-y divide-gray-200">
               {/* Waste Types */}
               <div className="px-6 py-6 flex justify-between items-center">
-                <div className="text-sm font-medium text-blue-600">Waste Types</div>
+                <div className="text-sm font-medium text-theme-color">Waste Types</div>
                 <div className="text-gray-900 font-medium">{pickupSummary.wasteTypes}</div>
               </div>
 
               {/* Quantities */}
               <div className="px-6 py-6 flex justify-between items-center">
-                <div className="text-sm font-medium text-blue-600">Quantities</div>
+                <div className="text-sm font-medium text-theme-color">Quantities</div>
                 <div className="text-gray-900 font-medium">{pickupSummary.quantities}</div>
               </div>
 
               {/* Total Weight */}
               <div className="px-6 py-6 flex justify-between items-center">
-                <div className="text-sm font-medium text-blue-600">Total Weight</div>
+                <div className="text-sm font-medium text-theme-color">Total Weight</div>
                 <div className="text-gray-900 font-medium">{pickupSummary.totalWeight}</div>
               </div>
 
               {/* Pickup Location */}
               <div className="px-6 py-6 flex justify-between items-center">
-                <div className="text-sm font-medium text-blue-600">Pickup Location</div>
+                <div className="text-sm font-medium text-theme-color">Pickup Location</div>
                 <div className="text-gray-900 font-medium">{pickupSummary.pickupLocation}</div>
               </div>
             </div>
@@ -107,18 +112,90 @@ const ConfirmPickup = () => {
 
         {/* Confirm Button or Success Message */}
         <div className="flex justify-center">
-          {confirmed ? (
-            <div className="text-green-600 text-lg font-semibold">Pickup schedule confirmed!</div>
-          ) : (
+          {!confirmed ? (
             <button
               onClick={handleConfirmSchedule}
-              className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-4 px-12 rounded-full text-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="next-btn py-4 px-12 rounded-full text-lg"
             >
               Confirm Schedule
             </button>
-          )}
+          ) : null}
         </div>
       </main>
+
+      {/* Success Popup Overlay */}
+      {showPopup && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 1000,
+          background: 'rgba(0,0,0,0.55)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          animation: 'fadeIn 0.3s',
+        }}>
+          <style>{`
+            @keyframes fadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+            @keyframes zoomIn {
+              from { transform: scale(0.85); opacity: 0; }
+              to { transform: scale(1); opacity: 1; }
+            }
+            @keyframes popIn {
+              0% { transform: scale(0.7); opacity: 0; }
+              60% { transform: scale(1.15); opacity: 1; }
+              100% { transform: scale(1); }
+            }
+          `}</style>
+          <div style={{
+            background: '#fff',
+            borderRadius: '1.5rem',
+            boxShadow: '0 8px 40px 0 rgba(58, 95, 70, 0.25)',
+            padding: '2.5rem 2.5rem 2rem 2.5rem',
+            minWidth: 340,
+            maxWidth: '90vw',
+            textAlign: 'center',
+            position: 'relative',
+            animation: 'zoomIn 0.35s cubic-bezier(.4,2,.6,1)',
+          }}>
+            <button
+              onClick={handleClosePopup}
+              aria-label="Close success message"
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: '#3a5f46',
+                border: 'none',
+                width: '2.5rem',
+                height: '2.5rem',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                zIndex: 10,
+                boxShadow: '0 2px 8px 0 rgba(58, 95, 70, 0.18)',
+                transition: 'background 0.2s',
+              }}
+              onMouseOver={e => e.currentTarget.style.background = '#24402e'}
+              onMouseOut={e => e.currentTarget.style.background = '#3a5f46'}
+            >
+              <img src={binIcon} alt="Close" style={{ width: '1.5rem', height: '1.5rem', objectFit: 'contain', filter: 'invert(1) brightness(2)', display: 'block', margin: '0 auto' }} />
+            </button>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem', animation: 'popIn 0.4s' }}>✅</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3a5f46', marginBottom: '0.5rem' }}>Pickup Scheduled Successfully!</div>
+            <div style={{ fontSize: '1.1rem', color: '#333', marginBottom: '1.5rem' }}>
+              You'll receive the pickup time and assigned company shortly.<br/>
+              Thank you for choosing TrashRoute!
+            </div>
+            <div style={{ fontSize: '1rem', color: '#3a5f46', fontWeight: 500, marginTop: '0.5rem' }}>Please wait...</div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

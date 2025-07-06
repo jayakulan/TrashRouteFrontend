@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Recycle } from "lucide-react"
+import { useAuth } from "./context/AuthContext"
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -9,6 +10,18 @@ const Login = () => {
   })
   const [error, setError] = useState("")
   const navigate = useNavigate()
+  const { login } = useAuth()
+
+  // Forgot password states
+  const [showEmailModal, setShowEmailModal] = useState(false)
+  const [showOtpModal, setShowOtpModal] = useState(false)
+  const [showResetModal, setShowResetModal] = useState(false)
+  const [forgotEmail, setForgotEmail] = useState("")
+  const [otp, setOtp] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [forgotError, setForgotError] = useState("")
+  const [forgotSuccess, setForgotSuccess] = useState("")
 
   const handleChange = (e) => {
     setFormData({
@@ -21,30 +34,96 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
+    const result = await login(formData.email, formData.password)
+    if (!result.success) {
+      setError(result.message || "Login failed")
+    }
+  }
+
+  // Forgot password: send OTP
+  const handleSendOtp = async (e) => {
+    e.preventDefault()
+    setForgotError("")
+    setForgotSuccess("")
     try {
-      const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/auth/login.php", {
+      const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/forgetpassword.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ action: "send_otp", email: forgotEmail }),
+        credentials: "include",
       })
       const result = await response.json()
       if (result.success) {
-        const role = result.data.user.role
-        if (role === "admin") {
-          navigate("/admin/dashboard")
-        } else if (role === "company") {
-          navigate("/company-waste-prefer")
-        } else if (role === "customer") {
-          sessionStorage.setItem("showMinimumWastePopup", "true");
-          navigate("/customer/trash-type")
-        } else {
-          setError("Unknown user role.")
-        }
+        setForgotSuccess("OTP sent to your email.")
+        setShowEmailModal(false)
+        setShowOtpModal(true)
       } else {
-        setError(result.message || "Login failed")
+        setForgotError(result.message || "Failed to send OTP")
       }
     } catch (err) {
-      setError("Server error")
+      setForgotError("Server error")
+    }
+  }
+
+  // Forgot password: verify OTP only
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault()
+    setForgotError("")
+    setForgotSuccess("")
+    try {
+      const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/forgetpassword.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "verify_otp",
+          email: forgotEmail,
+          otp,
+        }),
+        credentials: "include",
+      })
+      const result = await response.json()
+      if (result.success) {
+        setShowOtpModal(false)
+        setShowResetModal(true)
+      } else {
+        setForgotError(result.message || "Invalid OTP")
+      }
+    } catch (err) {
+      setForgotError("Server error")
+    }
+  }
+
+  // Forgot password: reset password after OTP verified
+  const handleResetPassword = async (e) => {
+    e.preventDefault()
+    setForgotError("")
+    setForgotSuccess("")
+    try {
+      const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/forgetpassword.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "verify_otp_and_reset",
+          email: forgotEmail,
+          otp,
+          new_password: newPassword,
+          confirm_password: confirmPassword,
+        }),
+        credentials: "include",
+      })
+      const result = await response.json()
+      if (result.success) {
+        setForgotSuccess("Password reset successful! You can now log in.")
+        setShowResetModal(false)
+        setForgotEmail("")
+        setOtp("")
+        setNewPassword("")
+        setConfirmPassword("")
+      } else {
+        setForgotError(result.message || "Failed to reset password")
+      }
+    } catch (err) {
+      setForgotError("Server error")
     }
   }
 
@@ -104,6 +183,9 @@ const Login = () => {
           {error && (
             <div className="text-red-600 text-sm mb-2 text-center">{error}</div>
           )}
+          {forgotSuccess && (
+            <div className="text-green-600 text-sm mb-2 text-center">{forgotSuccess}</div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Field */}
@@ -142,9 +224,13 @@ const Login = () => {
 
             {/* Forgot Password Link */}
             <div className="text-left">
-              <Link to="/forgot-password" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+              <button
+                type="button"
+                className="text-blue-600 hover:text-blue-700 text-sm font-medium bg-transparent border-0 p-0"
+                onClick={() => setShowEmailModal(true)}
+              >
                 Forgot password?
-              </Link>
+              </button>
             </div>
 
             {/* Login Button */}
@@ -165,6 +251,92 @@ const Login = () => {
           </form>
         </div>
       </div>
+
+      {/* Forgot Password: Email Modal */}
+      {showEmailModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md relative">
+            <button onClick={() => setShowEmailModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
+            <h2 className="text-2xl font-bold mb-4 text-center">Forgot Password</h2>
+            <form onSubmit={handleSendOtp} className="space-y-4">
+              <div>
+                <label className="block text-gray-700 font-medium mb-1">Enter your email</label>
+                <input
+                  type="email"
+                  value={forgotEmail}
+                  onChange={e => setForgotEmail(e.target.value)}
+                  required
+                  className="w-full border rounded-lg px-3 py-2"
+                  placeholder="Enter your email"
+                />
+              </div>
+              {forgotError && <div className="text-red-600 text-sm text-center">{forgotError}</div>}
+              <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">Send OTP</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Forgot Password: OTP Modal */}
+      {showOtpModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md relative">
+            <button onClick={() => setShowOtpModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
+            <h2 className="text-2xl font-bold mb-4 text-center">Enter OTP</h2>
+            <form onSubmit={handleVerifyOtp} className="space-y-4">
+              <div>
+                <label className="block text-gray-700 font-medium mb-1">Enter OTP</label>
+                <input
+                  type="text"
+                  value={otp}
+                  onChange={e => setOtp(e.target.value)}
+                  required
+                  className="w-full border rounded-lg px-3 py-2"
+                  placeholder="Enter OTP"
+                />
+              </div>
+              {forgotError && <div className="text-red-600 text-sm text-center">{forgotError}</div>}
+              <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">Verify OTP</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Forgot Password: Reset Password Modal */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md relative">
+            <button onClick={() => setShowResetModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
+            <h2 className="text-2xl font-bold mb-4 text-center">Reset Password</h2>
+            <form onSubmit={handleResetPassword} className="space-y-4">
+              <div>
+                <label className="block text-gray-700 font-medium mb-1">New Password</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  required
+                  className="w-full border rounded-lg px-3 py-2"
+                  placeholder="New password"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-700 font-medium mb-1">Confirm New Password</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  required
+                  className="w-full border rounded-lg px-3 py-2"
+                  placeholder="Confirm new password"
+                />
+              </div>
+              {forgotError && <div className="text-red-600 text-sm text-center">{forgotError}</div>}
+              <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">Reset Password</button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

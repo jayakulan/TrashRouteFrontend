@@ -2,14 +2,16 @@ import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Recycle, Search, Plus, Minus, Navigation, Bell } from "lucide-react"
 import UserProfileDropdown from "./UserProfileDropdown"
+import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
 
 const PinLocation = () => {
   const [coordinates, setCoordinates] = useState({
-    latitude: 37.7749,
-    longitude: -122.4194,
+    latitude: 9.6615, // Jaffna, Sri Lanka
+    longitude: 80.0255,
   })
 
   const [searchQuery, setSearchQuery] = useState("")
+  const [mapZoom, setMapZoom] = useState(17);
   const navigate = useNavigate();
 
   const pickupDetails = {
@@ -20,24 +22,34 @@ const PinLocation = () => {
   }
 
   const handleMapClick = (event) => {
-    // Simulate getting new coordinates (random nearby for demo)
-    const randomLat = coordinates.latitude + (Math.random() - 0.5) * 0.01;
-    const randomLng = coordinates.longitude + (Math.random() - 0.5) * 0.01;
-    setCoordinates({ latitude: randomLat, longitude: randomLng });
-    console.log("Map clicked, new coordinates:", randomLat, randomLng);
+    setCoordinates({
+      latitude: event.latLng.lat(),
+      longitude: event.latLng.lng(),
+    });
+    console.log("Map clicked, new coordinates:", event.latLng.lat(), event.latLng.lng());
   }
 
-  const handleZoomIn = () => {
-    console.log("Zoom in")
-  }
-
-  const handleZoomOut = () => {
-    console.log("Zoom out")
-  }
-
+  const handleZoomIn = () => setMapZoom((z) => Math.min(z + 1, 21));
+  const handleZoomOut = () => setMapZoom((z) => Math.max(z - 1, 2));
   const handleLocationCenter = () => {
+    // Optionally implement geolocation
     console.log("Center on user location")
   }
+
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: 'AIzaSyA5iEKgAwrJWVkCMAsD7_IilJ0YSVf_VGk',
+  });
+
+  const mapContainerStyle = {
+    width: '100%',
+    height: '380px',
+    borderRadius: '1rem',
+  };
+
+  const center = {
+    lat: coordinates.latitude,
+    lng: coordinates.longitude,
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -49,7 +61,7 @@ const PinLocation = () => {
           </div>
           <div className="flex items-center space-x-8">
             <Link to="/" className="text-gray-700 hover:text-gray-900 font-medium">Home</Link>
-            <Link to="/customer/trash-type" className="text-gray-700 hover:text-gray-900 font-medium">Request Pickup</Link>
+            <Link to="/customer/trash-type" className="text-theme-color hover:text-theme-color-dark font-medium">Request Pickup</Link>
             <Link to="/customer/track-pickup" className="text-gray-700 hover:text-gray-900 font-medium">Track Pickup</Link>
             <Link to="/customer/history-log" className="text-gray-700 hover:text-gray-900 font-medium">History Log</Link>
             <Link to="/customer/notification-log" className="text-gray-700 hover:text-gray-900 font-medium" aria-label="Notification Log"><Bell className="w-5 h-5" /></Link>
@@ -64,9 +76,9 @@ const PinLocation = () => {
         <section className="flex-1 min-w-0">
           {/* Breadcrumb */}
           <div className="flex items-center space-x-2 text-sm text-gray-600 mb-6">
-            <Link to="/customer/trash-type" className="text-blue-600 hover:text-blue-700">Request Pickup</Link>
+            <Link to="/customer/trash-type" className="text-theme-color hover:text-theme-color-dark font-medium">Request Pickup</Link>
             <span className="text-gray-400">/</span>
-            <Link to="/select-waste-type" className="text-blue-600 hover:text-blue-700">Select Waste Type</Link>
+            <Link to="/select-waste-type" className="text-theme-color hover:text-theme-color-dark font-medium">Select Waste Type</Link>
             <span className="text-gray-400">/</span>
             <span className="text-gray-900 font-semibold">Pin Location</span>
           </div>
@@ -106,34 +118,18 @@ const PinLocation = () => {
                 <Navigation className="w-5 h-5 text-gray-600" />
               </button>
             </div>
-            {/* Map Placeholder */}
-            <div
-              className="w-full h-96 bg-[#1b6b6b] relative cursor-crosshair"
-              onClick={handleMapClick}
-              style={{ backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`, backgroundSize: "20px 20px" }}
-            >
-              {/* Street Grid Overlay */}
-              <div className="absolute inset-0 opacity-30">
-                <svg className="w-full h-full" viewBox="0 0 400 300">
-                  {[...Array(15)].map((_, i) => (
-                    <line key={`h-${i}`} x1="0" y1={i * 20} x2="400" y2={i * 20} stroke="white" strokeWidth="0.5" />
-                  ))}
-                  {[...Array(20)].map((_, i) => (
-                    <line key={`v-${i}`} x1={i * 20} y1="0" x2={i * 20} y2="300" stroke="white" strokeWidth="0.5" />
-                  ))}
-                  <line x1="0" y1="150" x2="400" y2="150" stroke="white" strokeWidth="2" />
-                  <line x1="200" y1="0" x2="200" y2="300" stroke="white" strokeWidth="2" />
-                </svg>
-              </div>
-              {/* Location Pin */}
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                <div className="w-6 h-6 bg-red-500 rounded-full border-2 border-white shadow-lg animate-pulse"></div>
-                <div className="w-2 h-2 bg-red-500 rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
-              </div>
-              {/* Coordinates */}
-              <div className="absolute left-6 bottom-4 text-xs text-gray-400 font-medium">
-                Longitude: {coordinates.latitude.toFixed(4)}, Latitude: {coordinates.longitude.toFixed(4)}
-              </div>
+            {/* Google Map Integration */}
+            <div style={{ width: '100%', height: 380 }}>
+              {isLoaded && (
+                <GoogleMap
+                  mapContainerStyle={mapContainerStyle}
+                  center={center}
+                  zoom={mapZoom}
+                  onClick={handleMapClick}
+                >
+                  <Marker position={center} />
+                </GoogleMap>
+              )}
             </div>
           </div>
           {/* Coordinates Card - below the map */}
@@ -141,15 +137,15 @@ const PinLocation = () => {
             <div className="bg-white rounded-2xl shadow border p-6 flex flex-col gap-2 items-center">
               <h2 className="text-xl font-bold text-gray-900 mb-2">Pinned Location</h2>
               <div className="flex gap-8 text-base">
-                <div className="text-blue-600 font-medium">Longitude: <span className="text-gray-900 font-normal">{coordinates.latitude.toFixed(6)}</span></div>
-                <div className="text-blue-600 font-medium">Latitude: <span className="text-gray-900 font-normal">{coordinates.longitude.toFixed(6)}</span></div>
+                <div className="text-theme-color font-medium">Longitude: <span className="text-gray-900 font-normal">{coordinates.latitude.toFixed(6)}</span></div>
+                <div className="text-theme-color font-medium">Latitude: <span className="text-gray-900 font-normal">{coordinates.longitude.toFixed(6)}</span></div>
               </div>
             </div>
           </div>
           {/* Next Button - Centered below coordinates card */}
           <div className="w-full max-w-2xl mx-auto flex justify-center mb-8">
             <button 
-              className="bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold py-3 px-8 rounded-lg transition-colors"
+              className="next-btn py-4 px-12 rounded-full text-lg"
               onClick={() => navigate('/customer/pickup-summary')}
             >
               Next

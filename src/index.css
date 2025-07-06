@@ -195,3 +195,335 @@ input[type="range"].slider::-moz-range-thumb {
   animation: bounce-green 0.6s cubic-bezier(.68,-0.55,.27,1.55) 1;
   fill: #3a5f46;
 }
+
+/* --- Custom Animations for CustomerTrashType --- */
+@keyframes shake {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(-2px); }
+  40% { transform: translateX(2px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+  100% { transform: translateX(0); }
+}
+.shake {
+  animation: shake 0.3s;
+}
+
+@keyframes icon-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.icon-spin {
+  animation: icon-spin 1s linear infinite;
+}
+
+@keyframes icon-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+.icon-pulse {
+  animation: icon-pulse 0.8s infinite;
+}
+
+@keyframes slider-fill {
+  from { background-size: 0% 100%; }
+  to { background-size: 100% 100%; }
+}
+.slider-animated {
+  transition: background 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+
+@keyframes checkbox-bounce {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.2); }
+  60% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+.checkbox-bounce {
+  animation: checkbox-bounce 0.4s;
+}
+
+@keyframes ripple {
+  0% { box-shadow: 0 0 0 0 rgba(58,95,70,0.2); }
+  100% { box-shadow: 0 0 0 8px rgba(58,95,70,0); }
+}
+.ripple {
+  animation: ripple 0.4s;
+}
+
+@keyframes progress-slide-in {
+  from { width: 0; }
+  to { width: 33.33%; }
+}
+.progress-animate {
+  animation: progress-slide-in 1s cubic-bezier(0.4,0,0.2,1) forwards;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 0 #3a5f46; }
+  50% { box-shadow: 0 0 0 6px #3a5f4622; }
+}
+.pulse-dot {
+  animation: pulse-dot 1.2s infinite;
+}
+
+/* --- End Custom Animations --- */
+
+.next-btn {
+  background: #3a5f46;
+  color: #fff;
+  font-weight: 600;
+  padding: 0.75rem 2.5rem;
+  border-radius: 0.5rem;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px 0 rgba(58, 95, 70, 0.10);
+}
+.next-btn:hover {
+  background: #2e4c38;
+}
+.next-btn:active {
+  background: #24402e;
+}
+
+.toggle-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #3a5f46;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 4px rgba(58,95,70,0.08);
+  position: relative;
+  padding: 0;
+}
+.toggle-btn.selected {
+  background: #3a5f46;
+  border-color: #3a5f46;
+  box-shadow: 0 2px 8px 0 rgba(58, 95, 70, 0.18);
+}
+.toggle-btn .toggle-check {
+  display: none;
+}
+.toggle-btn.selected .toggle-check {
+  display: block;
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  text-shadow: 0 2px 8px rgba(58, 95, 70, 0.18);
+}
+
+.text-theme-color {
+  color: #3a5f46 !important;
+}
+.text-theme-color-dark {
+  color: #2e4c38 !important;
+}
+
+/* --- Vertical Progress Tracker Styles --- */
+.step-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.25rem;
+  box-shadow: 0 2px 8px 0 rgba(58, 95, 70, 0.10);
+  border: 3px solid #3a5f46;
+  background: #e5e7eb;
+  color: #3a5f46;
+  transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+  position: relative;
+  z-index: 2;
+}
+.step-circle.completed {
+  background: #3a5f46;
+  color: #fff;
+  box-shadow: 0 0 16px 2px #a8d59b;
+}
+.step-circle.active {
+  background: #3a5f46;
+  color: #fff;
+  animation: fade-bounce 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+  box-shadow: 0 0 16px 4px #a8d59b, 0 0 0 6px #3a5f4633;
+}
+.step-circle.pending {
+  background: #e5e7eb;
+  color: #bdbdbd;
+  border-color: #bdbdbd;
+}
+.step-number {
+  font-weight: bold;
+  font-size: 1.25rem;
+  color: inherit;
+}
+@keyframes fade-bounce {
+  0% { opacity: 0; transform: scale(0.7); }
+  60% { opacity: 1; transform: scale(1.15); }
+  80% { transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.animate-fade-bounce {
+  animation: fade-bounce 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+}
+@keyframes slide-in-left {
+  0% { opacity: 0; transform: translateX(-60px) scale(0.95); }
+  60% { opacity: 1; transform: translateX(8px) scale(1.05); }
+  80% { transform: translateX(-2px) scale(0.98); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes slide-in-right {
+  0% { opacity: 0; transform: translateX(60px) scale(0.95); }
+  60% { opacity: 1; transform: translateX(-8px) scale(1.05); }
+  80% { transform: translateX(2px) scale(0.98); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes dot-bounce {
+  0% { transform: scale(0.7); }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+.animate-slide-in-left {
+  animation: slide-in-left 0.8s cubic-bezier(.68,-0.55,.27,1.55) both;
+}
+.animate-slide-in-right {
+  animation: slide-in-right 0.8s cubic-bezier(.68,-0.55,.27,1.55) both;
+}
+.animate-fade-in {
+  animation: fade-in 1s ease both;
+}
+.animate-dot-bounce {
+  animation: dot-bounce 0.7s cubic-bezier(.68,-0.55,.27,1.55) both;
+}
+.progress-vertical {
+  transition: height 1s cubic-bezier(0.4,0,0.2,1);
+  z-index: 1;
+}
+/* --- End Vertical Progress Tracker Styles --- */
+
+/* --- Zig-Zag Progress Path Styles --- */
+.step-zigzag-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #3a5f46;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+  box-shadow: 0 2px 8px 0 rgba(58, 95, 70, 0.10);
+  position: relative;
+}
+.step-zigzag-circle.completed {
+  background: #fff;
+  color: #3a5f46;
+  border-color: #3a5f46;
+}
+.step-zigzag-circle.active {
+  background: #fff;
+  color: #3a5f46;
+  border-color: #3a5f46;
+  animation: step-bounce 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+  box-shadow: 0 0 16px 4px #a8d59b, 0 0 0 6px #3a5f4633;
+}
+.step-zigzag-circle.pending {
+  background: #fff;
+  color: #bdbdbd;
+  border-color: #bdbdbd;
+}
+@keyframes step-bounce {
+  0% { opacity: 0; transform: scale(0.7); }
+  60% { opacity: 1; transform: scale(1.15); }
+  80% { transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.animate-step-in-0 { animation: step-bounce 0.7s 0.05s both; }
+.animate-step-in-1 { animation: step-bounce 0.7s 0.15s both; }
+.animate-step-in-2 { animation: step-bounce 0.7s 0.25s both; }
+.animate-step-in-3 { animation: step-bounce 0.7s 0.35s both; }
+@keyframes truck-move {
+  0% { left: 0%; }
+  100% { left: 99%; }
+}
+.animate-truck-move {
+  transition: left 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+}
+@media (max-width: 640px) {
+  .w-full.max-w-2xl.mx-auto.flex.flex-col.sm\:flex-row.items-center.justify-between {
+    flex-direction: column !important;
+    height: 320px;
+  }
+  .step-zigzag-circle {
+    margin-bottom: 24px;
+  }
+  .absolute.top-1\/2.left-0.w-full.h-16.sm\:h-24.-z-10 {
+    height: 320px !important;
+    width: 60px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+}
+/* --- End Zig-Zag Progress Path Styles --- */
+
+/* --- Success Animation Styles --- */
+@keyframes fade-zoom {
+  0% { opacity: 0; transform: scale(0.7); }
+  80% { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.animate-fade-zoom {
+  animation: fade-zoom 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+}
+.success-checkmark svg {
+  display: block;
+}
+.checkmark-stroke {
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: checkmark-draw 0.7s 0.2s cubic-bezier(.68,-0.55,.27,1.55) forwards;
+}
+@keyframes checkmark-draw {
+  to { stroke-dashoffset: 0; }
+}
+.confetti {
+  pointer-events: none;
+  z-index: 100;
+}
+.confetti span {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: #3a5f46;
+  opacity: 0.8;
+  animation: confetti-fall 1.2s linear forwards;
+}
+@keyframes confetti-fall {
+  0% { transform: translateY(-40px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(300px) rotate(360deg); opacity: 0; }
+}
+/* --- End Success Animation Styles --- */
+
+.animate-pulse-current {
+  animation: pulse-current 1.2s infinite cubic-bezier(.68,-0.55,.27,1.55);
+}
+@keyframes pulse-current {
+  0% { box-shadow: 0 0 0 0 rgba(59,130,246,0.15); transform: scale(1); }
+  50% { box-shadow: 0 0 0 12px rgba(59,130,246,0.10); transform: scale(1.08); }
+  100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.15); transform: scale(1); }
+}
+.glow-current {
+  box-shadow: 0 0 16px 4px rgba(59,130,246,0.12), 0 2px 8px 0 rgba(59,130,246,0.10);
+  transition: box-shadow 0.3s;
+}
