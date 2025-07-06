@@ -1,9 +1,12 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Recycle, Search, Plus, Minus, Navigation, Bell } from "lucide-react"
 import UserProfileDropdown from "./UserProfileDropdown"
-import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
 import CustomerNotification from "./CustomerNotification";
+
+// Constants for Google Maps configuration
+const GOOGLE_MAPS_MAP_ID = '2d11b98e205d938c1f59291f'; // Custom Map ID for TrashRoute
 
 const PinLocation = () => {
   const [coordinates, setCoordinates] = useState({
@@ -13,6 +16,8 @@ const PinLocation = () => {
 
   const [searchQuery, setSearchQuery] = useState("")
   const [mapZoom, setMapZoom] = useState(17);
+  const [map, setMap] = useState(null);
+  const [marker, setMarker] = useState(null);
   const navigate = useNavigate();
 
   const pickupDetails = {
@@ -37,8 +42,17 @@ const PinLocation = () => {
     console.log("Center on user location")
   }
 
+  // Update marker position when coordinates change
+  useEffect(() => {
+    if (marker && map) {
+      const newPosition = { lat: coordinates.latitude, lng: coordinates.longitude };
+      marker.setPosition(newPosition);
+      map.setCenter(newPosition);
+    }
+  }, [coordinates, marker, map]);
+
   const { isLoaded } = useJsApiLoader({
-            googleMapsApiKey: 'AIzaSyAPU0AGbc-aFDts3rgDelAThInlph_ZBYI',
+            googleMapsApiKey: 'AIzaSyA5iEKgAwrJWVkCMAsD7_IilJ0YSVf_VGk'
   });
 
   const mapContainerStyle = {
@@ -127,9 +141,34 @@ const PinLocation = () => {
                   center={center}
                   zoom={mapZoom}
                   onClick={handleMapClick}
-                >
-                  <Marker position={center} />
-                </GoogleMap>
+                  // mapId={GOOGLE_MAPS_MAP_ID} // Temporarily disabled until Map ID is properly configured
+                  options={{
+                    mapTypeId: 'roadmap',
+                    streetViewControl: true,
+                    fullscreenControl: true,
+                    zoomControl: false
+                  }}
+                  onLoad={(mapInstance) => {
+                    setMap(mapInstance);
+                    // Create initial marker
+                    if (window.google) {
+                      const newMarker = new window.google.maps.Marker({
+                        position: center,
+                        map: mapInstance,
+                        title: "Selected Location",
+                        icon: {
+                          path: window.google.maps.SymbolPath.CIRCLE,
+                          scale: 8,
+                          fillColor: '#3a5f46',
+                          fillOpacity: 1,
+                          strokeColor: '#ffffff',
+                          strokeWeight: 2
+                        }
+                      });
+                      setMarker(newMarker);
+                    }
+                  }}
+                />
               )}
             </div>
           </div>

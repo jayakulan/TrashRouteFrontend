@@ -6,9 +6,9 @@ import { Plus, Minus, Navigation, Check } from "lucide-react"
 import { GoogleMap, LoadScript, Polyline } from "@react-google-maps/api"
 import UserProfileDropdowncom from "./UserProfileDropdowncom"
 
-const GOOGLE_MAPS_API_KEY = "AIzaSyAPU0AGbc-aFDts3rgDelAThInlph_ZBYI"
-const GOOGLE_MAPS_LIBRARIES = ["marker"]
-const GOOGLE_MAPS_MAP_ID = "DEMO_MAP_ID" // You'll need to create a Map ID in Google Cloud Console
+const GOOGLE_MAPS_API_KEY = "AIzaSyA5iEKgAwrJWVkCMAsD7_IilJ0YSVf_VGk"
+
+const GOOGLE_MAPS_MAP_ID = "2d11b98e205d938c1f59291f" // Custom Map ID for TrashRoute
 
 function getRandomLatLng(center, radius) {
   const y0 = center.lat
@@ -76,67 +76,38 @@ const RouteMap = () => {
     setMap(map)
     setIsLoading(false)
     
-    // Create advanced markers after map loads
+    // Create regular markers after map loads
     if (window.google && optimizedLocations.length > 0) {
-      try {
-        const newMarkers = optimizedLocations.map((location, index) => {
-          const labelDiv = document.createElement("div")
-          labelDiv.style.background = "#4285F4"
-          labelDiv.style.color = "#fff"
-          labelDiv.style.borderRadius = "50%"
-          labelDiv.style.width = "30px"
-          labelDiv.style.height = "30px"
-          labelDiv.style.display = "flex"
-          labelDiv.style.justifyContent = "center"
-          labelDiv.style.alignItems = "center"
-          labelDiv.style.fontWeight = "bold"
-          labelDiv.style.fontSize = "14px"
-          labelDiv.textContent = `${index + 1}`
-
-          return new window.google.maps.marker.AdvancedMarkerElement({
-            map: map,
-            position: location,
-            content: labelDiv,
-            title: `Location ${index + 1}`
-          })
+      const newMarkers = optimizedLocations.map((location, index) => {
+        return new window.google.maps.Marker({
+          position: location,
+          map: map,
+          label: {
+            text: `${index + 1}`,
+            color: 'white',
+            fontWeight: 'bold'
+          },
+          icon: {
+            path: window.google.maps.SymbolPath.CIRCLE,
+            scale: 12,
+            fillColor: '#4285F4',
+            fillOpacity: 1,
+            strokeColor: '#ffffff',
+            strokeWeight: 2
+          }
         })
-        
-        setMarkers(newMarkers)
-        
-        // Fit bounds to show all markers
-        const bounds = new window.google.maps.LatLngBounds()
-        optimizedLocations.forEach(loc => bounds.extend(loc))
-        map.fitBounds(bounds)
-      } catch (error) {
-        console.error("Error creating advanced markers:", error)
-        // Fallback to regular markers if Advanced Markers fail
-        createRegularMarkers(map)
-      }
+      })
+      
+      setMarkers(newMarkers)
+      
+      // Fit bounds to show all markers
+      const bounds = new window.google.maps.LatLngBounds()
+      optimizedLocations.forEach(loc => bounds.extend(loc))
+      map.fitBounds(bounds)
     }
   }
 
-  const createRegularMarkers = (map) => {
-    const newMarkers = optimizedLocations.map((location, index) => {
-      return new window.google.maps.Marker({
-        position: location,
-        map: map,
-        label: {
-          text: `${index + 1}`,
-          color: 'white',
-          fontWeight: 'bold'
-        },
-        icon: {
-          path: window.google.maps.SymbolPath.CIRCLE,
-          scale: 12,
-          fillColor: '#4285F4',
-          fillOpacity: 1,
-          strokeColor: '#ffffff',
-          strokeWeight: 2
-        }
-      })
-    })
-    setMarkers(newMarkers)
-  }
+
 
   const onError = (error) => {
     console.error("Google Maps API Error:", error)
@@ -151,47 +122,23 @@ const RouteMap = () => {
           const userLoc = { lat: coords.latitude, lng: coords.longitude }
           setCurrentLocation(userLoc)
           
-          try {
-            // Try to create advanced marker first
-            const userLabelDiv = document.createElement("div")
-            userLabelDiv.style.background = "#34A853"
-            userLabelDiv.style.color = "#fff"
-            userLabelDiv.style.borderRadius = "50%"
-            userLabelDiv.style.width = "28px"
-            userLabelDiv.style.height = "28px"
-            userLabelDiv.style.display = "flex"
-            userLabelDiv.style.justifyContent = "center"
-            userLabelDiv.style.alignItems = "center"
-            userLabelDiv.style.fontWeight = "bold"
-            userLabelDiv.style.fontSize = "12px"
-            userLabelDiv.textContent = "You"
-
-            new window.google.maps.marker.AdvancedMarkerElement({
-              map: map,
-              position: userLoc,
-              content: userLabelDiv,
-              title: "Your Location"
-            })
-          } catch (error) {
-            // Fallback to regular marker
-            new window.google.maps.Marker({
-              position: userLoc,
-              map: map,
-              label: {
-                text: 'You',
-                color: 'white',
-                fontWeight: 'bold'
-              },
-              icon: {
-                path: window.google.maps.SymbolPath.CIRCLE,
-                scale: 10,
-                fillColor: '#34A853',
-                fillOpacity: 1,
-                strokeColor: '#ffffff',
-                strokeWeight: 2
-              }
-            })
-          }
+          new window.google.maps.Marker({
+            position: userLoc,
+            map: map,
+            label: {
+              text: 'You',
+              color: 'white',
+              fontWeight: 'bold'
+            },
+            icon: {
+              path: window.google.maps.SymbolPath.CIRCLE,
+              scale: 10,
+              fillColor: '#34A853',
+              fillOpacity: 1,
+              strokeColor: '#ffffff',
+              strokeWeight: 2
+            }
+          })
           
           map.setCenter(userLoc)
           map.setZoom(14)
@@ -336,7 +283,6 @@ const RouteMap = () => {
           <LoadScript 
             googleMapsApiKey={GOOGLE_MAPS_API_KEY}
             onError={onError}
-            libraries={GOOGLE_MAPS_LIBRARIES}
           >
             <GoogleMap
               mapContainerStyle={mapContainerStyle}
