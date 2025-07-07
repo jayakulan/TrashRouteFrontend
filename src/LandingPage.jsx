@@ -126,7 +126,7 @@ function WhyChooseUsSlider() {
     <section className="max-w-7xl mx-auto mt-16 px-4">
 
       <div className="text-center mb-12">
-        <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#3a5f46] mb-4 animate-fade-in-up">
+        <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-[#3a5f46] mb-4 animate-fade-in-up">
           Why Choose Us
         </h2>
         <div className="w-24 h-1 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] mx-auto rounded-full animate-pulse"></div>
@@ -209,11 +209,49 @@ function LandingPage() {
           transform: translateY(0);
         }
       }
+      @keyframes slideInFromTop {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes pulseGlow {
+        0%, 100% {
+          box-shadow: 0 0 5px rgba(58, 95, 70, 0.1);
+        }
+        50% {
+          box-shadow: 0 0 20px rgba(58, 95, 70, 0.3);
+        }
+      }
+      @keyframes float {
+        0%, 100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-5px);
+        }
+      }
       .animate-fade-in-up {
         animation: fadeInUp 0.8s ease-out forwards;
       }
+      .animate-slide-in-top {
+        animation: slideInFromTop 0.6s ease-out forwards;
+      }
+      .animate-pulse-glow {
+        animation: pulseGlow 2s ease-in-out infinite;
+      }
+      .animate-float {
+        animation: float 3s ease-in-out infinite;
+      }
       .animation-delay-200 {
         animation-delay: 0.2s;
+      }
+      .animation-delay-400 {
+        animation-delay: 0.4s;
       }
     `;
     document.head.appendChild(style);
@@ -256,35 +294,75 @@ function LandingPage() {
   return (
     <div className="min-h-screen bg-[#f7f9fb] flex flex-col">
       {/* Navigation */}
-      <nav className="w-full bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
-          <div className="flex items-center space-x-2">
+      <nav className="w-full bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-50 shadow-xl rounded-b-2xl transition-all duration-300 relative">
+        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-20">
+          {/* Logo with animation */}
+          <div className="flex items-center">
             <img src="/public/images/logo.png" alt="Logo" className="h-16 w-34" />
           </div>
+          
+          {/* Navigation Links with enhanced animations */}
           <div className="hidden md:flex space-x-8 text-gray-700 font-medium">
-            <a href="#about" className="hover:text-green-600" onClick={(e) => {
-              e.preventDefault();
-              const aboutSection = document.getElementById('about');
-              const navHeight = 64; // Height of the fixed navigation bar
-              const aboutPosition = aboutSection.offsetTop - navHeight;
-              window.scrollTo({
-                top: aboutPosition,
-                behavior: 'smooth'
-              });
-            }}>About</a>
-            <a href="#services" className="hover:text-green-600" onClick={(e) => {
-              e.preventDefault();
-              const servicesSection = document.getElementById('services');
-              const navHeight = 64; // Height of the fixed navigation bar
-              const servicesPosition = servicesSection.offsetTop - navHeight;
-              window.scrollTo({
-                top: servicesPosition,
-                behavior: 'smooth'
-              });
-            }}>Services</a>
-            <button type="button" onClick={() => setShowContactModal(true)} className="hover:text-green-600 focus:outline-none bg-transparent">Contact</button>
+            <a 
+              href="#about" 
+              className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10" 
+              onClick={(e) => {
+                e.preventDefault();
+                const aboutSection = document.getElementById('about');
+                const navHeight = 80; // Updated height of the navigation bar
+                const aboutPosition = aboutSection.offsetTop - navHeight;
+                window.scrollTo({
+                  top: aboutPosition,
+                  behavior: 'smooth'
+                });
+              }}
+            >
+              <span className="relative z-10">About</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div>
+              <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div>
+            </a>
+            
+            <a 
+              href="#services" 
+              className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10" 
+              onClick={(e) => {
+                e.preventDefault();
+                const servicesSection = document.getElementById('services');
+                const navHeight = 80; // Updated height of the navigation bar
+                const servicesPosition = servicesSection.offsetTop - navHeight;
+                window.scrollTo({
+                  top: servicesPosition,
+                  behavior: 'smooth'
+                });
+              }}
+            >
+              <span className="relative z-10">Services</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div>
+              <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div>
+            </a>
+            
+            <button 
+              type="button" 
+              onClick={() => setShowContactModal(true)} 
+              className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10 focus:outline-none bg-transparent"
+            >
+              <span className="relative z-10">Contact</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div>
+              <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div>
+            </button>
+          </div>
+          
+          {/* Mobile menu button with animation */}
+          <div className="md:hidden">
+            <button className="relative group p-2 rounded-lg transition-all duration-300 hover:bg-[#3a5f46]/10">
+              <div className="w-6 h-0.5 bg-gray-700 group-hover:bg-[#3a5f46] transition-all duration-300 mb-1.5"></div>
+              <div className="w-6 h-0.5 bg-gray-700 group-hover:bg-[#3a5f46] transition-all duration-300 mb-1.5"></div>
+              <div className="w-6 h-0.5 bg-gray-700 group-hover:bg-[#3a5f46] transition-all duration-300"></div>
+            </button>
           </div>
         </div>
+        {/* Accent bar at the very top */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-[#26a360] rounded-t-2xl z-50"></div>
       </nav>
 
       {/* Hero Section - Video right after header */}
@@ -345,7 +423,7 @@ function LandingPage() {
       <section className="max-w-7xl mx-auto mt-16 px-4">
 
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#3a5f46] mb-4 animate-fade-in-up">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-[#3a5f46] mb-4 animate-fade-in-up">
             How It Works
           </h2>
           <div className="w-24 h-1 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] mx-auto rounded-full animate-pulse"></div>
@@ -482,7 +560,7 @@ function LandingPage() {
       {/* Who Can Use TrashRoute? */}
       <section className="max-w-7xl mx-auto mt-16 px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#3a5f46] mb-4 animate-fade-in-up">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-[#3a5f46] mb-4 animate-fade-in-up">
             Who Can Use TrashRoute?
           </h2>
           <div className="w-24 h-1 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] mx-auto rounded-full animate-pulse"></div>
@@ -516,7 +594,7 @@ function LandingPage() {
       <section id="about" ref={aboutUsRef} className="mt-16">
 
         <div className="text-center mb-12 max-w-7xl mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#3a5f46] mb-4 animate-fade-in-up">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-[#3a5f46] mb-4 animate-fade-in-up">
             About Us
           </h2>
           <div className="w-24 h-1 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] mx-auto rounded-full animate-pulse"></div>
@@ -540,9 +618,17 @@ function LandingPage() {
       </section>
 
 
-      {/* Our Features */}
-      <section className="max-w-7xl mx-auto mt-16 px-4">
-        <h2 className="text-lg font-bold mb-6 text-[#2e4d3a] text-center">Our Features</h2>
+      {/* Our Services */}
+      <section id="services" className="max-w-7xl mx-auto mt-16 px-4">
+        <div className="text-center mb-12">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-[#3a5f46] mb-4 animate-fade-in-up">
+            Our Services
+          </h2>
+          <div className="w-24 h-1 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] mx-auto rounded-full animate-pulse"></div>
+          <p className="text-gray-600 text-lg mt-4 max-w-2xl mx-auto animate-fade-in-up animation-delay-200">
+            Discover the key services that make TrashRoute unique and effective
+          </p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Feature 1 */}
           <div className="flex flex-col items-center bg-gradient-to-br from-[#e6f4ea] to-[#cfe3d6] rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-shadow duration-300 hover:scale-105 group cursor-pointer border border-[#d0e9d6]">

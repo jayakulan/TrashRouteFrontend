@@ -284,6 +284,19 @@ input[type="range"].slider::-moz-range-thumb {
 .next-btn:active {
   background: #24402e;
 }
+.next-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.waste-card {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
 
 .toggle-btn {
   width: 28px;
@@ -299,6 +312,7 @@ input[type="range"].slider::-moz-range-thumb {
   box-shadow: 0 1px 4px rgba(58,95,70,0.08);
   position: relative;
   padding: 0;
+  z-index: 2;
 }
 .toggle-btn.selected {
   background: #3a5f46;
@@ -307,10 +321,14 @@ input[type="range"].slider::-moz-range-thumb {
 }
 .toggle-btn .toggle-check {
   display: none;
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  font-weight: bold;
 }
 .toggle-btn.selected .toggle-check {
-  display: block;
-  color: #fff;
+  display: block !important;
+  color: #fff !important;
   font-size: 18px;
   line-height: 1;
   text-shadow: 0 2px 8px rgba(58, 95, 70, 0.18);

@@ -13,7 +13,14 @@ const CustomerTrashType = () => {
     metals: { quantity: 3, selected: false },
   })
 
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState({ type: "", text: "" })
   const navigate = useNavigate()
+
+  // Debug: Log state changes
+  useEffect(() => {
+    console.log('Waste types state updated:', wasteTypes);
+  }, [wasteTypes]);
 
   // Popup state
   const [isPopupOpen, setIsPopupOpen] = useState(() => {
@@ -31,7 +38,7 @@ const CustomerTrashType = () => {
   }
 
   const updateQuantity = (type, newQuantity) => {
-    if (wasteTypes[type].selected && newQuantity >= 0 && newQuantity <= 50) {
+    if (newQuantity >= 0 && newQuantity <= 50) {
       setWasteTypes((prev) => ({
         ...prev,
         [type]: { ...prev[type], quantity: newQuantity },
@@ -44,11 +51,93 @@ const CustomerTrashType = () => {
   }
 
   const toggleWasteType = (type) => {
-    setWasteTypes((prev) => ({
-      ...prev,
-      [type]: { ...prev[type], selected: !prev[type].selected },
-    }))
+    console.log('Toggling waste type:', type);
+    console.log('Current state before toggle:', wasteTypes);
+    
+    setWasteTypes((prev) => {
+      const currentSelected = prev[type].selected;
+      const newSelected = !currentSelected;
+      
+      console.log(`Changing ${type} from ${currentSelected} to ${newSelected}`);
+      
+      const newState = {
+        ...prev,
+        [type]: { 
+          ...prev[type], 
+          selected: newSelected 
+        },
+      };
+      
+      console.log('New waste types state:', newState);
+      return newState;
+    });
   }
+
+  const handleSubmitWasteTypes = async () => {
+    // Check if at least one waste type is selected
+    const selectedWasteTypes = Object.entries(wasteTypes).filter(([_, data]) => data.selected);
+    
+    if (selectedWasteTypes.length === 0) {
+      setMessage({ type: "error", text: "Please select at least one waste type" });
+      return;
+    }
+
+    setLoading(true);
+    setMessage({ type: "", text: "" });
+
+    try {
+      // Prepare data for backend
+      const wasteTypesData = Object.entries(wasteTypes).map(([type, data]) => ({
+        type: type.charAt(0).toUpperCase() + type.slice(1), // Capitalize first letter
+        quantity: data.quantity,
+        selected: data.selected
+      }));
+
+      console.log('Sending waste types data:', wasteTypesData);
+
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      console.log('Token from localStorage:', token ? 'Token exists' : 'No token found');
+      
+      const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Customer/CustomerTrashType.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          wasteTypes: wasteTypesData
+        }),
+        credentials: "include",
+      });
+
+      const result = await response.json();
+      
+      console.log('Response from server:', result);
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+
+      if (result.success) {
+        setMessage({ type: "success", text: "Waste types saved successfully!" });
+        
+        // Store the request data in localStorage for the next step
+        localStorage.setItem('wasteTypesData', JSON.stringify(wasteTypesData));
+        localStorage.setItem('pickupRequests', JSON.stringify(result.data));
+        
+        // Navigate to next step after a short delay
+        setTimeout(() => {
+          navigate('/customer/location-pin');
+        }, 1500);
+      } else {
+        setMessage({ type: "error", text: result.message || "Failed to save waste types" });
+      }
+    } catch (error) {
+      console.error('Error submitting waste types:', error);
+      setMessage({ type: "error", text: `Network error: ${error.message}. Please try again.` });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const wasteTypeData = [
     {
@@ -203,6 +292,22 @@ const CustomerTrashType = () => {
           </p>
         </div>
 
+        {/* Message Display */}
+        {message.text && (
+          <div className={`mb-6 p-4 rounded-lg ${
+            message.type === "success" 
+              ? "bg-green-50 border border-green-200 text-green-700" 
+              : "bg-red-50 border border-red-200 text-red-700"
+          }`}>
+            <div className="flex items-center space-x-2">
+              <span className="text-lg">
+                {message.type === "success" ? "✅" : "❌"}
+              </span>
+              <span className="font-medium">{message.text}</span>
+            </div>
+          </div>
+        )}
+
         {/* Recyclables Section */}
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Choose Materials for Pickup & Processing </h2>
@@ -212,18 +317,44 @@ const CustomerTrashType = () => {
               <div
                 key={wasteType.id}
                 className={`waste-card bg-white rounded-lg border border-gray-200 p-6 flex items-center transition-all duration-200 ${wasteTypes[wasteType.id].selected ? '' : 'opacity-60'}`}
-                onClick={() => toggleWasteType(wasteType.id)}
-                style={{ cursor: 'pointer' }}
+                style={{ position: 'relative', zIndex: 1 }}
               >
                 {/* Toggle Button */}
                 <button
                   className={`toggle-btn mr-6 ${wasteTypes[wasteType.id].selected ? 'selected' : ''}`}
                   aria-label={wasteTypes[wasteType.id].selected ? `Deselect ${wasteType.name}` : `Select ${wasteType.name}`}
                   type="button"
-                  tabIndex={-1}
-                  style={{ pointerEvents: 'none' }}
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    console.log('Toggle button clicked:', wasteType.id);
+                    toggleWasteType(wasteType.id);
+                  }}
+                  style={{
+                    backgroundColor: wasteTypes[wasteType.id].selected ? '#3a5f46' : '#fff',
+                    borderColor: '#3a5f46',
+                    cursor: 'pointer',
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    border: '2px solid #3a5f46',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s ease'
+                  }}
                 >
-                  <span className="toggle-check">&#10003;</span>
+                  <span 
+                    className="toggle-check"
+                    style={{
+                      display: wasteTypes[wasteType.id].selected ? 'block' : 'none',
+                      color: '#fff',
+                      fontSize: '18px',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    &#10003;
+                  </span>
                 </button>
                 {/* Waste Type Header */}
                 <div className="flex-1">
@@ -251,13 +382,11 @@ const CustomerTrashType = () => {
                           background: `linear-gradient(to right, #3a5f46 0%, #3a5f46 ${(wasteTypes[wasteType.id].quantity / 50) * 100}%, #e5e7eb ${(wasteTypes[wasteType.id].quantity / 50) * 100}%, #e5e7eb 100%)`,
                           opacity: wasteTypes[wasteType.id].selected ? 1 : 0.5,
                         }}
-                        disabled={!wasteTypes[wasteType.id].selected}
                       />
                       <div className="flex items-center space-x-2 ml-4">
                         <button
                           onClick={(e) => { e.stopPropagation(); updateQuantity(wasteType.id, wasteTypes[wasteType.id].quantity - 1) }}
                           className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 text-gray-600"
-                          disabled={!wasteTypes[wasteType.id].selected}
                         >
                           <Minus className="w-4 h-4" />
                         </button>
@@ -267,7 +396,6 @@ const CustomerTrashType = () => {
                         <button
                           onClick={(e) => { e.stopPropagation(); updateQuantity(wasteType.id, wasteTypes[wasteType.id].quantity + 1) }}
                           className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 text-gray-600"
-                          disabled={!wasteTypes[wasteType.id].selected}
                         >
                           <Plus className="w-4 h-4" />
                         </button>
@@ -282,8 +410,19 @@ const CustomerTrashType = () => {
 
         {/* Next Button */}
         <div className="flex justify-center">
-          <button className="next-btn" onClick={() => navigate('/customer/location-pin')}>
-            Next
+          <button 
+            className="next-btn py-4 px-12 rounded-full text-lg" 
+            onClick={handleSubmitWasteTypes}
+            disabled={loading}
+          >
+            {loading ? (
+              <div className="flex items-center justify-center space-x-2">
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>Saving...</span>
+              </div>
+            ) : (
+              "Submit"
+            )}
           </button>
         </div>
       </main>

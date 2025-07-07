@@ -1,6 +1,6 @@
 "use client"
 
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { Recycle, Bell } from "lucide-react"
 import UserProfileDropdown from "./UserProfileDropdown"
 import CustomerNotification from "./CustomerNotification"
@@ -51,6 +51,7 @@ function isToday(dateStr) {
 
 const HistoryLog = () => {
   const [search, setSearch] = useState("")
+  const navigate = useNavigate()
   const historyData = [
     {
       date: "July 20, 2024",
