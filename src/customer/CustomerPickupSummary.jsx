@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { Recycle, Bell } from "lucide-react"
 import { useState } from "react"
 import UserProfileDropdown from "./UserProfileDropdown"
@@ -8,6 +8,7 @@ import CustomerNotification from "./CustomerNotification";
 const ConfirmPickup = () => {
   const [confirmed, setConfirmed] = useState(false)
   const [showPopup, setShowPopup] = useState(false);
+  const navigate = useNavigate();
   const pickupSummary = {
     wasteTypes: "Recyclables, Organics",
     quantities: "2 bags, 1 bin",

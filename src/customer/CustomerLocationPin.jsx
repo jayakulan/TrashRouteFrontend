@@ -18,6 +18,8 @@ const PinLocation = () => {
   const [mapZoom, setMapZoom] = useState(17);
   const [map, setMap] = useState(null);
   const [marker, setMarker] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ type: "", text: "" });
   const navigate = useNavigate();
 
   const pickupDetails = {
@@ -41,6 +43,61 @@ const PinLocation = () => {
     // Optionally implement geolocation
     console.log("Center on user location")
   }
+
+  const handleSaveLocation = async () => {
+    setLoading(true);
+    setMessage({ type: "", text: "" });
+
+    try {
+      console.log('Saving location coordinates:', coordinates);
+
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      console.log('Token from localStorage:', token ? 'Token exists' : 'No token found');
+      
+      const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Customer/CustomerLocationPin.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          latitude: coordinates.latitude,
+          longitude: coordinates.longitude
+        }),
+        credentials: "include",
+      });
+
+      const result = await response.json();
+      
+      console.log('Response from server:', result);
+      console.log('Response status:', response.status);
+
+      if (result.success) {
+        setMessage({ type: "success", text: "Location saved successfully!" });
+        
+        // Store the location data in localStorage for the next step
+        localStorage.setItem('locationData', JSON.stringify({
+          latitude: coordinates.latitude,
+          longitude: coordinates.longitude,
+          requestIds: result.data.request_ids,
+          totalUpdated: result.data.total_updated
+        }));
+        
+        // Navigate to next step after a short delay
+        setTimeout(() => {
+          navigate('/customer/pickup-summary');
+        }, 1500);
+      } else {
+        setMessage({ type: "error", text: result.message || "Failed to save location" });
+      }
+    } catch (error) {
+      console.error('Error saving location:', error);
+      setMessage({ type: "error", text: `Network error: ${error.message}. Please try again.` });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Update marker position when coordinates change
   useEffect(() => {
@@ -106,6 +163,22 @@ const PinLocation = () => {
           </div>
           {/* Title */}
           <h1 className="text-3xl font-bold text-gray-900 mb-6">Pin your location</h1>
+          
+          {/* Message Display */}
+          {message.text && (
+            <div className={`mb-6 p-4 rounded-lg ${
+              message.type === "success" 
+                ? "bg-green-50 border border-green-200 text-green-700" 
+                : "bg-red-50 border border-red-200 text-red-700"
+            }`}>
+              <div className="flex items-center space-x-2">
+                <span className="text-lg">
+                  {message.type === "success" ? "✅" : "❌"}
+                </span>
+                <span className="font-medium">{message.text}</span>
+              </div>
+            </div>
+          )}
           {/* Map Card */}
           <div className="relative bg-white rounded-2xl shadow border overflow-hidden" style={{ minHeight: 380 }}>
             {/* Floating Search Bar */}
@@ -186,9 +259,17 @@ const PinLocation = () => {
           <div className="w-full max-w-2xl mx-auto flex justify-center mb-8">
             <button 
               className="next-btn py-4 px-12 rounded-full text-lg"
-              onClick={() => navigate('/customer/pickup-summary')}
+              onClick={handleSaveLocation}
+              disabled={loading}
             >
-              Next
+              {loading ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Saving...</span>
+                </div>
+              ) : (
+                "Next"
+              )}
             </button>
           </div>
         </section>
