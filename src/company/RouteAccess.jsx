@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Search, Plus, Minus, Navigation } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import UserProfileDropdowncom from "./UserProfileDropdowncom"
 import { Link } from "react-router-dom"
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api"
@@ -45,8 +45,15 @@ const RouteActivation = () => {
   
   // Generate 10 random locations
   const [randomLocations, setRandomLocations] = useState([])
+  const [backendData, setBackendData] = useState({ customerCount: null, approximateQuantity: null });
+  const [loadingBackend, setLoadingBackend] = useState(false);
+  const [backendError, setBackendError] = useState("");
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentMessage, setPaymentMessage] = useState("");
 
   const navigate = useNavigate()
+  const location = useLocation();
+  const wasteType = location.state?.wasteType || null;
 
   // Generate random locations on component mount
   useEffect(() => {
@@ -54,6 +61,47 @@ const RouteActivation = () => {
     const locations = Array.from({ length: 10 }, () => getRandomLatLng(center, 5000)) // 5km radius
     setRandomLocations(locations)
   }, [])
+
+  // Fetch backend data for route details
+  useEffect(() => {
+    setLoadingBackend(true);
+    setBackendError("");
+    let url, body;
+    const company_id = localStorage.getItem("company_id");
+    if (!company_id) {
+      setBackendError("Company ID not found. Please log in again.");
+      setLoadingBackend(false);
+      return;
+    }
+    if (wasteType) {
+      url = "http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/Companywasteprefer.php";
+      body = `waste_type=${wasteType}&company_id=${company_id}`;
+    } else {
+      url = "http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/Routeaccess.php";
+      body = `company_id=${company_id}`;
+    }
+    fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setBackendData({
+            customerCount: data.customerCount,
+            approximateQuantity: data.approximateQuantity,
+          });
+        } else {
+          setBackendError(data.message || "Failed to fetch route data.");
+        }
+        setLoadingBackend(false);
+      })
+      .catch(err => {
+        setBackendError("Network error. Please try again.");
+        setLoadingBackend(false);
+      });
+  }, [wasteType]);
 
   const handleMapLoad = (mapInstance) => {
     setMap(mapInstance)
@@ -112,11 +160,61 @@ const RouteActivation = () => {
 
   const handlePayNow = () => setShowModal(true)
   const handleCloseModal = () => setShowModal(false)
-  const handleProceed = (e) => {
-    e.preventDefault()
-    setShowModal(false)
-    navigate("/company/route-map")
-  }
+  const handleProceed = async (e) => {
+    e.preventDefault();
+    setPaymentLoading(true);
+    setPaymentMessage("");
+    const company_id = localStorage.getItem("company_id");
+    if (!company_id) {
+      setPaymentMessage("Company ID not found. Please log in again.");
+      setPaymentLoading(false);
+      return;
+    }
+    try {
+      const res = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/payments.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `company_id=${company_id}&card_number=${cardNumber}&cardholder_name=${encodeURIComponent(cardName)}&expiry_date=${expiry}&pin_number=${cvv}&amount=${amount}`,
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPaymentMessage("Payment successful! Route access unlocked.");
+        setShowModal(false);
+        // Redirect to RouteMap with company_id and route_id
+        navigate("/company/route-map", {
+          state: {
+            company_id: company_id,
+            route_id: data.route_id
+          }
+        });
+      } else {
+        setPaymentMessage(data.message || "Payment failed. Please try again.");
+      }
+    } catch (err) {
+      setPaymentMessage("Network error. Please try again.");
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const lockedMapOptions = {
+    mapTypeId: 'roadmap',
+    streetViewControl: false,
+    fullscreenControl: false,
+    zoomControl: false,
+    draggable: false,
+    disableDoubleClickZoom: true,
+    scrollwheel: false,
+    clickableIcons: false,
+    gestureHandling: "none", // disables all gestures
+    styles: [
+      {
+        featureType: "poi",
+        elementType: "labels",
+        stylers: [{ visibility: "off" }]
+      }
+    ]
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -180,55 +278,64 @@ const RouteActivation = () => {
 
           {/* Google Maps Display */}
           <div className="w-full h-80 relative">
-            <LoadScript 
-              googleMapsApiKey={GOOGLE_MAPS_API_KEY}
-              onError={handleMapError}
-            >
-              <GoogleMap
-                mapContainerStyle={{ width: '100%', height: '100%' }}
-                center={{ lat: 6.9271, lng: 79.8612 }} // Colombo, Sri Lanka
-                zoom={mapZoom}
-                onLoad={handleMapLoad}
-                options={{
-                  mapTypeId: 'roadmap',
-                  streetViewControl: true,
-                  fullscreenControl: true,
-                  zoomControl: false,
-                  styles: [
-                    {
-                      featureType: "poi",
-                      elementType: "labels",
-                      stylers: [{ visibility: "off" }]
-                    }
-                  ]
-                }}
+            {(routeDetails.routeStatus === "Pending" || routeDetails.routeStatus === "Accepted") ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-200 bg-opacity-80 z-20 rounded-2xl border-2 border-dashed border-gray-400">
+                <svg className="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 17v1m0 4a2 2 0 002-2h-4a2 2 0 002 2zm6-4V9a6 6 0 10-12 0v8a2 2 0 002 2h8a2 2 0 002-2z" />
+                </svg>
+                <div className="text-xl font-bold text-gray-500 mb-2">Map Locked</div>
+                <div className="text-gray-500 text-center">Unlock the route by completing the payment.</div>
+              </div>
+            ) : (
+              <LoadScript 
+                googleMapsApiKey={GOOGLE_MAPS_API_KEY}
+                onError={handleMapError}
               >
-                {/* Render random location markers */}
-                {randomLocations.map((location, index) => (
-                  <Marker
-                    key={index}
-                    position={location}
-                    label={{
-                      text: `${index + 1}`,
-                      color: 'white',
-                      fontWeight: 'bold',
-                      fontSize: '14px'
-                    }}
-                    icon={{
-                      path: window.google?.maps.SymbolPath.CIRCLE,
-                      scale: 10,
-                      fillColor: '#3a5f46',
-                      fillOpacity: 1,
-                      strokeColor: '#ffffff',
-                      strokeWeight: 2
-                    }}
-                  />
-                ))}
-              </GoogleMap>
-            </LoadScript>
-            
+                <GoogleMap
+                  mapContainerStyle={{ width: '100%', height: '100%' }}
+                  center={{ lat: 6.9271, lng: 79.8612 }} // Colombo, Sri Lanka
+                  zoom={mapZoom}
+                  onLoad={handleMapLoad}
+                  options={{
+                    mapTypeId: 'roadmap',
+                    streetViewControl: true,
+                    fullscreenControl: true,
+                    zoomControl: false,
+                    styles: [
+                      {
+                        featureType: "poi",
+                        elementType: "labels",
+                        stylers: [{ visibility: "off" }]
+                      }
+                    ]
+                  }}
+                >
+                  {/* Render random location markers */}
+                  {randomLocations.map((location, index) => (
+                    <Marker
+                      key={index}
+                      position={location}
+                      label={{
+                        text: `${index + 1}`,
+                        color: 'white',
+                        fontWeight: 'bold',
+                        fontSize: '14px'
+                      }}
+                      icon={{
+                        path: window.google?.maps.SymbolPath.CIRCLE,
+                        scale: 10,
+                        fillColor: '#3a5f46',
+                        fillOpacity: 1,
+                        strokeColor: '#ffffff',
+                        strokeWeight: 2
+                      }}
+                    />
+                  ))}
+                </GoogleMap>
+              </LoadScript>
+            )}
             {/* Loading overlay */}
-            {!isMapLoaded && (
+            {!isMapLoaded && routeDetails.routeStatus !== "Pending" && routeDetails.routeStatus !== "Accepted" && (
               <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3a5f46] mx-auto mb-4"></div>
@@ -260,7 +367,9 @@ const RouteActivation = () => {
                   </svg>
                   <span className="font-medium text-[#3a5f46]">No. of Customers</span>
                 </div>
-                <p className="text-2xl font-bold text-[#3a5f46]">{routeDetails.customerCount}</p>
+                <p className="text-2xl font-bold text-[#3a5f46]">
+                  {loadingBackend ? "Loading..." : backendData.customerCount ?? "--"}
+                </p>
               </div>
               
               <div className="bg-[#f7faf9] rounded-lg p-4 border border-[#e6f4ea]">
@@ -270,9 +379,14 @@ const RouteActivation = () => {
                   </svg>
                   <span className="font-medium text-[#3a5f46]">Approximate Quantity</span>
                 </div>
-                <p className="text-2xl font-bold text-[#3a5f46]">{routeDetails.approximateQuantity} kg</p>
+                <p className="text-2xl font-bold text-[#3a5f46]">
+                  {loadingBackend ? "Loading..." : (backendData.approximateQuantity ?? "--")} kg
+                </p>
               </div>
             </div>
+            {backendError && (
+              <div className="text-red-600 text-center mb-4">{backendError}</div>
+            )}
             
             {/* Accept/Reject Buttons */}
             <div className="flex gap-4">
@@ -404,7 +518,12 @@ const RouteActivation = () => {
                 <label className="block text-gray-700 font-medium mb-1">Amount</label>
                 <input type="text" value={`Rs.${amount}`} readOnly className="w-full border rounded-lg px-3 py-2 bg-gray-100" />
               </div>
-              <button type="submit" className="w-full bg-[#3a5f46] hover:bg-[#2e4d3a] text-white font-semibold py-3 rounded-lg transition">Proceed</button>
+              <button type="submit" className="w-full bg-[#3a5f46] hover:bg-[#2e4d3a] text-white font-semibold py-3 rounded-lg transition" disabled={paymentLoading}>
+                {paymentLoading ? "Processing..." : "Proceed"}
+              </button>
+              {paymentMessage && (
+                <div className={`mt-4 text-center font-semibold ${paymentMessage.includes("success") ? "text-green-600" : "text-red-600"}`}>{paymentMessage}</div>
+              )}
             </form>
           </div>
         </div>
