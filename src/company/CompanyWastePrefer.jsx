@@ -5,6 +5,9 @@ import UserProfileDropdowncom from "./UserProfileDropdowncom"
 
 const WastePreferences = () => {
   const [selectedWasteType, setSelectedWasteType] = useState("")
+  const [result, setResult] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
   const navigate = useNavigate()
 
   const wasteTypes = [
@@ -36,12 +39,37 @@ const WastePreferences = () => {
 
   const toggleWasteType = (wasteTypeId) => {
     setSelectedWasteType(wasteTypeId)
+    setResult(null)
+    setError("")
   }
 
-  const handleSubmit = () => {
-    console.log("Selected waste type:", selectedWasteType)
-    // Handle submission logic here
-    navigate("/company/route-access")
+  const handleSubmit = async () => {
+    setLoading(true)
+    setError("")
+    setResult(null)
+    try {
+      const res = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/Companywasteprefer.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `waste_type=${selectedWasteType}`,
+      })
+      const data = await res.json()
+      if (data.success) {
+        navigate("/company/route-access", {
+          state: {
+            wasteType: selectedWasteType
+          }
+        });
+      } else {
+        setError(data.message || "Failed to fetch data.")
+      }
+    } catch (err) {
+      setError("Network error. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+    // Optionally navigate after showing results
+    // navigate("/company/route-access")
   }
 
   return (
@@ -127,17 +155,17 @@ const WastePreferences = () => {
         <div className="flex justify-center">
           <button
             onClick={handleSubmit}
-            disabled={!selectedWasteType}
+            disabled={!selectedWasteType || loading}
             className={`
               px-8 py-4 rounded-full font-semibold text-lg transition-all duration-200
               ${
-                selectedWasteType
+                selectedWasteType && !loading
                   ? "bg-[#3a5f46] hover:bg-[#2e4d3a] text-white shadow-lg hover:shadow-xl"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }
             `}
           >
-            Submit Waste Preferences
+            {loading ? "Loading..." : "Submit Waste Preferences"}
           </button>
         </div>
 
@@ -148,6 +176,28 @@ const WastePreferences = () => {
               Selected: {wasteTypes.find((type) => type.id === selectedWasteType)?.name}
             </p>
           </div>
+        )}
+
+        {/* Results Section */}
+        {result && (
+          <div className="mt-8 text-center">
+            <div className="inline-block bg-white rounded-2xl shadow border p-8">
+              <h2 className="text-2xl font-bold mb-4 text-[#3a5f46]">Pickup Request Summary</h2>
+              <div className="flex flex-col md:flex-row gap-8 justify-center items-center">
+                <div className="text-lg font-semibold text-gray-700">
+                  <span className="block text-[#3a5f46] text-3xl font-bold">{result.customerCount}</span>
+                  No. of Customers
+                </div>
+                <div className="text-lg font-semibold text-gray-700">
+                  <span className="block text-[#3a5f46] text-3xl font-bold">{result.approximateQuantity} kg</span>
+                  Approximate Quantity
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        {error && (
+          <div className="mt-8 text-center text-red-600 font-semibold">{error}</div>
         )}
       </main>
     </div>

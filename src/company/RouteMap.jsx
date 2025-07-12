@@ -65,6 +65,15 @@ const RouteMap = () => {
     { id: 5, address: "222 Cedar Court", contact: "Jessica White", notes: "Bins near the side entrance", collected: false }
   ])
 
+  const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
+  const [feedbackHousehold, setFeedbackHousehold] = useState(null);
+  const [feedback, setFeedback] = useState({
+    pickup_completed: true,
+    rating: 5,
+    comment: ""
+  });
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
+
   useEffect(() => {
     const center = { lat: 20.5937, lng: 78.9629 }
     const locations = Array.from({ length: 10 }, () => getRandomLatLng(center, 1000000))
@@ -226,6 +235,15 @@ const RouteMap = () => {
     )
   }
 
+  const handleCollectedClick = (household) => {
+    if (!household.collected) {
+      setFeedbackHousehold(household);
+      setShowFeedbackPopup(true);
+    } else {
+      toggleCollected(household.id);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
@@ -348,7 +366,7 @@ const RouteMap = () => {
                     <td className="px-6 py-4">{h.notes}</td>
                     <td className="px-6 py-4">
                       <button
-                        onClick={() => toggleCollected(h.id)}
+                        onClick={() => handleCollectedClick(h)}
                         className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 transition-colors shadow-sm ${
                           h.collected
                             ? "bg-green-100 text-green-800 border border-green-300"
@@ -387,6 +405,135 @@ const RouteMap = () => {
           </div>
         </div>
       </main>
+      {showFeedbackPopup && feedbackHousehold && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Animated Backdrop */}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity animate-fadeIn" aria-hidden="true"></div>
+          {/* Animated Popup */}
+          <div className="relative bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md border border-[#e6f4ea] animate-popupEnter">
+            {/* Close Button */}
+            <button
+              type="button"
+              aria-label="Close feedback form"
+              onClick={() => { setShowFeedbackPopup(false); setFeedbackHousehold(null); }}
+              className="absolute top-3 right-3 text-gray-400 hover:text-[#3a5f46] transition-colors text-2xl font-bold focus:outline-none"
+            >
+              &times;
+            </button>
+            <h3 className="text-2xl font-extrabold mb-4 text-[#3a5f46] flex items-center gap-2">
+              <span className="inline-block bg-[#e6f4ea] text-[#3a5f46] px-2 py-1 rounded text-xs font-semibold">Feedback</span>
+              Company Pickup
+            </h3>
+            <form
+              className="space-y-5"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setFeedbackSubmitting(true);
+                // TODO: Replace with your actual request_id and company_id logic
+                const request_id = feedbackHousehold.request_id || 1; // Example
+                const company_id = 3; // Example, get from context/auth
+                const payload = {
+                  request_id,
+                  company_id,
+                  pickup_completed: feedback.pickup_completed,
+                  rating: feedback.rating,
+                  comment: feedback.comment
+                };
+                await fetch("/api/company_feedback.php", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(payload)
+                });
+                toggleCollected(feedbackHousehold.id);
+                setShowFeedbackPopup(false);
+                setFeedbackHousehold(null);
+                setFeedback({ pickup_completed: true, rating: 5, comment: "" });
+                setFeedbackSubmitting(false);
+              }}
+            >
+              <div>
+                <label className="block mb-1 font-semibold text-[#3a5f46]">Pickup Completed</label>
+                <div className="flex gap-4">
+                  <label className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${feedback.pickup_completed ? 'bg-[#e6f4ea] border-[#3a5f46] text-[#3a5f46]' : 'bg-gray-50 border-gray-200 text-gray-500'}`}> 
+                    <input
+                      type="radio"
+                      className="accent-[#3a5f46]"
+                      name="pickup_completed"
+                      value="yes"
+                      checked={feedback.pickup_completed}
+                      onChange={() => setFeedback(f => ({ ...f, pickup_completed: true }))}
+                    />
+                    Yes
+                  </label>
+                  <label className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${!feedback.pickup_completed ? 'bg-[#e6f4ea] border-[#3a5f46] text-[#3a5f46]' : 'bg-gray-50 border-gray-200 text-gray-500'}`}> 
+                    <input
+                      type="radio"
+                      className="accent-[#3a5f46]"
+                      name="pickup_completed"
+                      value="no"
+                      checked={!feedback.pickup_completed}
+                      onChange={() => setFeedback(f => ({ ...f, pickup_completed: false }))}
+                    />
+                    No
+                  </label>
+                </div>
+              </div>
+              <div>
+                <label className="block mb-1 font-semibold text-[#3a5f46]">Rating</label>
+                <div className="flex gap-2">
+                  {[1,2,3,4,5].map(n => (
+                    <button
+                      type="button"
+                      key={n}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center border text-lg font-bold transition-colors focus:outline-none ${feedback.rating === n ? 'bg-[#3a5f46] text-white border-[#3a5f46] scale-110 shadow' : 'bg-gray-100 text-[#3a5f46] border-gray-200 hover:bg-[#e6f4ea]'}`}
+                      onClick={() => setFeedback(f => ({ ...f, rating: n }))}
+                      aria-label={`Rate ${n}`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block mb-1 font-semibold text-[#3a5f46]">Comment</label>
+                <textarea
+                  className="w-full border border-[#e6f4ea] rounded-lg p-3 min-h-[80px] focus:ring-2 focus:ring-[#3a5f46] focus:outline-none transition"
+                  value={feedback.comment}
+                  onChange={e => setFeedback(f => ({ ...f, comment: e.target.value }))}
+                  placeholder="Share your experience (optional)"
+                  maxLength={500}
+                />
+              </div>
+              <div className="flex justify-end gap-2 mt-6">
+                <button
+                  type="button"
+                  onClick={() => { setShowFeedbackPopup(false); setFeedbackHousehold(null); }}
+                  className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={feedbackSubmitting}
+                  className={`px-6 py-2 rounded-lg font-bold text-white flex items-center gap-2 transition-colors duration-200 shadow ${feedbackSubmitting ? 'bg-[#3a5f46]/70 cursor-wait' : 'bg-[#3a5f46] hover:bg-[#2e4d3a]'}`}
+                >
+                  {feedbackSubmitting && (
+                    <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+                  )}
+                  Submit Feedback
+                </button>
+              </div>
+            </form>
+          </div>
+          {/* Animations */}
+          <style>{`
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            .animate-fadeIn { animation: fadeIn 0.3s ease; }
+            @keyframes popupEnter { from { opacity: 0; transform: scale(0.85) translateY(40px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+            .animate-popupEnter { animation: popupEnter 0.35s cubic-bezier(0.4,0,0.2,1); }
+          `}</style>
+        </div>
+      )}
     </div>
   )
 }

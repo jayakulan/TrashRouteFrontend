@@ -29,10 +29,16 @@ export const AuthProvider = ({ children }) => {
       const result = await response.json();
       
       if (result.success) {
-        const { user: userData, token } = result.data;
+        const { user: userData, token, profile } = result.data;
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
+
+        // Store company_id and full company profile for company users
+        if (userData.role === "company" && profile && profile.company_id) {
+          localStorage.setItem('company_id', profile.company_id);
+          localStorage.setItem('company_profile', JSON.stringify(profile));
+        }
 
         // Navigate based on role
         switch (userData.role) {

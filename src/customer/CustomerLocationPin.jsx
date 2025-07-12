@@ -1,11 +1,40 @@
-import { useState, useEffect } from "react"
+// Place this at the top of the file, outside the component
+const GOOGLE_MAPS_LIBRARIES = ['places'];
+
+import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Recycle, Search, Plus, Minus, Navigation, Bell } from "lucide-react"
 import UserProfileDropdown from "./UserProfileDropdown"
 import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
 import CustomerNotification from "./CustomerNotification";
 
-// Constants for Google Maps configuration
+// --- PlaceAutocompleteInput: Uses the new PlaceAutocompleteElement web component ---
+function PlaceAutocompleteInput({ onPlaceSelect }) {
+  const inputRef = useRef(null);
+  useEffect(() => {
+    if (window.customElements && !window.customElements.get('gmpx-place-autocomplete')) {
+      // Optionally, dynamically load the web component if not present
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/@googlemaps/places-autocomplete-element/dist/index.min.js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+    if (window.google && window.google.maps && window.google.maps.places && inputRef.current) {
+      // Remove any previous autocomplete element
+      inputRef.current.innerHTML = '';
+      const autocompleteEl = document.createElement('gmpx-place-autocomplete');
+      autocompleteEl.setAttribute('style', 'width: 100%;');
+      autocompleteEl.addEventListener('gmpx-placeautocomplete-placechange', (event) => {
+        const place = event.detail;
+        if (onPlaceSelect) onPlaceSelect(place);
+      });
+      inputRef.current.appendChild(autocompleteEl);
+    }
+  }, [onPlaceSelect]);
+  return <div ref={inputRef} style={{ width: '100%' }} />;
+}
+
+// --- Main Component ---
 const GOOGLE_MAPS_MAP_ID = '2d11b98e205d938c1f59291f'; // Custom Map ID for TrashRoute
 
 const PinLocation = () => {
@@ -13,7 +42,7 @@ const PinLocation = () => {
     latitude: 9.6615, // Jaffna, Sri Lanka
     longitude: 80.0255,
   })
-
+  const [address, setAddress] = useState("");
   const [searchQuery, setSearchQuery] = useState("")
   const [mapZoom, setMapZoom] = useState(17);
   const [map, setMap] = useState(null);
@@ -21,6 +50,13 @@ const PinLocation = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const navigate = useNavigate();
+  const autocompleteInputRef = useRef(null);
+
+  // Use the static libraries array
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: 'AIzaSyA5iEKgAwrJWVkCMAsD7_IilJ0YSVf_VGk',
+    libraries: GOOGLE_MAPS_LIBRARIES
+  });
 
   const pickupDetails = {
     wasteTypes: "Mixed Recyclables, Cardboard",
@@ -34,27 +70,45 @@ const PinLocation = () => {
       latitude: event.latLng.lat(),
       longitude: event.latLng.lng(),
     });
-    console.log("Map clicked, new coordinates:", event.latLng.lat(), event.latLng.lng());
   }
 
   const handleZoomIn = () => setMapZoom((z) => Math.min(z + 1, 21));
   const handleZoomOut = () => setMapZoom((z) => Math.max(z - 1, 2));
   const handleLocationCenter = () => {
-    // Optionally implement geolocation
-    console.log("Center on user location")
+    if (map) {
+      map.setCenter({ lat: coordinates.latitude, lng: coordinates.longitude });
+      setMapZoom(17);
+    }
   }
+
+  // Locate Me button using Geolocation API
+  const handleLocateMe = () => {
+    if (navigator.geolocation) {
+      setLoading(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setCoordinates({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+          setLoading(false);
+          setMapZoom(18);
+        },
+        (error) => {
+          setMessage({ type: "error", text: "Unable to get your location." });
+          setLoading(false);
+        }
+      );
+    } else {
+      setMessage({ type: "error", text: "Geolocation is not supported by your browser." });
+    }
+  };
 
   const handleSaveLocation = async () => {
     setLoading(true);
     setMessage({ type: "", text: "" });
-
     try {
-      console.log('Saving location coordinates:', coordinates);
-
-      // Get token from localStorage
       const token = localStorage.getItem('token');
-      console.log('Token from localStorage:', token ? 'Token exists' : 'No token found');
-      
       const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Customer/CustomerLocationPin.php", {
         method: "POST",
         headers: {
@@ -67,24 +121,15 @@ const PinLocation = () => {
         }),
         credentials: "include",
       });
-
       const result = await response.json();
-      
-      console.log('Response from server:', result);
-      console.log('Response status:', response.status);
-
       if (result.success) {
         setMessage({ type: "success", text: "Location saved successfully!" });
-        
-        // Store the location data in localStorage for the next step
         localStorage.setItem('locationData', JSON.stringify({
           latitude: coordinates.latitude,
           longitude: coordinates.longitude,
           requestIds: result.data.request_ids,
           totalUpdated: result.data.total_updated
         }));
-        
-        // Navigate to next step after a short delay
         setTimeout(() => {
           navigate('/customer/pickup-summary');
         }, 1500);
@@ -92,25 +137,65 @@ const PinLocation = () => {
         setMessage({ type: "error", text: result.message || "Failed to save location" });
       }
     } catch (error) {
-      console.error('Error saving location:', error);
       setMessage({ type: "error", text: `Network error: ${error.message}. Please try again.` });
     } finally {
       setLoading(false);
     }
   };
 
-  // Update marker position when coordinates change
+  // --- AdvancedMarkerElement integration ---
   useEffect(() => {
-    if (marker && map) {
-      const newPosition = { lat: coordinates.latitude, lng: coordinates.longitude };
-      marker.setPosition(newPosition);
-      map.setCenter(newPosition);
+    if (isLoaded && map && window.google) {
+      // Remove old marker if any
+      if (marker) marker.setMap(null);
+      const newMarker = new window.google.maps.Marker({
+        position: { lat: coordinates.latitude, lng: coordinates.longitude },
+        map,
+        title: "Selected Location",
+        draggable: true,
+        icon: {
+          path: window.google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: '#3a5f46',
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 2
+        }
+      });
+      newMarker.addListener("dragend", (e) => {
+        setCoordinates({
+          latitude: e.latLng.lat(),
+          longitude: e.latLng.lng(),
+        });
+      });
+      setMarker(newMarker);
     }
-  }, [coordinates, marker, map]);
+    // eslint-disable-next-line
+  }, [isLoaded, map, coordinates]);
 
-  const { isLoaded } = useJsApiLoader({
-            googleMapsApiKey: 'AIzaSyA5iEKgAwrJWVkCMAsD7_IilJ0YSVf_VGk'
-  });
+  // Reverse geocoding to get address from coordinates
+  useEffect(() => {
+    if (
+      isLoaded &&
+      window.google &&
+      window.google.maps &&
+      typeof window.google.maps.Geocoder === "function" &&
+      coordinates.latitude &&
+      coordinates.longitude
+    ) {
+      const geocoder = new window.google.maps.Geocoder();
+      geocoder.geocode(
+        { location: { lat: coordinates.latitude, lng: coordinates.longitude } },
+        (results, status) => {
+          if (status === "OK" && results[0]) {
+            setAddress(results[0].formatted_address);
+          } else {
+            setAddress("Address not found");
+          }
+        }
+      );
+    }
+  }, [isLoaded, coordinates]);
 
   const mapContainerStyle = {
     width: '100%',
@@ -163,7 +248,6 @@ const PinLocation = () => {
           </div>
           {/* Title */}
           <h1 className="text-3xl font-bold text-gray-900 mb-6">Pin your location</h1>
-          
           {/* Message Display */}
           {message.text && (
             <div className={`mb-6 p-4 rounded-lg ${
@@ -181,17 +265,23 @@ const PinLocation = () => {
           )}
           {/* Map Card */}
           <div className="relative bg-white rounded-2xl shadow border overflow-hidden" style={{ minHeight: 380 }}>
-            {/* Floating Search Bar */}
+            {/* Floating Search Bar with PlaceAutocompleteElement */}
             <div className="absolute top-6 left-6 right-32 z-10">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Search for a location..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-full shadow focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-                />
+                {isLoaded && (
+                  <PlaceAutocompleteInput
+                    onPlaceSelect={place => {
+                      if (place && place.location) {
+                        setCoordinates({
+                          latitude: place.location.lat,
+                          longitude: place.location.lng,
+                        });
+                        setSearchQuery(place.formatted_address || "");
+                      }
+                    }}
+                  />
+                )}
               </div>
             </div>
             {/* Map Controls */}
@@ -205,6 +295,9 @@ const PinLocation = () => {
               <button onClick={handleLocationCenter} className="w-10 h-10 bg-white border border-gray-200 rounded-lg shadow flex items-center justify-center hover:bg-gray-50 transition-colors">
                 <Navigation className="w-5 h-5 text-gray-600" />
               </button>
+              <button onClick={handleLocateMe} className="w-10 h-10 bg-blue-50 border border-blue-200 rounded-lg shadow flex items-center justify-center hover:bg-blue-100 transition-colors" title="Locate Me">
+                <Navigation className="w-5 h-5 text-blue-600" />
+              </button>
             </div>
             {/* Google Map Integration */}
             <div style={{ width: '100%', height: 380 }}>
@@ -214,33 +307,14 @@ const PinLocation = () => {
                   center={center}
                   zoom={mapZoom}
                   onClick={handleMapClick}
-                  // mapId={GOOGLE_MAPS_MAP_ID} // Temporarily disabled until Map ID is properly configured
+                  mapId={GOOGLE_MAPS_MAP_ID} // Pass the Map ID here for Advanced Markers
                   options={{
                     mapTypeId: 'roadmap',
                     streetViewControl: true,
                     fullscreenControl: true,
                     zoomControl: false
                   }}
-                  onLoad={(mapInstance) => {
-                    setMap(mapInstance);
-                    // Create initial marker
-                    if (window.google) {
-                      const newMarker = new window.google.maps.Marker({
-                        position: center,
-                        map: mapInstance,
-                        title: "Selected Location",
-                        icon: {
-                          path: window.google.maps.SymbolPath.CIRCLE,
-                          scale: 8,
-                          fillColor: '#3a5f46',
-                          fillOpacity: 1,
-                          strokeColor: '#ffffff',
-                          strokeWeight: 2
-                        }
-                      });
-                      setMarker(newMarker);
-                    }
-                  }}
+                  onLoad={setMap}
                 />
               )}
             </div>
@@ -252,6 +326,9 @@ const PinLocation = () => {
               <div className="flex gap-8 text-base">
                 <div className="text-theme-color font-medium">Longitude: <span className="text-gray-900 font-normal">{coordinates.latitude.toFixed(6)}</span></div>
                 <div className="text-theme-color font-medium">Latitude: <span className="text-gray-900 font-normal">{coordinates.longitude.toFixed(6)}</span></div>
+              </div>
+              <div className="text-gray-700 text-sm mt-2">
+                <span className="font-medium">Address:</span> {address}
               </div>
             </div>
           </div>
@@ -274,6 +351,12 @@ const PinLocation = () => {
           </div>
         </section>
       </main>
+      {/*
+        IMPORTANT: For PlaceAutocompleteElement and AdvancedMarkerElement to work,
+        add these to your public/index.html (or equivalent):
+        <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_KEY&libraries=places,marker"></script>
+        <script src="https://unpkg.com/@googlemaps/places-autocomplete-element/dist/index.min.js"></script>
+      */}
     </div>
   )
 }
