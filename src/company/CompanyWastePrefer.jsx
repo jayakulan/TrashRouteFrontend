@@ -84,6 +84,7 @@ const WastePreferences = () => {
             </div>
             {/* Navigation - right aligned */}
             <div className="flex items-center space-x-8 ml-auto">
+              <Link to="/" className="text-gray-700 hover:text-gray-900 font-medium">Home</Link>
               <Link to="/company-waste-prefer" className="text-gray-700 hover:text-gray-900 font-medium">Dashboard</Link>
               <Link to="/company/historylogs" className="text-gray-700 hover:text-gray-900 font-medium">Historylogs</Link>
               {/* Notification Bell Icon */}
@@ -104,48 +105,49 @@ const WastePreferences = () => {
         {/* Title Section */}
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Waste Preferences</h1>
-          <p className="text-lg text-gray-600">Select the type of waste your company processes.</p>
+          <p className="text-lg text-[#3a5f46]">Select the type of waste your company processes.</p>
         </div>
 
         {/* Waste Type Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {wasteTypes.map((wasteType) => (
             <div
               key={wasteType.id}
               onClick={() => toggleWasteType(wasteType.id)}
               className={`
-                relative cursor-pointer rounded-2xl overflow-hidden transition-all duration-200 hover:scale-105 hover:shadow-lg
-                ${selectedWasteType === wasteType.id ? "ring-4 ring-[#3a5f46] ring-opacity-50" : "hover:shadow-md"}
+                relative cursor-pointer rounded-lg overflow-hidden transition-all duration-200
+                border-2 shadow-lg
+                bg-[#f5f7f6]
+                ${selectedWasteType === wasteType.id ? 'border-4  bg-[#eaf3ee]' : ''}
+                hover:scale-105 hover:border-[#3a5f46] hover:shadow-lg 
+                group
               `}
+              style={{ minHeight: '340px' }}
             >
               {/* Card Image/Background */}
-              <div className={`${wasteType.bgColor} h-64 flex items-center justify-center relative`}>
-                {/* Placeholder for actual images */}
-                <div className="text-white text-6xl opacity-20">
-                  {wasteType.name === "Plastic" && <span role="img" aria-label="Plastic Bottle">🧴</span>}
-                  {wasteType.name === "Metal" && <span role="img" aria-label="Wrench">🔧</span>}
-                  {wasteType.name === "Paper" && <span role="img" aria-label="Paper">📄</span>}
-                  {wasteType.name === "Glass" && <span role="img" aria-label="Glass Jar">🫙</span>}
-                </div>
-
+              <div className="h-48 flex items-center justify-center relative p-2">
+                <img 
+                  src={`/images/${wasteType.id}com.${wasteType.id === 'paper' ? 'jpg' : 'jpeg'}`} 
+                  alt={`${wasteType.name} waste`}
+                  className={
+                    selectedWasteType === wasteType.id
+                      ? 'w-full h-full object-cover rounded-md transition-all duration-200'
+                      : 'w-full h-full object-cover rounded-md transition-all duration-200 group-hover:grayscale'
+                  }
+                />
                 {/* Selection Indicator */}
                 {selectedWasteType === wasteType.id && (
-                  <div className="absolute top-4 right-4 w-6 h-6 bg-[#3a5f46] rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
+                  <div className="absolute top-3 right-3 w-8 h-8 bg-[#3a5f46] rounded-full flex items-center justify-center shadow-md">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
                 )}
               </div>
-
               {/* Card Content */}
-              <div className="bg-white p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{wasteType.name}</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">{wasteType.description}</p>
+              <div className="p-5 flex flex-col gap-2">
+                <h3 className="text-lg font-semibold text-black mb-1">{wasteType.name}</h3>
+                <p className="text-[#3a5f46] text-sm leading-relaxed text-left">{wasteType.description}</p>
               </div>
             </div>
           ))}

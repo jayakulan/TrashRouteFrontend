@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import { Link } from "react-router-dom"; // Added Link import
 
 const UserProfileDropdowncom = () => {
   const { user, logout } = useAuth();
@@ -88,7 +89,7 @@ const UserProfileDropdowncom = () => {
           <div className="font-semibold text-gray-900 text-lg mb-1">{user?.name || "Company Name"}</div>
           <div className="text-sm text-gray-500 mb-4">{user?.email || "company@email.com"}</div>
           <button onClick={() => setShowEditModal(true)} className="w-full text-center px-4 py-2 bg-[#3a5f46] text-white rounded hover:bg-[#2e4d3a] transition mb-2">Edit Profile</button>
-          <button onClick={logout} className="w-full text-center px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition">Logout</button>
+          <button onClick={logout} className="w-full text-center px-4 py-2 bg-[#6bbf7c] text-white rounded transition">Logout</button>
         </div>
       )}
       {/* Edit Profile Modal */}
