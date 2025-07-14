@@ -5,9 +5,8 @@ import { Search, Plus, Minus, Navigation } from "lucide-react"
 import { useNavigate, useLocation } from "react-router-dom"
 import UserProfileDropdowncom from "./UserProfileDropdowncom"
 import { Link } from "react-router-dom"
-import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api"
-
-const GOOGLE_MAPS_API_KEY = "AIzaSyA5iEKgAwrJWVkCMAsD7_IilJ0YSVf_VGk"
+import { GoogleMap, Marker } from "@react-google-maps/api"
+import { useGoogleMaps } from "../components/GoogleMapsProvider"
 
 // Helper function to generate random locations around a center point
 function getRandomLatLng(center, radius) {
@@ -24,6 +23,7 @@ function getRandomLatLng(center, radius) {
 }
 
 const RouteActivation = () => {
+  const { isLoaded: isGoogleMapsLoaded, loadError: googleMapsError, isLoading: isGoogleMapsLoading } = useGoogleMaps()
   const [searchQuery, setSearchQuery] = useState("")
   const [showModal, setShowModal] = useState(false)
   const [cardType, setCardType] = useState("")
@@ -119,6 +119,24 @@ const RouteActivation = () => {
     console.error("Google Maps API Error:", error)
   }
 
+  // Show error if Google Maps failed to load
+  if (googleMapsError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-lg text-center">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Google Maps Error</h2>
+          <p className="text-gray-600 mb-4">Failed to load Google Maps API. Please refresh the page.</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-[#3a5f46] text-white px-4 py-2 rounded hover:bg-[#2e4d3a]"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   const handleZoomIn = () => {
     if (map) {
       setMapZoom(prev => Math.min(prev + 1, 20))
@@ -174,17 +192,18 @@ const RouteActivation = () => {
       const res = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/payments.php", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `company_id=${company_id}&card_number=${cardNumber}&cardholder_name=${encodeURIComponent(cardName)}&expiry_date=${expiry}&pin_number=${cvv}&amount=${amount}`,
+        body: `company_id=${company_id}&card_number=${cardNumber}&cardholder_name=${encodeURIComponent(cardName)}&expiry_date=${expiry}&pin_number=${cvv}&amount=${amount}&waste_type=${encodeURIComponent(wasteType || '')}`,
       });
       const data = await res.json();
       if (data.success) {
         setPaymentMessage("Payment successful! Route access unlocked.");
         setShowModal(false);
-        // Redirect to RouteMap with company_id and route_id
+        // Redirect to RouteMap with company_id, route_id, and waste_type
         navigate("/company/route-map", {
           state: {
             company_id: company_id,
-            route_id: data.route_id
+            route_id: data.route_id,
+            waste_type: wasteType
           }
         });
       } else {
@@ -287,15 +306,13 @@ const RouteActivation = () => {
                 <div className="text-gray-500 text-center">Unlock the route by completing the payment.</div>
               </div>
             ) : (
-              <LoadScript 
-                googleMapsApiKey={GOOGLE_MAPS_API_KEY}
-                onError={handleMapError}
-              >
+              isGoogleMapsLoaded && window.google && window.google.maps && window.google.maps.Map ? (
                 <GoogleMap
                   mapContainerStyle={{ width: '100%', height: '100%' }}
                   center={{ lat: 6.9271, lng: 79.8612 }} // Colombo, Sri Lanka
                   zoom={mapZoom}
                   onLoad={handleMapLoad}
+                  onError={handleMapError}
                   options={{
                     mapTypeId: 'roadmap',
                     streetViewControl: true,
@@ -332,14 +349,21 @@ const RouteActivation = () => {
                     />
                   ))}
                 </GoogleMap>
-              </LoadScript>
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-200 bg-opacity-80 z-20 rounded-2xl border-2 border-dashed border-gray-400">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3a5f46] mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading Google Maps...</p>
+                </div>
+              )
             )}
             {/* Loading overlay */}
-            {!isMapLoaded && routeDetails.routeStatus !== "Pending" && routeDetails.routeStatus !== "Accepted" && (
+            {(isGoogleMapsLoading || (!isMapLoaded && routeDetails.routeStatus !== "Pending" && routeDetails.routeStatus !== "Accepted")) && (
               <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3a5f46] mx-auto mb-4"></div>
-                  <p className="text-gray-600">Loading map...</p>
+                  <p className="text-gray-600">
+                    {isGoogleMapsLoading ? "Loading Google Maps..." : "Loading map..."}
+                  </p>
                 </div>
               </div>
             )}
