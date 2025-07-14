@@ -84,7 +84,6 @@ const WastePreferences = () => {
             </div>
             {/* Navigation - right aligned */}
             <div className="flex items-center space-x-8 ml-auto">
-              <Link to="/" className="text-gray-700 hover:text-gray-900 font-medium">Home</Link>
               <Link to="/company-waste-prefer" className="text-gray-700 hover:text-gray-900 font-medium">Dashboard</Link>
               <Link to="/company/historylogs" className="text-gray-700 hover:text-gray-900 font-medium">Historylogs</Link>
               {/* Notification Bell Icon */}
@@ -146,7 +145,7 @@ const WastePreferences = () => {
               </div>
               {/* Card Content */}
               <div className="p-5 flex flex-col gap-2">
-                <h3 className="text-lg font-semibold text-black mb-1">{wasteType.name}</h3>
+                <h3 className="text-lg font-semibold text-[#3a5f46] mb-1">{wasteType.name}</h3>
                 <p className="text-[#3a5f46] text-sm leading-relaxed text-left">{wasteType.description}</p>
               </div>
             </div>
