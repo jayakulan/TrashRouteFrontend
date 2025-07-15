@@ -82,7 +82,21 @@ function ZigzagTimeline({ steps, currentStep }) {
 
 export default function CustomerTrackPickup() {
   const [selectedWaste, setSelectedWaste] = useState("plastics");
+  const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
   const navigate = useNavigate();
+  // Determine notification status and progress based on progressByType
+  const currentStep = progressByType[selectedWaste];
+  const isCompleted = currentStep === 3;
+  // Map step to progress percent
+  const progressPercents = [25, 50, 75, 100];
+  const notification = {
+    status: isCompleted ? "completed" : "on_the_way",
+    progressPercent: progressPercents[currentStep],
+    progressStep: currentStep + 1,
+    progressTotal: 4,
+    // You can add other notification fields as needed
+    onFeedback: () => setShowFeedbackPopup(true),
+  };
   return (
     <div className="min-h-screen bg-[#f7f9fb] flex flex-col">
       {/* Header Bar */}
@@ -96,7 +110,10 @@ export default function CustomerTrackPickup() {
             <Link to="/customer/trash-type" className="text-gray-700 hover:text-gray-900 font-medium">Request Pickup</Link>
             <Link to="/customer/track-pickup" className="text-gray-700 hover:text-gray-900 font-medium">Track Pickup</Link>
             <Link to="/customer/history-log" className="text-gray-700 hover:text-gray-900 font-medium">History Log</Link>
-            <CustomerNotification onViewDetails={() => navigate('/customer/track-pickup')} />
+            <CustomerNotification 
+              onViewDetails={() => navigate('/customer/track-pickup')} 
+              notification={notification}
+            />
             <UserProfileDropdown />
           </div>
         </nav>
@@ -119,6 +136,129 @@ export default function CustomerTrackPickup() {
           <ZigzagTimeline steps={steps} currentStep={progressByType[selectedWaste]} />
         </div>
       </main>
+      {/* Feedback Popup Modal */}
+      {showFeedbackPopup && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 1000,
+          background: 'rgba(0,0,0,0.55)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <FeedbackFormModal onClose={() => setShowFeedbackPopup(false)} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// FeedbackFormModal component
+function FeedbackFormModal({ onClose }) {
+  const [feedback, setFeedback] = React.useState("");
+  const [rating, setRating] = React.useState(5);
+  const [submitted, setSubmitted] = React.useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setSubmitted(true);
+    setTimeout(() => {
+      onClose();
+    }, 1800);
+  };
+
+  return (
+    <div style={{
+      background: '#fff',
+      borderRadius: '1.5rem',
+      boxShadow: '0 8px 40px 0 rgba(58, 95, 70, 0.25)',
+      padding: '2.5rem 2.5rem 2rem 2.5rem',
+      minWidth: 340,
+      maxWidth: '90vw',
+      textAlign: 'center',
+      position: 'relative',
+    }}>
+      <button
+        onClick={onClose}
+        aria-label="Close feedback form"
+        style={{
+          position: 'absolute',
+          top: '1rem',
+          right: '1rem',
+          background: '#3a5f46',
+          border: 'none',
+          width: '2.5rem',
+          height: '2.5rem',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          zIndex: 10,
+          color: '#fff',
+          fontSize: '1.5rem',
+        }}
+      >
+        ×
+      </button>
+      {!submitted ? (
+        <form onSubmit={handleSubmit}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3a5f46', marginBottom: '1.2rem' }}>Feedback</div>
+          <div style={{ marginBottom: '1rem' }}>
+            <label htmlFor="feedback-text" style={{ display: 'block', fontWeight: 500, marginBottom: 6 }}>Your Feedback</label>
+            <textarea
+              id="feedback-text"
+              value={feedback}
+              onChange={e => setFeedback(e.target.value)}
+              rows={4}
+              style={{ width: '100%', borderRadius: 8, border: '1px solid #ccc', padding: 10, resize: 'vertical' }}
+              required
+            />
+          </div>
+          <div style={{ marginBottom: '1.2rem' }}>
+            <label htmlFor="feedback-rating" style={{ display: 'block', fontWeight: 500, marginBottom: 6 }}>Rating</label>
+            <select
+              id="feedback-rating"
+              value={rating}
+              onChange={e => setRating(Number(e.target.value))}
+              style={{ width: '100%', borderRadius: 8, border: '1px solid #ccc', padding: 8 }}
+            >
+              <option value={5}>5 - Excellent</option>
+              <option value={4}>4 - Good</option>
+              <option value={3}>3 - Average</option>
+              <option value={2}>2 - Poor</option>
+              <option value={1}>1 - Very Poor</option>
+            </select>
+          </div>
+          <button
+            type="submit"
+            style={{
+              background: '#3a5f46',
+              color: '#fff',
+              fontWeight: 600,
+              fontSize: '1.1rem',
+              border: 'none',
+              borderRadius: 8,
+              padding: '0.7rem 2.2rem',
+              cursor: 'pointer',
+              marginTop: 10,
+              boxShadow: '0 2px 8px 0 rgba(58, 95, 70, 0.18)',
+              transition: 'background 0.2s',
+            }}
+          >
+            Submit Feedback
+          </button>
+        </form>
+      ) : (
+        <div>
+          <div style={{ fontSize: '2.2rem', marginBottom: '1rem' }}>🎉</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3a5f46', marginBottom: '0.5rem' }}>Thank you for your feedback!</div>
+          <div style={{ fontSize: '1.1rem', color: '#333', marginBottom: '1.5rem' }}>
+            We appreciate your input and will use it to improve our service.
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -178,6 +178,16 @@ export default function CustomerNotification({ hasNew = true, onViewDetails, not
             </div>
           )}
         </div>
+        {notification.status === "completed" && (
+          <div className="w-full flex justify-center mt-3">
+            <button
+              className="py-2 px-6 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-lg shadow transition-all duration-200"
+              onClick={notification.onFeedback || (() => alert('Feedback clicked!'))}
+            >
+              Give Feedback
+            </button>
+          </div>
+        )}
         {/* Mini Confirmation Note */}
         <div className="mt-2 text-center text-green-800 text-sm font-medium bg-green-50 rounded-lg py-2 px-3 shadow-sm">
           Thank you for recycling with TrashRoute 🌿<br />
