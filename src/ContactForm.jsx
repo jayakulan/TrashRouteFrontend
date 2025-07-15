@@ -37,9 +37,9 @@ function ContactModal({ onClose }) {
         {/* Right: Contact Info */}
         <div className="flex-1 bg-gray-50 rounded-lg p-6 flex flex-col">
           <div className="font-semibold text-xl mb-4">Contact Information</div>
-          <div className="mb-2"><span className="font-bold">Email:</span> support@trashroute.com</div>
-          <div className="mb-2"><span className="font-bold">Phone:</span> (555) 123-4567</div>
-          <div className="mb-2"><span className="font-bold">Address:</span><br />123 Green Street<br />Eco City, EC 12345</div>
+          <div className="mb-2"><span className="font-bold">Email:</span> trashroute.wastemanagement@gmail.com</div>
+          <div className="mb-2"><span className="font-bold">Phone:</span> 0768304047</div>
+          <div className="mb-2"><span className="font-bold">Address:</span><br />No.25 , Passara Road , Badulla , Sri Lanka</div>
           <div className="mt-4"><span className="font-bold">Business Hours:</span><br />Monday - Friday: 9:00 AM - 6:00 PM<br />Saturday: 10:00 AM - 4:00 PM<br />Sunday: Closed</div>
         </div>
       </div>
