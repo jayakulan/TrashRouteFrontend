@@ -5,8 +5,9 @@ import { Search, Plus, Minus, Navigation } from "lucide-react"
 import { useNavigate, useLocation } from "react-router-dom"
 import UserProfileDropdowncom from "./UserProfileDropdowncom"
 import { Link } from "react-router-dom"
-import { GoogleMap, Marker } from "@react-google-maps/api"
-import { useGoogleMaps } from "../components/GoogleMapsProvider"
+import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api"
+
+const GOOGLE_MAPS_API_KEY = "AIzaSyA5iEKgAwrJWVkCMAsD7_IilJ0YSVf_VGk"
 
 // Helper function to generate random locations around a center point
 function getRandomLatLng(center, radius) {
@@ -23,7 +24,6 @@ function getRandomLatLng(center, radius) {
 }
 
 const RouteActivation = () => {
-  const { isLoaded: isGoogleMapsLoaded, loadError: googleMapsError, isLoading: isGoogleMapsLoading } = useGoogleMaps()
   const [searchQuery, setSearchQuery] = useState("")
   const [showModal, setShowModal] = useState(false)
   const [cardType, setCardType] = useState("")
@@ -119,24 +119,6 @@ const RouteActivation = () => {
     console.error("Google Maps API Error:", error)
   }
 
-  // Show error if Google Maps failed to load
-  if (googleMapsError) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-lg text-center">
-          <h2 className="text-2xl font-bold text-red-600 mb-4">Google Maps Error</h2>
-          <p className="text-gray-600 mb-4">Failed to load Google Maps API. Please refresh the page.</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="bg-[#3a5f46] text-white px-4 py-2 rounded hover:bg-[#2e4d3a]"
-          >
-            Refresh Page
-          </button>
-        </div>
-      </div>
-    )
-  }
-
   const handleZoomIn = () => {
     if (map) {
       setMapZoom(prev => Math.min(prev + 1, 20))
@@ -192,18 +174,17 @@ const RouteActivation = () => {
       const res = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/payments.php", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `company_id=${company_id}&card_number=${cardNumber}&cardholder_name=${encodeURIComponent(cardName)}&expiry_date=${expiry}&pin_number=${cvv}&amount=${amount}&waste_type=${encodeURIComponent(wasteType || '')}`,
+        body: `company_id=${company_id}&card_number=${cardNumber}&cardholder_name=${encodeURIComponent(cardName)}&expiry_date=${expiry}&pin_number=${cvv}&amount=${amount}`,
       });
       const data = await res.json();
       if (data.success) {
         setPaymentMessage("Payment successful! Route access unlocked.");
         setShowModal(false);
-        // Redirect to RouteMap with company_id, route_id, and waste_type
+        // Redirect to RouteMap with company_id and route_id
         navigate("/company/route-map", {
           state: {
             company_id: company_id,
-            route_id: data.route_id,
-            waste_type: wasteType
+            route_id: data.route_id
           }
         });
       } else {
@@ -247,6 +228,7 @@ const RouteActivation = () => {
             </div>
             {/* Navigation - right aligned */}
             <div className="flex items-center space-x-8 ml-auto">
+              <Link to="/" className="text-gray-700 hover:text-gray-900 font-medium">Home</Link>
               <Link to="/company-waste-prefer" className="text-gray-700 hover:text-gray-900 font-medium">Dashboard</Link>
               <Link to="/company/historylogs" className="text-gray-700 hover:text-gray-900 font-medium">Historylogs</Link>
               {/* Notification Bell Icon */}
@@ -306,13 +288,15 @@ const RouteActivation = () => {
                 <div className="text-gray-500 text-center">Unlock the route by completing the payment.</div>
               </div>
             ) : (
-              isGoogleMapsLoaded && window.google && window.google.maps && window.google.maps.Map ? (
+              <LoadScript 
+                googleMapsApiKey={GOOGLE_MAPS_API_KEY}
+                onError={handleMapError}
+              >
                 <GoogleMap
                   mapContainerStyle={{ width: '100%', height: '100%' }}
                   center={{ lat: 6.9271, lng: 79.8612 }} // Colombo, Sri Lanka
                   zoom={mapZoom}
                   onLoad={handleMapLoad}
-                  onError={handleMapError}
                   options={{
                     mapTypeId: 'roadmap',
                     streetViewControl: true,
@@ -349,21 +333,14 @@ const RouteActivation = () => {
                     />
                   ))}
                 </GoogleMap>
-              ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-200 bg-opacity-80 z-20 rounded-2xl border-2 border-dashed border-gray-400">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3a5f46] mx-auto mb-4"></div>
-                  <p className="text-gray-600">Loading Google Maps...</p>
-                </div>
-              )
+              </LoadScript>
             )}
             {/* Loading overlay */}
-            {(isGoogleMapsLoading || (!isMapLoaded && routeDetails.routeStatus !== "Pending" && routeDetails.routeStatus !== "Accepted")) && (
+            {!isMapLoaded && routeDetails.routeStatus !== "Pending" && routeDetails.routeStatus !== "Accepted" && (
               <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3a5f46] mx-auto mb-4"></div>
-                  <p className="text-gray-600">
-                    {isGoogleMapsLoading ? "Loading Google Maps..." : "Loading map..."}
-                  </p>
+                  <p className="text-gray-600">Loading map...</p>
                 </div>
               </div>
             )}
@@ -373,11 +350,17 @@ const RouteActivation = () => {
           <div className="p-6 border-t border-[#e6f4ea]">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-[#3a5f46]">Route Assignment</h3>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                routeDetails.routeStatus === "Pending" ? "bg-yellow-100 text-yellow-800" :
-                routeDetails.routeStatus === "Accepted" ? "bg-green-100 text-green-800" :
-                "bg-red-100 text-red-800"
-              }`}>
+              <span className={`relative flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium shadow-sm transition-all duration-200
+                ${routeDetails.routeStatus === "Pending" ? "bg-[#eaf3ee] text-[#3a5f46] border border-[#3a5f46] shadow-md" :
+                  routeDetails.routeStatus === "Accepted" ? "bg-green-100 text-green-800" :
+                  "bg-red-100 text-red-800"}
+              `}>
+                {routeDetails.routeStatus === "Pending" && (
+                  <span className="relative flex h-3 w-3 mr-1">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#3a5f46] opacity-60"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-[#3a5f46]"></span>
+                  </span>
+                )}
                 {routeDetails.routeStatus}
               </span>
             </div>
@@ -417,8 +400,8 @@ const RouteActivation = () => {
               <button 
                 className={`flex-1 font-semibold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center gap-2 ${
                   routeDetails.routeStatus === "Accepted" 
-                    ? "bg-green-700 text-white cursor-not-allowed" 
-                    : "bg-green-600 hover:bg-green-700 text-white"
+                    ? "bg-[#30543C] text-white cursor-not-allowed border border-[#30543C]" 
+                    : "bg-[#30543C] hover:bg-[#3a5f46] text-white border border-[#30543C]"
                 }`}
                 onClick={handleAcceptRoute}
                 disabled={routeDetails.routeStatus === "Accepted"}
@@ -432,8 +415,8 @@ const RouteActivation = () => {
               <button 
                 className={`flex-1 font-semibold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center gap-2 ${
                   routeDetails.routeStatus === "Rejected" 
-                    ? "bg-red-700 text-white cursor-not-allowed" 
-                    : "bg-red-600 hover:bg-red-700 text-white"
+                    ? "bg-[#9D3939] text-white cursor-not-allowed border border-[#7a2323]" 
+                    : "bg-[#9D3939] hover:bg-[#7a2323] text-white border border-[#9D3939]"
                 }`}
                 onClick={handleRejectRoute}
                 disabled={routeDetails.routeStatus === "Rejected"}
@@ -449,26 +432,36 @@ const RouteActivation = () => {
 
         {/* Route Status */}
         {routeDetails.routeStatus === "Pending" && (
-          <div className="flex items-center gap-2 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 px-4 py-3 rounded mt-8 mb-8 shadow">
-            <svg className="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z" />
+          <div className="flex items-center gap-4 bg-gradient-to-r from-[#eaf3ee] via-white to-white border-l-4 border-[#3a5f46] text-[#3a5f46] px-6 py-5 rounded-2xl mt-8 mb-8 shadow-lg relative overflow-hidden">
+            {/* Decorative clock icon */}
+            <svg className="w-8 h-8 text-[#3a5f46] mr-2 drop-shadow" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke="#3a5f46" strokeWidth="2" fill="#eaf3ee" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 2" />
             </svg>
-            <span>Routes are currently locked. Pay the subscription fee to access them.</span>
+            <div className="flex-1">
+              <span className="block font-semibold text-base">Routes are currently locked.</span>
+              <span className="block text-sm opacity-80">Pay the subscription fee to access them.</span>
+            </div>
           </div>
         )}
         
         {routeDetails.routeStatus === "Accepted" && (
-          <div className="flex items-center gap-2 bg-green-50 border-l-4 border-green-400 text-green-800 px-4 py-3 rounded mt-8 mb-8 shadow">
-            <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <div className="flex items-center gap-4 bg-gradient-to-r from-[#eaf3ee] via-white to-white border-l-4 border-[#3a5f46] text-[#3a5f46] px-6 py-5 rounded-2xl mt-8 mb-8 shadow-lg relative overflow-hidden">
+            {/* Decorative checkmark icon */}
+            <svg className="w-8 h-8 text-[#3a5f46] mr-2 drop-shadow" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke="#3a5f46" strokeWidth="2" fill="#eaf3ee" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2l4-4" />
             </svg>
-            <span>Route accepted! Please complete the payment to activate route access.</span>
+            <div className="flex-1">
+              <span className="block font-semibold text-base">Route accepted!</span>
+              <span className="block text-sm opacity-80">Please complete the payment to activate route access.</span>
+            </div>
           </div>
         )}
         
         {routeDetails.routeStatus === "Rejected" && (
-          <div className="flex items-center gap-2 bg-red-50 border-l-4 border-red-400 text-red-800 px-4 py-3 rounded mt-8 mb-8 shadow">
-            <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <div className="flex items-center gap-2 bg-[#9d3939] border-l-4 border-[#7a2323] text-white px-4 py-3 rounded mt-8 mb-8 shadow">
+            <svg className="w-6 h-6 text-white opacity-80" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
             <span>Route rejected. Redirecting to dashboard...</span>
@@ -478,27 +471,50 @@ const RouteActivation = () => {
 
       {/* Subscription & Payment Card - Only show when route is accepted */}
       {routeDetails.routeStatus === "Accepted" && (
-        <section className="max-w-4xl mx-auto px-4 mb-16 space-y-6">
-          <div className="rounded-2xl bg-gradient-to-r from-yellow-400 via-green-500 to-green-600 p-6 text-white text-center shadow-md border-2 border-[#e6f4ea] flex flex-col items-center animate-fade-in">
-            <div className="flex items-center justify-center mb-2">
-              <svg className="w-8 h-8 text-white bg-[#3a5f46] rounded-full p-1 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2l4-4" />
+        <section className="max-w-4xl mx-auto px-4 mb-16 flex justify-center animate-fade-in">
+          <div
+            className="relative w-full max-w-xl min-h-[380px] p-12 rounded-[12px] shadow-2xl border border-[#B5CCC0] flex flex-col items-center"
+            style={{
+              overflow: 'hidden',
+              background: 'linear-gradient(135deg, #30543C 0%, #7AA48E 100%)'
+            }}
+          >
+            {/* Chip Icon */}
+            <div className="absolute left-6 top-6 flex items-center">
+              <svg className="w-10 h-7" viewBox="0 0 40 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="1" y="1" width="38" height="26" rx="6" fill="#eaf3ee" stroke="#b2c7b9" strokeWidth="2"/>
+                <rect x="8" y="8" width="24" height="4" rx="2" fill="#b2c7b9"/>
+                <rect x="8" y="16" width="10" height="2" rx="1" fill="#b2c7b9"/>
+                <rect x="22" y="16" width="10" height="2" rx="1" fill="#b2c7b9"/>
               </svg>
-              <h2 className="text-2xl font-bold">Activate Route Access</h2>
             </div>
-            <p className="text-lg mb-2">Total fee: <span className="font-bold">Rs.500</span></p>
-            <div className="w-full border-t border-white/30 my-4"></div>
-            <h3 className="text-xl font-semibold mb-4 text-white">Payment Method</h3>
+            {/* Card Title */}
+            <h2 className="text-2xl font-extrabold text-white mb-2 mt-8 tracking-wide w-full text-left">Activate Route Access</h2>
+            {/* Amount */}
+            <p className="text-lg mb-2 w-full text-left">
+              <span className="text-[#eaf3ee] font-semibold">Total fee:</span> <span className="font-extrabold text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]">Rs.<span className="text-white font-extrabold">500</span></span>
+            </p>
+            {/* Divider */}
+            <div className="w-full border-t border-white/20 my-4"></div>
+            {/* Payment Method Label */}
+            <h3 className="text-lg font-semibold mb-4 text-white w-full text-left opacity-80">Payment Method</h3>
+            {/* Pay Now Button as Card Chip Area */}
             <button
               onClick={handlePayNow}
-              className="bg-[#3a5f46] hover:bg-[#2e4d3a] text-white py-3 px-6 rounded-xl font-semibold w-full flex items-center justify-center gap-2 shadow transition"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-lg shadow-inner border border-[#eaf3ee] bg-white text-black transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#39ff14] mb-2 active:bg-[#7AA48E] active:text-[#1E422F]"
+              style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.10), 0 1.5px 0 #eaf3ee inset' }}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <rect x="2" y="7" width="20" height="10" rx="2" fill="#fff" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2 9h20M2 15h20" />
+              {/* Embossed chip icon on button */}
+              <svg className="w-6 h-6 mr-2" viewBox="0 0 32 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="1" y="1" width="30" height="18" rx="4" fill="#eaf3ee" stroke="#b2c7b9" strokeWidth="2"/>
+                <rect x="7" y="7" width="18" height="3" rx="1.5" fill="#b2c7b9"/>
               </svg>
               <span>Pay Now</span>
             </button>
+            {/* Secure Payment Line */}
+            <div className="w-full text-right mt-2">
+              <span className="text-xs text-white/60 tracking-wider select-none">Secure Payment • TXN#{Math.floor(Math.random()*900000+100000)}</span>
+            </div>
           </div>
         </section>
       )}
