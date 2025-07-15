@@ -13,6 +13,7 @@ const ManageCompanies = () => {
     type: "All Types",
     location: "All Locations",
   })
+  const [autoRevertMsg, setAutoRevertMsg] = useState("");
 
   const companiesData = [
     {
@@ -96,6 +97,17 @@ const ManageCompanies = () => {
     console.log("Delete company:", companyId)
     // Handle delete company logic
   }
+
+  const handleAutoRevert = async () => {
+    setAutoRevertMsg("Running auto-revert...");
+    try {
+      const res = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/auto_revert_pickup_status.php");
+      const data = await res.json();
+      setAutoRevertMsg(data.message || "Done.");
+    } catch (err) {
+      setAutoRevertMsg("Error: " + err.message);
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -419,6 +431,15 @@ const ManageCompanies = () => {
           <div className="mt-4 text-xs sm:text-sm text-[#618170]">
             Showing {filteredCompanies.length} of {companiesData.length} companies
           </div>
+          <button
+            onClick={handleAutoRevert}
+            className="px-4 py-2 bg-green-700 text-white rounded shadow hover:bg-green-800 mt-4"
+          >
+            Run Auto-Revert for Stale Pickup Requests
+          </button>
+          {autoRevertMsg && (
+            <div className="mt-2 text-sm text-green-700">{autoRevertMsg}</div>
+          )}
         </main>
       </div>
     </div>
