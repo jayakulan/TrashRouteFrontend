@@ -174,7 +174,7 @@ const RouteActivation = () => {
       const res = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/payments.php", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `company_id=${company_id}&card_number=${cardNumber}&cardholder_name=${encodeURIComponent(cardName)}&expiry_date=${expiry}&pin_number=${cvv}&amount=${amount}`,
+        body: `company_id=${company_id}&card_number=${cardNumber}&cardholder_name=${encodeURIComponent(cardName)}&expiry_date=${expiry}&pin_number=${cvv}&amount=${amount}&waste_type=${encodeURIComponent(wasteType || '')}`,
       });
       const data = await res.json();
       if (data.success) {
