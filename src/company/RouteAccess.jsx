@@ -352,7 +352,7 @@ const RouteActivation = () => {
               <h3 className="text-lg font-semibold text-[#3a5f46]">Route Assignment</h3>
               <span className={`relative flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium shadow-sm transition-all duration-200
                 ${routeDetails.routeStatus === "Pending" ? "bg-[#eaf3ee] text-[#3a5f46] border border-[#3a5f46] shadow-md" :
-                  routeDetails.routeStatus === "Accepted" ? "bg-green-100 text-green-800" :
+                routeDetails.routeStatus === "Accepted" ? "bg-green-100 text-green-800" :
                   "bg-red-100 text-red-800"}
               `}>
                 {routeDetails.routeStatus === "Pending" && (

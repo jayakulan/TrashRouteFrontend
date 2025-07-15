@@ -459,30 +459,30 @@ const RouteMap = () => {
               <p className="text-gray-500">There are no customers with pickup requests for this waste type.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-[#f7faf9] text-xs font-medium text-[#3a5f46] uppercase tracking-wider">
-                  <tr>
-                    <th className="px-6 py-3 text-left">#</th>
-                    <th className="px-6 py-3 text-left">Address</th>
-                    <th className="px-6 py-3 text-left">Contact</th>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-[#f7faf9] text-xs font-medium text-[#3a5f46] uppercase tracking-wider">
+                <tr>
+                  <th className="px-6 py-3 text-left">#</th>
+                  <th className="px-6 py-3 text-left">Address</th>
+                  <th className="px-6 py-3 text-left">Contact</th>
                     <th className="px-6 py-3 text-left">Details</th>
                     <th className="px-6 py-3 text-left">Status</th>
-                    <th className="px-6 py-3 text-left">Collected</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-100">
-                  {filteredHouseholds.map((h, idx) => (
-                    <tr key={h.id} className={idx % 2 === 0 ? "bg-[#f7faf9]" : "bg-white"}>
-                      <td className="px-6 py-4 font-semibold text-gray-700">{h.id}</td>
-                      <td className="px-6 py-4">{h.address}</td>
+                  <th className="px-6 py-3 text-left">Collected</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-100">
+                {filteredHouseholds.map((h, idx) => (
+                  <tr key={h.id} className={idx % 2 === 0 ? "bg-[#f7faf9]" : "bg-white"}>
+                    <td className="px-6 py-4 font-semibold text-gray-700">{h.id}</td>
+                    <td className="px-6 py-4">{h.address}</td>
                       <td className="px-6 py-4">
                         <div>
                           <div className="font-medium">{h.contact}</div>
                           <div className="text-sm text-gray-500">{h.customer_phone}</div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">{h.notes}</td>
+                    <td className="px-6 py-4">{h.notes}</td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                           h.status === 'Request received' ? 'bg-blue-100 text-blue-800' :
@@ -493,48 +493,48 @@ const RouteMap = () => {
                           {h.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <button
-                          onClick={() => handleCollectedClick(h)}
-                          className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 transition-colors shadow-sm ${
-                            h.collected
-                              ? "bg-green-100 text-green-800 border border-green-300"
-                              : "bg-red-100 text-red-800 border border-red-300 hover:bg-red-200"
-                          }`}
-                        >
-                          {h.collected ? (
-                            <span className="inline-flex items-center"><Check className="w-4 h-4 mr-1" />Collected</span>
-                          ) : (
-                            <span className="inline-flex items-center"><span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>Not Collected</span>
-                          )}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => handleCollectedClick(h)}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 transition-colors shadow-sm ${
+                          h.collected
+                            ? "bg-green-100 text-green-800 border border-green-300"
+                            : "bg-red-100 text-red-800 border border-red-300 hover:bg-red-200"
+                        }`}
+                      >
+                        {h.collected ? (
+                          <span className="inline-flex items-center"><Check className="w-4 h-4 mr-1" />Collected</span>
+                        ) : (
+                          <span className="inline-flex items-center"><span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>Not Collected</span>
+                        )}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           )}
           
           {totalCount > 0 && (
-            <div className="p-6 bg-[#f7faf9] flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="text-sm text-gray-700 font-medium flex items-center gap-2">
-                <span>Route Completion:</span>
+          <div className="p-6 bg-[#f7faf9] flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="text-sm text-gray-700 font-medium flex items-center gap-2">
+              <span>Route Completion:</span>
                 <span className="font-bold text-[#3a5f46]">{collectedCount} of {totalCount} customers collected</span>
-              </div>
-              <button
-                onClick={() => alert("Route completed!")}
-                disabled={collectedCount !== totalCount}
-                className={`px-8 py-3 rounded-full font-bold text-lg flex items-center gap-2 shadow transition-colors duration-200
-                  ${collectedCount === totalCount
-                    ? "bg-[#3a5f46] text-white hover:bg-[#2e4d3a]"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed"}
-                `}
-              >
-                <Check className="inline w-6 h-6" />
-                Complete Route
-              </button>
             </div>
+            <button
+              onClick={() => alert("Route completed!")}
+              disabled={collectedCount !== totalCount}
+              className={`px-8 py-3 rounded-full font-bold text-lg flex items-center gap-2 shadow transition-colors duration-200
+                ${collectedCount === totalCount
+                  ? "bg-[#3a5f46] text-white hover:bg-[#2e4d3a]"
+                  : "bg-gray-200 text-gray-400 cursor-not-allowed"}
+              `}
+            >
+              <Check className="inline w-6 h-6" />
+              Complete Route
+            </button>
+          </div>
           )}
         </div>
       </main>
@@ -585,30 +585,30 @@ const RouteMap = () => {
                       return;
                     }
                   }
-                  // TODO: Replace with your actual request_id and company_id logic
-                  const request_id = feedbackHousehold.request_id || 1; // Example
-                  const company_id = 3; // Example, get from context/auth
-                  const payload = {
-                    request_id,
-                    company_id,
-                    pickup_completed: feedback.pickup_completed,
-                    rating: feedback.rating,
-                    comment: feedback.comment
-                  };
-                  await fetch("/api/company_feedback.php", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                  });
-                  toggleCollected(feedbackHousehold.id);
-                  setShowFeedbackPopup(false);
-                  setFeedbackHousehold(null);
+                // TODO: Replace with your actual request_id and company_id logic
+                const request_id = feedbackHousehold.request_id || 1; // Example
+                const company_id = 3; // Example, get from context/auth
+                const payload = {
+                  request_id,
+                  company_id,
+                  pickup_completed: feedback.pickup_completed,
+                  rating: feedback.rating,
+                  comment: feedback.comment
+                };
+                await fetch("/api/company_feedback.php", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(payload)
+                });
+                toggleCollected(feedbackHousehold.id);
+                setShowFeedbackPopup(false);
+                setFeedbackHousehold(null);
                   setFeedback({ pickup_completed: true, rating: 5, comment: "", entered_otp: "" });
                   alert("Feedback submitted successfully!");
                 } catch (err) {
                   alert("Error submitting feedback: " + err.message);
                 } finally {
-                  setFeedbackSubmitting(false);
+                setFeedbackSubmitting(false);
                 }
               }}
             >

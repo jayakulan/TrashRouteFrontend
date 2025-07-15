@@ -143,8 +143,8 @@ const PrivacyPolicy = ({ isOpen, onClose }) => {
               </p>
               
               <div className="ml-4 space-y-2 text-gray-700">
-                <p>📧 Email: support@trashroute.lk</p>
-                <p>📍 Address: [Enter Your Organization's Address]</p>
+                <p>📧 Email: trashroute.wastemanagement@gmail.com</p>
+                <p>📍 Address: No.25 , Passara Road , Badulla , Sri Lanka</p>
                 <p>📞 Phone: [Optional]</p>
               </div>
             </div>
