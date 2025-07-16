@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { Recycle, Bell, Minus, Plus } from "lucide-react"
+import { Recycle, Bell, Minus, Plus, ArrowLeft } from "lucide-react"
 import MinimumWastePopup from "./MinimumWastePopup"
 import UserProfileDropdown from "./UserProfileDropdown"
 import CustomerNotification from "./CustomerNotification"
@@ -38,7 +38,7 @@ const CustomerTrashType = () => {
   }
 
   const updateQuantity = (type, newQuantity) => {
-    if (newQuantity >= 0 && newQuantity <= 50) {
+    if (newQuantity >= 3 && newQuantity <= 50) {
       setWasteTypes((prev) => ({
         ...prev,
         [type]: { ...prev[type], quantity: newQuantity },
@@ -112,6 +112,14 @@ const CustomerTrashType = () => {
       });
 
       const result = await response.json();
+      const addressToSave = result.data && result.data.address ? result.data.address : address;
+      localStorage.setItem('locationData', JSON.stringify({
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
+        address: addressToSave,
+        requestIds: result.data.request_ids,
+        totalUpdated: result.data.total_updated
+      }));
       
       console.log('Response from server:', result);
       console.log('Response status:', response.status);
@@ -257,7 +265,7 @@ const CustomerTrashType = () => {
             <Link to="/customer/trash-type" className="text-gray-700 hover:text-gray-900 font-medium">Request Pickup</Link>
             <Link to="/customer/track-pickup" className="text-gray-700 hover:text-gray-900 font-medium">Track Pickup</Link>
             <Link to="/customer/history-log" className="text-gray-700 hover:text-gray-900 font-medium">History Log</Link>
-            <CustomerNotification onViewDetails={() => navigate('/customer/track-pickup')} />
+            <CustomerNotification iconOnly hasNew={false} />
             <UserProfileDropdown />
           </div>
         </nav>
@@ -265,6 +273,13 @@ const CustomerTrashType = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8 max-w-4xl">
+        <button
+          className="flex items-center text-theme-color hover:text-theme-color-dark font-medium mb-4"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="w-5 h-5 mr-2" />
+          Back
+        </button>
         {/* Breadcrumb */}
         <div className="flex items-center space-x-2 text-sm text-gray-600 mb-8">
           <Link to="/customer/trash-type" className="text-theme-color hover:text-theme-color-dark">
@@ -368,12 +383,12 @@ const CustomerTrashType = () => {
                   {/* Quantity Controls */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">Quantity (kg)</span>
+                      <span className="text-sm font-medium text-gray-700">Approximate Quantity (kg)</span>
                     </div>
                     <div className="relative flex items-center">
                       <input
                         type="range"
-                        min="0"
+                        min="3"
                         max="50"
                         value={wasteTypes[wasteType.id].quantity}
                         onChange={(e) => handleSliderChange(wasteType.id, e.target.value)}
@@ -385,7 +400,7 @@ const CustomerTrashType = () => {
                       />
                       <div className="flex items-center space-x-2 ml-4">
                         <button
-                          onClick={(e) => { e.stopPropagation(); updateQuantity(wasteType.id, wasteTypes[wasteType.id].quantity - 1) }}
+                          onClick={(e) => { e.stopPropagation(); updateQuantity(wasteType.id, Math.max(3, wasteTypes[wasteType.id].quantity - 1)) }}
                           className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 text-gray-600"
                         >
                           <Minus className="w-4 h-4" />

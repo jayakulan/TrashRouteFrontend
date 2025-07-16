@@ -1,5 +1,6 @@
 import React, { useState } from "react"
 import binIcon from '/images/bin.png';
+import { X } from "lucide-react";
 
 const MinimumWastePopup = ({ isOpen, onClose, onLearnMore, onDontShowAgain }) => {
   const [dontShow, setDontShow] = useState(false)
@@ -54,32 +55,14 @@ const MinimumWastePopup = ({ isOpen, onClose, onLearnMore, onDontShowAgain }) =>
       }}>
         <button
           onClick={onClose}
-          aria-label="Close popup"
-          style={{
-            position: 'absolute',
-            top: '1rem',
-            right: '1rem',
-            background: '#3a5f46',
-            border: 'none',
-            width: '2.5rem',
-            height: '2.5rem',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            zIndex: 10,
-            boxShadow: '0 2px 8px 0 rgba(58, 95, 70, 0.18)',
-            transition: 'background 0.2s',
-          }}
-          onMouseOver={e => e.currentTarget.style.background = '#24402e'}
-          onMouseOut={e => e.currentTarget.style.background = '#3a5f46'}
+          aria-label="Close"
+          className="absolute top-4 right-4 bg-gray-200 hover:bg-gray-300 rounded-full p-2 transition"
         >
-          <img src={binIcon} alt="Close" style={{ width: '1.5rem', height: '1.5rem', objectFit: 'contain', filter: 'invert(1) brightness(2)', display: 'block', margin: '0 auto' }} />
+          <X size={20} />
         </button>
         <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3a5f46', marginBottom: '0.5rem' }}>Minimum Waste Requirement</h2>
         <p style={{ fontSize: '1.1rem', color: '#333', marginBottom: '1.5rem' }}>
-          To ensure efficient processing, we require a minimum of <b>3kg</b> of waste for collection.
+          To request a pickup, you must have at least 3 kg of waste.
         </p>
         <div style={{ display: 'flex', gap: '1rem', width: '100%', justifyContent: 'center', marginBottom: '1.5rem' }}>
           <button

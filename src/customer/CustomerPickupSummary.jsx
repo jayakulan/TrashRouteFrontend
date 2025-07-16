@@ -1,20 +1,24 @@
 import { Link, useNavigate } from "react-router-dom"
-import { Recycle, Bell } from "lucide-react"
-import { useState } from "react"
+import { Recycle, Bell, X } from "lucide-react"
+import { useState, useEffect } from "react"
 import UserProfileDropdown from "./UserProfileDropdown"
-import binIcon from '/images/bin.png';
 import CustomerNotification from "./CustomerNotification";
 
 const ConfirmPickup = () => {
   const [confirmed, setConfirmed] = useState(false)
   const [showPopup, setShowPopup] = useState(false);
+  const [wasteTypes, setWasteTypes] = useState([]);
+  const [location, setLocation] = useState(null);
   const navigate = useNavigate();
-  const pickupSummary = {
-    wasteTypes: "Recyclables, Organics",
-    quantities: "2 bags, 1 bin",
-    totalWeight: "15 kg",
-    pickupLocation: "123 Maple Street, Anytown",
-  }
+
+  useEffect(() => {
+    // Get waste types from localStorage
+    const wasteTypesData = JSON.parse(localStorage.getItem('wasteTypesData')) || [];
+    setWasteTypes(wasteTypesData.filter(w => w.selected));
+    // Get location from localStorage
+    const locationData = JSON.parse(localStorage.getItem('locationData'));
+    setLocation(locationData);
+  }, []);
 
   const handleConfirmSchedule = () => {
     setConfirmed(true)
@@ -39,7 +43,11 @@ const ConfirmPickup = () => {
             <Link to="/customer/trash-type" className="text-gray-700 hover:text-gray-900 font-medium">Request Pickup</Link>
             <Link to="/customer/track-pickup" className="text-gray-700 hover:text-gray-900 font-medium">Track Pickup</Link>
             <Link to="/customer/history-log" className="text-gray-700 hover:text-gray-900 font-medium">History Log</Link>
-            <CustomerNotification onViewDetails={() => navigate('/customer/track-pickup')} />
+            {confirmed ? (
+              <CustomerNotification hasNew={true} onViewDetails={() => navigate('/customer/track-pickup')} />
+            ) : (
+              <CustomerNotification iconOnly hasNew={false} />
+            )}
             <UserProfileDropdown />
           </div>
         </nav>
@@ -88,25 +96,32 @@ const ConfirmPickup = () => {
               {/* Waste Types */}
               <div className="px-6 py-6 flex justify-between items-center">
                 <div className="text-sm font-medium text-theme-color">Waste Types</div>
-                <div className="text-gray-900 font-medium">{pickupSummary.wasteTypes}</div>
+                <div className="text-gray-900 font-medium">
+                  {wasteTypes.length > 0 ? wasteTypes.map(w => w.type).join(', ') : '—'}
+                </div>
               </div>
-
               {/* Quantities */}
               <div className="px-6 py-6 flex justify-between items-center">
-                <div className="text-sm font-medium text-theme-color">Quantities</div>
-                <div className="text-gray-900 font-medium">{pickupSummary.quantities}</div>
+                <div className="text-sm font-medium text-theme-color">Quantities (kg)</div>
+                <div className="text-gray-900 font-medium">
+                  {wasteTypes.length > 0 ? wasteTypes.map(w => `${w.type}: ${w.quantity}kg`).join(', ') : '—'}
+                </div>
               </div>
-
-              {/* Total Weight */}
+              {/* Address Row */}
               <div className="px-6 py-6 flex justify-between items-center">
-                <div className="text-sm font-medium text-theme-color">Total Weight</div>
-                <div className="text-gray-900 font-medium">{pickupSummary.totalWeight}</div>
+                <div className="text-sm font-medium text-theme-color">Address</div>
+                <div className="text-gray-900 font-medium">
+                  {location && location.address ? location.address : '—'}
+                </div>
               </div>
-
-              {/* Pickup Location */}
+              {/* Pickup Location (Coordinates) Row */}
               <div className="px-6 py-6 flex justify-between items-center">
-                <div className="text-sm font-medium text-theme-color">Pickup Location</div>
-                <div className="text-gray-900 font-medium">{pickupSummary.pickupLocation}</div>
+                <div className="text-sm font-medium text-theme-color">Pickup Coordinates</div>
+                <div className="text-gray-900 font-medium">
+                  {location && location.latitude && location.longitude
+                    ? `Lat: ${location.latitude.toFixed(6)}, Lng: ${location.longitude.toFixed(6)}`
+                    : '—'}
+                </div>
               </div>
             </div>
           </div>
@@ -186,7 +201,7 @@ const ConfirmPickup = () => {
               onMouseOver={e => e.currentTarget.style.background = '#24402e'}
               onMouseOut={e => e.currentTarget.style.background = '#3a5f46'}
             >
-              <img src={binIcon} alt="Close" style={{ width: '1.5rem', height: '1.5rem', objectFit: 'contain', filter: 'invert(1) brightness(2)', display: 'block', margin: '0 auto' }} />
+              <X size={24} color="#fff" style={{ display: 'block' }} />
             </button>
             <div style={{ fontSize: '3rem', marginBottom: '1rem', animation: 'popIn 0.4s' }}>✅</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3a5f46', marginBottom: '0.5rem' }}>Pickup Scheduled Successfully!</div>

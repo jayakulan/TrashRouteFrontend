@@ -221,7 +221,7 @@ const PinLocation = () => {
             <Link to="/customer/trash-type" className="text-gray-700 hover:text-gray-900 font-medium">Request Pickup</Link>
             <Link to="/customer/track-pickup" className="text-gray-700 hover:text-gray-900 font-medium">Track Pickup</Link>
             <Link to="/customer/history-log" className="text-gray-700 hover:text-gray-900 font-medium">History Log</Link>
-            <CustomerNotification onViewDetails={() => navigate('/customer/track-pickup')} />
+            <CustomerNotification iconOnly hasNew={false} />
             <UserProfileDropdown />
           </div>
         </nav>
@@ -324,12 +324,20 @@ const PinLocation = () => {
             <div className="bg-white rounded-2xl shadow border p-6 flex flex-col gap-2 items-center">
               <h2 className="text-xl font-bold text-gray-900 mb-2">Pinned Location</h2>
               <div className="flex gap-8 text-base">
-                <div className="text-theme-color font-medium">Longitude: <span className="text-gray-900 font-normal">{coordinates.latitude.toFixed(6)}</span></div>
-                <div className="text-theme-color font-medium">Latitude: <span className="text-gray-900 font-normal">{coordinates.longitude.toFixed(6)}</span></div>
+                <div className="text-theme-color font-medium">Latitude: <span className="text-gray-900 font-normal">{coordinates.latitude.toFixed(6)}</span></div>
+                <div className="text-theme-color font-medium">Longitude: <span className="text-gray-900 font-normal">{coordinates.longitude.toFixed(6)}</span></div>
               </div>
               <div className="text-gray-700 text-sm mt-2">
                 <span className="font-medium">Address:</span> {address}
               </div>
+              {/* Static map preview */}
+              {coordinates.latitude && coordinates.longitude && (
+                <img
+                  src={`https://maps.googleapis.com/maps/api/staticmap?center=${coordinates.latitude},${coordinates.longitude}&zoom=16&size=320x120&markers=color:green%7C${coordinates.latitude},${coordinates.longitude}&key=YOUR_GOOGLE_MAPS_API_KEY`}
+                  alt="Pinned Location Map"
+                  style={{ borderRadius: '0.75rem', marginTop: 8, boxShadow: '0 2px 8px #0001' }}
+                />
+              )}
             </div>
           </div>
           {/* Next Button - Centered below coordinates card */}
