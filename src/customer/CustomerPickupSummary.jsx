@@ -1,12 +1,17 @@
 import { Link, useNavigate } from "react-router-dom"
-import { Recycle, Bell } from "lucide-react"
-import { useState } from "react"
+import { Recycle, Bell, X } from "lucide-react"
+import { useState, useEffect } from "react"
 import UserProfileDropdown from "./UserProfileDropdown"
+<<<<<<< HEAD
 import binIcon from '/images/bin.png';
+=======
+import CustomerNotification from "./CustomerNotification";
+>>>>>>> ea8637baa2efec7003ae2eec137906464b4b6d79
 
 const ConfirmPickup = () => {
   const [confirmed, setConfirmed] = useState(false)
   const [showPopup, setShowPopup] = useState(false);
+<<<<<<< HEAD
   const [showBellDot, setShowBellDot] = useState(false);
   const [showNotificationPopup, setShowNotificationPopup] = useState(false);
   const [showBellPopup, setShowBellPopup] = useState(false);
@@ -38,6 +43,20 @@ const ConfirmPickup = () => {
     quantities,
     pickupLocation,
   }
+=======
+  const [wasteTypes, setWasteTypes] = useState([]);
+  const [location, setLocation] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Get waste types from localStorage
+    const wasteTypesData = JSON.parse(localStorage.getItem('wasteTypesData')) || [];
+    setWasteTypes(wasteTypesData.filter(w => w.selected));
+    // Get location from localStorage
+    const locationData = JSON.parse(localStorage.getItem('locationData'));
+    setLocation(locationData);
+  }, []);
+>>>>>>> ea8637baa2efec7003ae2eec137906464b4b6d79
 
   const handleConfirmSchedule = () => {
     setConfirmed(true)
@@ -63,6 +82,7 @@ const ConfirmPickup = () => {
             <Link to="/customer/trash-type" className="text-gray-700 hover:text-gray-900 font-medium">Request Pickup</Link>
             <Link to="/customer/track-pickup" className="text-gray-700 hover:text-gray-900 font-medium">Track Pickup</Link>
             <Link to="/customer/history-log" className="text-gray-700 hover:text-gray-900 font-medium">History Log</Link>
+<<<<<<< HEAD
             <span className="mx-2" />
             <button
               className="relative focus:outline-none"
@@ -79,6 +99,13 @@ const ConfirmPickup = () => {
                 <span className="absolute top-0 right-0 block w-3 h-3 bg-red-500 rounded-full ring-2 ring-white animate-pulse" />
               )}
             </button>
+=======
+            {confirmed ? (
+              <CustomerNotification hasNew={true} onViewDetails={() => navigate('/customer/track-pickup')} />
+            ) : (
+              <CustomerNotification iconOnly hasNew={false} />
+            )}
+>>>>>>> ea8637baa2efec7003ae2eec137906464b4b6d79
             <UserProfileDropdown />
           </div>
         </nav>
@@ -127,23 +154,35 @@ const ConfirmPickup = () => {
               {/* Waste Types */}
               <div className="px-6 py-6 flex justify-between items-center">
                 <div className="text-sm font-medium text-theme-color">Waste Types</div>
-                <div className="text-gray-900 font-medium">{pickupSummary.wasteTypes}</div>
+                <div className="text-gray-900 font-medium">
+                  {wasteTypes.length > 0 ? wasteTypes.map(w => w.type).join(', ') : '—'}
+                </div>
               </div>
-
               {/* Quantities */}
               <div className="px-6 py-6 flex justify-between items-center">
-                <div className="text-sm font-medium text-theme-color">Quantities</div>
-                <div className="text-gray-900 font-medium">{pickupSummary.quantities}</div>
+                <div className="text-sm font-medium text-theme-color">Quantities (kg)</div>
+                <div className="text-gray-900 font-medium">
+                  {wasteTypes.length > 0 ? wasteTypes.map(w => `${w.type}: ${w.quantity}kg`).join(', ') : '—'}
+                </div>
               </div>
+<<<<<<< HEAD
 
               {/* Address */}
               <div className="px-6 py-6 flex justify-between items-center">
                 <div className="text-sm font-medium text-theme-color">Address</div>
                 <div className="text-gray-900 font-medium">{pickupSummary.pickupLocation}</div>
-              </div>
-
-              {/* Pickup Location */}
+=======
+              {/* Address Row */}
               <div className="px-6 py-6 flex justify-between items-center">
+                <div className="text-sm font-medium text-theme-color">Address</div>
+                <div className="text-gray-900 font-medium">
+                  {location && location.address ? location.address : '—'}
+                </div>
+>>>>>>> ea8637baa2efec7003ae2eec137906464b4b6d79
+              </div>
+              {/* Pickup Location (Coordinates) Row */}
+              <div className="px-6 py-6 flex justify-between items-center">
+<<<<<<< HEAD
                 <div className="text-sm font-medium text-theme-color">Pickup Location</div>
                 <div className="text-gray-900 font-medium">
                   {(longitude && latitude) ? (
@@ -154,6 +193,13 @@ const ConfirmPickup = () => {
                   ) : (
                     <span className="text-gray-500">Not set</span>
                   )}
+=======
+                <div className="text-sm font-medium text-theme-color">Pickup Coordinates</div>
+                <div className="text-gray-900 font-medium">
+                  {location && location.latitude && location.longitude
+                    ? `Lat: ${location.latitude.toFixed(6)}, Lng: ${location.longitude.toFixed(6)}`
+                    : '—'}
+>>>>>>> ea8637baa2efec7003ae2eec137906464b4b6d79
                 </div>
               </div>
             </div>
@@ -217,6 +263,34 @@ const ConfirmPickup = () => {
             position: 'relative',
             animation: 'zoomIn 0.35s cubic-bezier(.4,2,.6,1)',
           }}>
+<<<<<<< HEAD
+=======
+            <button
+              onClick={handleClosePopup}
+              aria-label="Close success message"
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: '#3a5f46',
+                border: 'none',
+                width: '2.5rem',
+                height: '2.5rem',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                zIndex: 10,
+                boxShadow: '0 2px 8px 0 rgba(58, 95, 70, 0.18)',
+                transition: 'background 0.2s',
+              }}
+              onMouseOver={e => e.currentTarget.style.background = '#24402e'}
+              onMouseOut={e => e.currentTarget.style.background = '#3a5f46'}
+            >
+              <X size={24} color="#fff" style={{ display: 'block' }} />
+            </button>
+>>>>>>> ea8637baa2efec7003ae2eec137906464b4b6d79
             <div style={{ fontSize: '3rem', marginBottom: '1rem', animation: 'popIn 0.4s' }}>✅</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3a5f46', marginBottom: '0.5rem' }}>Pickup Scheduled Successfully!</div>
             <div style={{ fontSize: '1.1rem', color: '#333', marginBottom: '1.5rem' }}>

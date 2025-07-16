@@ -31,7 +31,7 @@ const statusColors = {
   on_the_way: "text-green-700",
 };
 
-export default function CustomerNotification({ hasNew = true, onViewDetails, notification = defaultNotification }) {
+export default function CustomerNotification({ hasNew = true, onViewDetails, notification = defaultNotification, iconOnly = false }) {
   const [open, setOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const bellRef = useRef();
@@ -67,6 +67,24 @@ export default function CustomerNotification({ hasNew = true, onViewDetails, not
 
   // Progress bar width
   const progressWidth = `${notification.progressPercent || 0}%`;
+
+  if (iconOnly) {
+    return (
+      <div className="relative flex items-center">
+        <button
+          ref={bellRef}
+          className="relative focus:outline-none"
+          aria-label="Notifications"
+          // No onClick when iconOnly
+        >
+          <Bell className="w-7 h-7 text-gray-700 hover:text-green-700 transition" />
+          {hasNew && (
+            <span className="absolute top-0 right-0 block w-3 h-3 bg-red-500 rounded-full ring-2 ring-white animate-pulse" />
+          )}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex items-center">

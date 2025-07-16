@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { Recycle, Bell, Minus, Plus } from "lucide-react"
+import { Recycle, Bell, Minus, Plus, ArrowLeft } from "lucide-react"
 import MinimumWastePopup from "./MinimumWastePopup"
 import UserProfileDropdown from "./UserProfileDropdown"
 
@@ -111,6 +111,14 @@ const CustomerTrashType = () => {
       });
 
       const result = await response.json();
+      const addressToSave = result.data && result.data.address ? result.data.address : address;
+      localStorage.setItem('locationData', JSON.stringify({
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
+        address: addressToSave,
+        requestIds: result.data.request_ids,
+        totalUpdated: result.data.total_updated
+      }));
       
       console.log('Response from server:', result);
       console.log('Response status:', response.status);
@@ -256,6 +264,7 @@ const CustomerTrashType = () => {
             <Link to="/customer/trash-type" className="text-gray-700 hover:text-gray-900 font-medium">Request Pickup</Link>
             <Link to="/customer/track-pickup" className="text-gray-700 hover:text-gray-900 font-medium">Track Pickup</Link>
             <Link to="/customer/history-log" className="text-gray-700 hover:text-gray-900 font-medium">History Log</Link>
+<<<<<<< HEAD
             <span className="mx-2" />
             <button
               className="relative focus:outline-none"
@@ -265,6 +274,9 @@ const CustomerTrashType = () => {
             >
               <Bell className="w-7 h-7 text-gray-700 hover:text-green-700 transition" />
             </button>
+=======
+            <CustomerNotification iconOnly hasNew={false} />
+>>>>>>> ea8637baa2efec7003ae2eec137906464b4b6d79
             <UserProfileDropdown />
           </div>
         </nav>
@@ -272,6 +284,13 @@ const CustomerTrashType = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8 max-w-4xl">
+        <button
+          className="flex items-center text-theme-color hover:text-theme-color-dark font-medium mb-4"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="w-5 h-5 mr-2" />
+          Back
+        </button>
         {/* Breadcrumb */}
         <div className="flex items-center space-x-2 text-sm text-gray-600 mb-8">
           <Link to="/customer/trash-type" className="text-theme-color hover:text-theme-color-dark">
