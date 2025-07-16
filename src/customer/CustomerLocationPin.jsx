@@ -6,7 +6,6 @@ import { Link, useNavigate } from "react-router-dom"
 import { Recycle, Search, Plus, Minus, Navigation, Bell } from "lucide-react"
 import UserProfileDropdown from "./UserProfileDropdown"
 import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
-import CustomerNotification from "./CustomerNotification";
 
 // --- PlaceAutocompleteInput: Uses the new PlaceAutocompleteElement web component ---
 function PlaceAutocompleteInput({ onPlaceSelect }) {
@@ -221,7 +220,15 @@ const PinLocation = () => {
             <Link to="/customer/trash-type" className="text-gray-700 hover:text-gray-900 font-medium">Request Pickup</Link>
             <Link to="/customer/track-pickup" className="text-gray-700 hover:text-gray-900 font-medium">Track Pickup</Link>
             <Link to="/customer/history-log" className="text-gray-700 hover:text-gray-900 font-medium">History Log</Link>
-            <CustomerNotification onViewDetails={() => navigate('/customer/track-pickup')} />
+            <span className="mx-2" />
+            <button
+              className="relative focus:outline-none"
+              aria-label="Notifications"
+              style={{ background: 'none', border: 'none', padding: 0, margin: 0, cursor: 'pointer' }}
+              onClick={() => { /* Optionally: alert('Notifications clicked!') */ }}
+            >
+              <Bell className="w-7 h-7 text-gray-700 hover:text-green-700 transition" />
+            </button>
             <UserProfileDropdown />
           </div>
         </nav>
@@ -333,6 +340,14 @@ const PinLocation = () => {
             </div>
           </div>
           {/* Next Button - Centered below coordinates card */}
+          <div className="w-full max-w-2xl mx-auto flex justify-center mb-2">
+            <button
+              onClick={() => navigate(-1)}
+              className="py-2 px-8 rounded-full text-base border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 mb-2"
+            >
+              ← Back
+            </button>
+          </div>
           <div className="w-full max-w-2xl mx-auto flex justify-center mb-8">
             <button 
               className="next-btn py-4 px-12 rounded-full text-lg"

@@ -3,19 +3,12 @@ import binIcon from '/images/bin.png';
 
 const MinimumWastePopup = ({ isOpen, onClose, onLearnMore, onDontShowAgain }) => {
   const [dontShow, setDontShow] = useState(false)
-  const [showLearnMore, setShowLearnMore] = useState(false)
 
   if (!isOpen) return null
 
   const handleGotIt = () => {
     if (dontShow) onDontShowAgain()
     onClose()
-  }
-
-  const handleLearnMore = () => {
-    if (dontShow) onDontShowAgain()
-    setShowLearnMore(true)
-    if (onLearnMore) onLearnMore()
   }
 
   return (
@@ -75,7 +68,7 @@ const MinimumWastePopup = ({ isOpen, onClose, onLearnMore, onDontShowAgain }) =>
           onMouseOver={e => e.currentTarget.style.background = '#24402e'}
           onMouseOut={e => e.currentTarget.style.background = '#3a5f46'}
         >
-          <img src={binIcon} alt="Close" style={{ width: '1.5rem', height: '1.5rem', objectFit: 'contain', filter: 'invert(1) brightness(2)', display: 'block', margin: '0 auto' }} />
+          <span style={{ color: '#fff', fontSize: '1.7rem', fontWeight: 'bold', lineHeight: 1 }}>×</span>
         </button>
         <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3a5f46', marginBottom: '0.5rem' }}>Minimum Waste Requirement</h2>
         <p style={{ fontSize: '1.1rem', color: '#333', marginBottom: '1.5rem' }}>
@@ -101,31 +94,7 @@ const MinimumWastePopup = ({ isOpen, onClose, onLearnMore, onDontShowAgain }) =>
           >
             Got it!
           </button>
-          <button
-            onClick={handleLearnMore}
-            style={{
-              background: '#eee',
-              color: '#333',
-              fontWeight: 600,
-              padding: '0.6rem 2.2rem',
-              borderRadius: '0.5rem',
-              border: 'none',
-              fontSize: '1rem',
-              cursor: 'pointer',
-              transition: 'background 0.2s',
-              boxShadow: '0 2px 8px 0 rgba(58, 95, 70, 0.10)',
-            }}
-            onMouseOver={e => e.currentTarget.style.background = '#e0e0e0'}
-            onMouseOut={e => e.currentTarget.style.background = '#eee'}
-          >
-            Learn more
-          </button>
         </div>
-        {showLearnMore && (
-          <div style={{ marginTop: '1rem', color: '#3a5f46', fontWeight: 500, fontSize: '1rem', background: '#f3f6f4', borderRadius: '0.5rem', padding: '1rem' }}>
-            Learn more: For more information about our minimum waste policy, please visit our FAQ or contact support.
-          </div>
-        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', justifyContent: 'start' }}>
           <input
             id="dont-show-again"

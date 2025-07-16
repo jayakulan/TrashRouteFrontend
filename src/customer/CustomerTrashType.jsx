@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom"
 import { Recycle, Bell, Minus, Plus } from "lucide-react"
 import MinimumWastePopup from "./MinimumWastePopup"
 import UserProfileDropdown from "./UserProfileDropdown"
-import CustomerNotification from "./CustomerNotification"
 
 const CustomerTrashType = () => {
   const [wasteTypes, setWasteTypes] = useState({
@@ -38,7 +37,7 @@ const CustomerTrashType = () => {
   }
 
   const updateQuantity = (type, newQuantity) => {
-    if (newQuantity >= 0 && newQuantity <= 50) {
+    if (newQuantity >= 3 && newQuantity <= 50) {
       setWasteTypes((prev) => ({
         ...prev,
         [type]: { ...prev[type], quantity: newQuantity },
@@ -257,7 +256,15 @@ const CustomerTrashType = () => {
             <Link to="/customer/trash-type" className="text-gray-700 hover:text-gray-900 font-medium">Request Pickup</Link>
             <Link to="/customer/track-pickup" className="text-gray-700 hover:text-gray-900 font-medium">Track Pickup</Link>
             <Link to="/customer/history-log" className="text-gray-700 hover:text-gray-900 font-medium">History Log</Link>
-            <CustomerNotification onViewDetails={() => navigate('/customer/track-pickup')} />
+            <span className="mx-2" />
+            <button
+              className="relative focus:outline-none"
+              aria-label="Notifications"
+              style={{ background: 'none', border: 'none', padding: 0, margin: 0, cursor: 'pointer' }}
+              onClick={() => { /* Optionally: alert('Notifications clicked!') */ }}
+            >
+              <Bell className="w-7 h-7 text-gray-700 hover:text-green-700 transition" />
+            </button>
             <UserProfileDropdown />
           </div>
         </nav>
@@ -293,16 +300,10 @@ const CustomerTrashType = () => {
         </div>
 
         {/* Message Display */}
-        {message.text && (
-          <div className={`mb-6 p-4 rounded-lg ${
-            message.type === "success" 
-              ? "bg-green-50 border border-green-200 text-green-700" 
-              : "bg-red-50 border border-red-200 text-red-700"
-          }`}>
+        {message.text && message.type === "success" && (
+          <div className="mb-6 p-4 rounded-lg bg-green-50 border border-green-200 text-green-700">
             <div className="flex items-center space-x-2">
-              <span className="text-lg">
-                {message.type === "success" ? "✅" : "❌"}
-              </span>
+              <span className="text-lg">✅</span>
               <span className="font-medium">{message.text}</span>
             </div>
           </div>
@@ -368,25 +369,26 @@ const CustomerTrashType = () => {
                   {/* Quantity Controls */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">Quantity (kg)</span>
+                      <span className="text-sm font-medium text-gray-700">Approximate Quantity (kg)</span>
                     </div>
                     <div className="relative flex items-center">
                       <input
                         type="range"
-                        min="0"
+                        min="3"
                         max="50"
                         value={wasteTypes[wasteType.id].quantity}
                         onChange={(e) => handleSliderChange(wasteType.id, e.target.value)}
                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                         style={{
-                          background: `linear-gradient(to right, #3a5f46 0%, #3a5f46 ${(wasteTypes[wasteType.id].quantity / 50) * 100}%, #e5e7eb ${(wasteTypes[wasteType.id].quantity / 50) * 100}%, #e5e7eb 100%)`,
+                          background: `linear-gradient(to right, #3a5f46 0%, #3a5f46 ${((wasteTypes[wasteType.id].quantity - 3) / 47) * 100}%, #e5e7eb ${((wasteTypes[wasteType.id].quantity - 3) / 47) * 100}%, #e5e7eb 100%)`,
                           opacity: wasteTypes[wasteType.id].selected ? 1 : 0.5,
                         }}
                       />
                       <div className="flex items-center space-x-2 ml-4">
                         <button
-                          onClick={(e) => { e.stopPropagation(); updateQuantity(wasteType.id, wasteTypes[wasteType.id].quantity - 1) }}
+                          onClick={(e) => { e.stopPropagation(); updateQuantity(wasteType.id, Math.max(3, wasteTypes[wasteType.id].quantity - 1)) }}
                           className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 text-gray-600"
+                          disabled={wasteTypes[wasteType.id].quantity <= 3}
                         >
                           <Minus className="w-4 h-4" />
                         </button>
