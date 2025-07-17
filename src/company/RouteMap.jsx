@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { Plus, Minus, Navigation, Check } from "lucide-react"
 import { GoogleMap, LoadScript, Polyline } from "@react-google-maps/api"
 import UserProfileDropdowncom from "./UserProfileDropdowncom"
@@ -56,6 +56,8 @@ const RouteMap = () => {
   const [markers, setMarkers] = useState([])
   const [apiError, setApiError] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+
+  const navigate = useNavigate();
 
   const [households, setHouseholds] = useState([
     { id: 1, address: "123 Elm Street", contact: "Sarah Miller", notes: "Leave bins by the curb", collected: false },
@@ -198,6 +200,7 @@ const RouteMap = () => {
           <nav className="container mx-auto px-6 py-4 flex justify-between">
             <img src="/images/logo.png" className="h-16" alt="Logo" />
             <div className="flex space-x-6 items-center">
+              <Link to="/" className="text-gray-700 hover:text-gray-900 font-medium">Home</Link>
               <Link to="/company-waste-prefer">Dashboard</Link>
               <Link to="/company/historylogs">Historylogs</Link>
               <UserProfileDropdowncom />
@@ -250,6 +253,7 @@ const RouteMap = () => {
         <nav className="container mx-auto px-6 py-4 flex justify-between">
           <img src="/images/logo.png" className="h-16" alt="Logo" />
           <div className="flex space-x-6 items-center">
+            <Link to="/" className="text-gray-700 hover:text-gray-900 font-medium">Home</Link>
             <Link to="/company-waste-prefer">Dashboard</Link>
             <Link to="/company/historylogs">Historylogs</Link>
               <UserProfileDropdowncom />
@@ -391,7 +395,7 @@ const RouteMap = () => {
               <span className="font-bold text-[#3a5f46]">{collectedCount} of {totalCount} households collected</span>
             </div>
             <button
-              onClick={() => alert("Route completed!")}
+              onClick={() => navigate("/company-waste-prefer")}
               disabled={collectedCount !== totalCount}
               className={`px-8 py-3 rounded-full font-bold text-lg flex items-center gap-2 shadow transition-colors duration-200
                 ${collectedCount === totalCount

@@ -21,6 +21,7 @@ import CustomerTrackPickup from './customer/CustomerTrackPickup.jsx'
 import CustomerHistoryLog from './customer/CustomerHistoryLog.jsx'
 import Footer from './footer.jsx'
 import OtpVerification from './OtpVerification.jsx'
+import CompanyHistoryLog from './company/CompanyHistoryLog';
 
 function ScrollToTopButton() {
   const [visible, setVisible] = useState(false);
@@ -113,6 +114,7 @@ function App() {
         <Route path="/company-waste-prefer" element={<CompanyWastePrefer />} />
         <Route path="/company/route-access" element={<RouteActivation />} />
         <Route path="/company/route-map" element={<RouteMap />} />
+        <Route path="/company/historylogs" element={<CompanyHistoryLog />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/users" element={<ManageCustomers />} />
         <Route path="/admin/companies" element={<ManageCompanies />} />

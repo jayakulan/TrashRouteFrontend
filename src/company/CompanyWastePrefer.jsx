@@ -84,6 +84,7 @@ const WastePreferences = () => {
             </div>
             {/* Navigation - right aligned */}
             <div className="flex items-center space-x-8 ml-auto">
+              <Link to="/" className="text-gray-700 hover:text-gray-900 font-medium">Home</Link>
               <Link to="/company-waste-prefer" className="text-gray-700 hover:text-gray-900 font-medium">Dashboard</Link>
               <Link to="/company/historylogs" className="text-gray-700 hover:text-gray-900 font-medium">Historylogs</Link>
               {/* Notification Bell Icon */}
