@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 
-const UserProfileDropdown = () => {
+const UserProfileDropdown = ({ popupPosition }) => {
   const { user, logout, updateUser } = useAuth();
   const [showProfile, setShowProfile] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -102,11 +102,16 @@ const UserProfileDropdown = () => {
         onClick={() => setShowProfile((prev) => !prev)}
       />
       {showProfile && (
-        <div className="fixed top-20 right-10 w-72 bg-white border-2 border-gray-400 rounded-lg shadow-2xl z-[9999] p-6 flex flex-col items-center">
+        <div
+          className={
+            popupPosition === "sidebar"
+              ? "absolute bottom-14 left-1/2 -translate-x-1/2 z-[9999] w-72 bg-white border-2 border-gray-400 rounded-lg shadow-2xl p-6 flex flex-col items-center"
+              : "fixed top-20 right-10 w-72 bg-white border-2 border-gray-400 rounded-lg shadow-2xl z-[9999] p-6 flex flex-col items-center"
+          }
+        >
           <img src={user?.profileImage || "https://randomuser.me/api/portraits/women/44.jpg"} alt="User" className="w-16 h-16 rounded-full object-cover mb-3" />
           <div className="font-semibold text-gray-900 text-lg mb-1">{user?.name || "User"}</div>
           <div className="text-sm text-gray-500 mb-4">{user?.email || "user@email.com"}</div>
-          
           {/* Edit Profile Button */}
           <button 
             onClick={() => setShowEditModal(true)}
@@ -114,7 +119,6 @@ const UserProfileDropdown = () => {
           >
             Edit Profile
           </button>
-          
           {/* Logout Button */}
           <button 
             onClick={handleLogout}
@@ -124,7 +128,6 @@ const UserProfileDropdown = () => {
           </button>
         </div>
       )}
-
       {/* Edit Profile Modal */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
@@ -136,7 +139,6 @@ const UserProfileDropdown = () => {
               &times;
             </button>
             <h2 className="text-2xl font-bold mb-6 text-center text-[#3a5f46]">Edit Profile</h2>
-            
             <form onSubmit={handleEditSubmit} className="space-y-4">
               <div>
                 <label className="block text-gray-700 font-medium mb-2">Full Name</label>
