@@ -40,12 +40,6 @@ export const AuthProvider = ({ children }) => {
           localStorage.setItem('company_profile', JSON.stringify(profile));
         }
 
-        // Store customer_id for customer users
-        if (userData.role === "customer" && profile && profile.customer_id) {
-          localStorage.setItem('customer_id', profile.customer_id);
-          localStorage.setItem('customer_profile', JSON.stringify(profile));
-        }
-
         // Navigate based on role
         switch (userData.role) {
           case "admin":
