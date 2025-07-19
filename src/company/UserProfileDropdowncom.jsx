@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom"; // Added Link import
+import ReactDOM from "react-dom";
 
 const UserProfileDropdowncom = () => {
   const { user, logout } = useAuth();
@@ -93,9 +94,9 @@ const UserProfileDropdowncom = () => {
         </div>
       )}
       {/* Edit Profile Modal */}
-      {showEditModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md relative">
+      {showEditModal && ReactDOM.createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md relative max-h-[90vh] overflow-y-auto flex flex-col justify-center">
             <button onClick={() => setShowEditModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
             <h2 className="text-2xl font-bold mb-4 text-center">Edit Profile</h2>
             <form onSubmit={handleEditSubmit} className="space-y-4">
@@ -153,6 +154,7 @@ const UserProfileDropdowncom = () => {
             </form>
           </div>
         </div>
+        , document.body
       )}
     </div>
   );
