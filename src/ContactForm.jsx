@@ -17,11 +17,12 @@ function ContactModal({ onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div ref={modalRef} className="bg-white rounded-xl shadow-2xl max-w-3xl w-full mx-4 p-8 relative flex flex-col md:flex-row gap-6">
         <button
-          className="absolute top-4 right-4 text-2xl text-gray-400 hover:text-gray-700"
+          className="absolute top-4 right-4 text-2xl text-gray-400 hover:text-gray-700 p-0 bg-transparent border-none"
           onClick={onClose}
           aria-label="Close"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none' }}
         >
-          &times;
+          <img src="/images/close.png" alt="Close" style={{ width: 24, height: 24, display: 'block' }} />
         </button>
         {/* Left: Form */}
         <div className="flex-1 bg-gray-50 rounded-lg p-6 flex flex-col">

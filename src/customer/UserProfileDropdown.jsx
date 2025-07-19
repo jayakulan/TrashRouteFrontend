@@ -118,7 +118,7 @@ const UserProfileDropdown = () => {
             </button>
             <button 
               onClick={handleLogout}
-              className="w-full text-center px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
+              className="w-full text-center px-4 py-2 bg-[#6bbf7c] text-white rounded-lg hover:bg-[#57a86a] transition-colors font-medium"
             >
               Logout
             </button>

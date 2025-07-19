@@ -42,6 +42,7 @@ const PopupExample = () => {
           onClose={handleClosePopup}
           onLearnMore={handleLearnMore}
           onDontShowAgain={handleDontShowAgain}
+          closeIcon="/images/close.png"
         />
       </div>
     </div>

@@ -14,9 +14,10 @@ const PrivacyPolicy = ({ isOpen, onClose }) => {
             </h1>
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+              className="text-gray-500 hover:text-gray-700 text-2xl font-bold p-0 bg-transparent border-none"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none' }}
             >
-              ×
+              <img src="/images/close.png" alt="Close" style={{ width: 24, height: 24, display: 'block' }} />
             </button>
           </div>
           <p className="text-gray-600 mt-2">Effective Date: December 2024</p>

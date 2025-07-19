@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { X } from "lucide-react";
 
-const MinimumWastePopup = ({ isOpen, onClose, onLearnMore, onDontShowAgain }) => {
+const MinimumWastePopup = ({ isOpen, onClose, onLearnMore, onDontShowAgain, closeIcon }) => {
+  // Always use /images/close.png unless a different closeIcon is provided
+  const icon = closeIcon || "/images/close.png";
   const [dontShow, setDontShow] = useState(false);
 
   if (!isOpen) return null;
@@ -63,11 +65,14 @@ const MinimumWastePopup = ({ isOpen, onClose, onLearnMore, onDontShowAgain }) =>
             padding: '0.4rem',
             cursor: 'pointer',
             transition: 'background 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
           onMouseOver={e => (e.currentTarget.style.backgroundColor = '#d1d5db')}
           onMouseOut={e => (e.currentTarget.style.backgroundColor = '#e5e7eb')}
         >
-          <X size={20} />
+          <img src={icon} alt="Close" style={{ width: 20, height: 20, display: 'block' }} />
         </button>
 
         <h2
