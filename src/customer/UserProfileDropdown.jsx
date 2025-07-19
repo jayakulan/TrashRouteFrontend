@@ -92,7 +92,7 @@ const UserProfileDropdown = () => {
   };
 
   return (
-    <>
+    <div>
       <div
         className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200 flex items-center justify-center cursor-pointer relative"
         ref={profileRef}
@@ -105,11 +105,7 @@ const UserProfileDropdown = () => {
         />
         {showProfile && (
           <div
-            className={
-              popupPosition === "sidebar"
-                ? "absolute bottom-14 left-1/2 -translate-x-1/2 z-[9999] w-72 bg-white border-2 border-gray-400 rounded-lg shadow-2xl p-6 flex flex-col items-center"
-                : "fixed top-20 right-10 w-72 bg-white border-2 border-gray-400 rounded-lg shadow-2xl z-[9999] p-6 flex flex-col items-center"
-            }
+            className="fixed top-20 right-10 w-72 bg-white border-2 border-gray-400 rounded-lg shadow-2xl z-[9999] p-6 flex flex-col items-center"
           >
             <img src={user?.profileImage || "https://randomuser.me/api/portraits/women/44.jpg"} alt="User" className="w-16 h-16 rounded-full object-cover mb-3" />
             <div className="font-semibold text-gray-900 text-lg mb-1">{user?.name || "User"}</div>
@@ -130,7 +126,7 @@ const UserProfileDropdown = () => {
         )}
       </div>
       {/* Modal is now outside the avatar container */}
-      {showEditModal && (
+      {showEditModal && ReactDOM.createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-4 md:p-8 relative overflow-y-auto max-h-[90vh]">
             <button 

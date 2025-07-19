@@ -134,7 +134,7 @@ const CustomerTrashType = () => {
         setCookie('pickupRequests', JSON.stringify(result.data));
         
         // Navigate to next step after a short delay
-        navigate('/customer/location-pin');
+          navigate('/customer/location-pin');
       } else {
         setMessage({ type: "error", text: result.message || "Failed to save waste types" });
       }
