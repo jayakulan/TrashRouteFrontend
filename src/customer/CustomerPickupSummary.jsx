@@ -5,6 +5,7 @@ import UserProfileDropdown from "./UserProfileDropdown"
 import binIcon from '/images/bin.png';
 import CustomerNotification from "./CustomerNotification";
 import { useAuth } from "../context/AuthContext";
+import { getCookie } from "../utils/cookieUtils";
 
 const ConfirmPickup = () => {
   const [confirmed, setConfirmed] = useState(false)
@@ -26,8 +27,8 @@ const ConfirmPickup = () => {
   useEffect(() => {
     const fetchPickupSummary = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const user = localStorage.getItem('user');
+        const token = getCookie('token');
+        const user = getCookie('user');
         
         console.log('Token exists:', !!token);
         console.log('User exists:', !!user);
@@ -42,7 +43,7 @@ const ConfirmPickup = () => {
         }
 
         // Check if user is a customer
-        const userData = JSON.parse(user);
+        const userData = typeof user === 'string' ? JSON.parse(user) : user;
         if (userData.role !== 'customer') {
           setError('Access denied. This page is for customers only.');
           setLoading(false);
@@ -99,7 +100,7 @@ const ConfirmPickup = () => {
   const handleConfirmSchedule = async () => {
     setSchedulingLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = getCookie('token');
       if (!token) {
         setError('No authentication token found. Please log in again.');
         return;

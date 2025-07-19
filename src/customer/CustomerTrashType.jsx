@@ -4,6 +4,7 @@ import { Recycle, Bell, Minus, Plus } from "lucide-react"
 import MinimumWastePopup from "./MinimumWastePopup"
 import UserProfileDropdown from "./UserProfileDropdown"
 import CustomerNotification from "./CustomerNotification"
+import { getCookie } from "../utils/cookieUtils"
 
 const CustomerTrashType = () => {
   const [wasteTypes, setWasteTypes] = useState({
@@ -95,9 +96,9 @@ const CustomerTrashType = () => {
 
       console.log('Sending waste types data:', wasteTypesData);
 
-      // Get token from localStorage
-      const token = localStorage.getItem('token');
-      console.log('Token from localStorage:', token ? 'Token exists' : 'No token found');
+      // Get token from cookies
+      const token = getCookie('token');
+      console.log('Token from cookies:', token ? 'Token exists' : 'No token found');
       
       const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Customer/CustomerTrashType.php", {
         method: "POST",
@@ -120,7 +121,8 @@ const CustomerTrashType = () => {
       if (result.success) {
         setMessage({ type: "success", text: "Waste types saved successfully!" });
         
-        // Store the request data in localStorage for the next step
+        // Store the request data in cookies for the next step
+        // Note: We'll keep using localStorage for this data as it's temporary and doesn't need to persist across sessions
         localStorage.setItem('wasteTypesData', JSON.stringify(wasteTypesData));
         localStorage.setItem('pickupRequests', JSON.stringify(result.data));
         

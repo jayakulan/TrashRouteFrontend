@@ -8,6 +8,7 @@ import UserProfileDropdown from "./UserProfileDropdown"
 import { GoogleMap } from '@react-google-maps/api';
 import CustomerNotification from "./CustomerNotification";
 import { useGoogleMaps } from "../components/GoogleMapsProvider";
+import { getCookie } from "../utils/cookieUtils";
 
 // --- PlaceAutocompleteInput: Uses the new PlaceAutocompleteElement web component ---
 function PlaceAutocompleteInput({ onPlaceSelect }) {
@@ -104,7 +105,7 @@ const PinLocation = () => {
     setLoading(true);
     setMessage({ type: "", text: "" });
     try {
-      const token = localStorage.getItem('token');
+      const token = getCookie('token');
       const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Customer/CustomerLocationPin.php", {
         method: "POST",
         headers: {

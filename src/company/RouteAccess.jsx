@@ -6,6 +6,7 @@ import { useNavigate, useLocation } from "react-router-dom"
 import UserProfileDropdowncom from "./UserProfileDropdowncom"
 import { Link } from "react-router-dom"
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api"
+import { getCookie } from "../utils/cookieUtils"
 
 const GOOGLE_MAPS_API_KEY = "AIzaSyA5iEKgAwrJWVkCMAsD7_IilJ0YSVf_VGk"
 
@@ -67,7 +68,7 @@ const RouteActivation = () => {
     setLoadingBackend(true);
     setBackendError("");
     let url, body;
-    const company_id = localStorage.getItem("company_id");
+    const company_id = getCookie("company_id");
     if (!company_id) {
       setBackendError("Company ID not found. Please log in again.");
       setLoadingBackend(false);
@@ -164,7 +165,7 @@ const RouteActivation = () => {
     e.preventDefault();
     setPaymentLoading(true);
     setPaymentMessage("");
-    const company_id = localStorage.getItem("company_id");
+    const company_id = getCookie("company_id");
     if (!company_id) {
       setPaymentMessage("Company ID not found. Please log in again.");
       setPaymentLoading(false);
