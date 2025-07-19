@@ -197,7 +197,10 @@ export default function CustomerNotification({ hasNew = true, onViewDetails, not
         {notification.status === "completed" && (
           <div className="w-full flex justify-center mt-3">
             <button
-              className="py-2 px-6 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-lg shadow transition-all duration-200"
+              className="py-2 px-6 text-white text-base font-semibold rounded-lg shadow transition-all duration-200"
+              style={{ background: '#5E856D' }}
+              onMouseOver={e => e.currentTarget.style.background = '#466a54'}
+              onMouseOut={e => e.currentTarget.style.background = '#5E856D'}
               onClick={notification.onFeedback || (() => alert('Feedback clicked!'))}
             >
               Give Feedback

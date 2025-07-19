@@ -367,11 +367,11 @@ function LandingPage() {
 
       {/* Hero Section - Video right after header */}
       <section className="relative w-full overflow-hidden bg-[#f7f9fb] min-h-[60vh] sm:min-h-[70vh] md:min-h-[80vh] lg:min-h-[90vh]">
-        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 h-full relative bg-[#f7f9fb]">
+        <div className="w-full h-full">
           <img
             src="/images/homepic.png"
             alt="Home Hero"
-            className="w-full h-full object-cover object-center z-0"
+            className="w-full h-full object-cover"
             style={{ minHeight: '250px', maxHeight: '90vh' }}
           />
         </div>
