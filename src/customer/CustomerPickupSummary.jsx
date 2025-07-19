@@ -5,6 +5,7 @@ import UserProfileDropdown from "./UserProfileDropdown"
 import binIcon from '/images/bin.png';
 import CustomerNotification from "./CustomerNotification";
 import { useAuth } from "../context/AuthContext";
+import { getCookie } from "../utils/cookieUtils";
 
 const ConfirmPickup = () => {
   const [confirmed, setConfirmed] = useState(false)
@@ -26,8 +27,8 @@ const ConfirmPickup = () => {
   useEffect(() => {
     const fetchPickupSummary = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const user = localStorage.getItem('user');
+        const token = getCookie('token');
+        const user = getCookie('user');
         
         console.log('Token exists:', !!token);
         console.log('User exists:', !!user);
@@ -42,7 +43,7 @@ const ConfirmPickup = () => {
         }
 
         // Check if user is a customer
-        const userData = JSON.parse(user);
+        const userData = typeof user === 'string' ? JSON.parse(user) : user;
         if (userData.role !== 'customer') {
           setError('Access denied. This page is for customers only.');
           setLoading(false);
@@ -99,7 +100,7 @@ const ConfirmPickup = () => {
   const handleConfirmSchedule = async () => {
     setSchedulingLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = getCookie('token');
       if (!token) {
         setError('No authentication token found. Please log in again.');
         return;
@@ -144,8 +145,8 @@ const ConfirmPickup = () => {
           <div className="flex items-center">
             <img src="/public/images/logo2.png" alt="Logo" className="h-16 w-34" />
           </div>
-          {/* Navigation Links with enhanced animations */}
-          <div className="hidden md:flex space-x-8 text-gray-700 font-medium">
+          {/* Navigation Links - right aligned */}
+          <div className="hidden md:flex space-x-8 text-gray-700 font-medium ml-auto">
             <a href="/" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Home</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
             <a href="/customer/trash-type" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Request Pickup</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
             <a href="/customer/track-pickup" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Track Pickup</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>

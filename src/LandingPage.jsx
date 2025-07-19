@@ -33,7 +33,7 @@ function ScrollToTopButton() {
   return (
     <button
       onClick={handleClick}
-      className={`fixed z-50 bottom-8 right-8 w-14 h-14 flex items-center justify-center rounded-full bg-white shadow-lg border-2 border-[#3a5f46] transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+      className={fixed z-50 bottom-8 right-8 w-14 h-14 flex items-center justify-center rounded-full bg-white shadow-lg border-2 border-[#3a5f46] transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0 pointer-events-none'}}
       aria-label="Scroll to top"
       style={{ outline: 'none' }}
     >
@@ -76,7 +76,7 @@ function WhyChooseUsSlider() {
   const cards = [
     [
       {
-        icon: "♻️",
+        icon: "♻",
         title: "Eco-Friendly Impact",
         desc: "Every pickup reduces landfill waste."
       },
@@ -148,7 +148,7 @@ function WhyChooseUsSlider() {
             {cardPair.map((card, cidx) => (
               <div
                 key={cidx}
-                className={`flex flex-col items-center rounded-xl p-10 m-4 shadow transition-transform duration-300 hover:scale-105 hover:shadow-[0_4px_32px_0_#3a5f46] w-full max-w-md h-72 relative ${['Eco-Friendly Impact','No Middleman Needed','Time-Saving System','Mobile Friendly'].includes(card.title) ? 'bg-cover bg-center' : 'bg-white hover:bg-gray-100'}`}
+                className={flex flex-col items-center rounded-xl p-10 m-4 shadow transition-transform duration-300 hover:scale-105 hover:shadow-[0_4px_32px_0_#3a5f46] w-full max-w-md h-72 relative ${['Eco-Friendly Impact','No Middleman Needed','Time-Saving System','Mobile Friendly'].includes(card.title) ? 'bg-cover bg-center' : 'bg-white hover:bg-gray-100'}}
                 style={card.title === 'Eco-Friendly Impact'
                   ? { backgroundImage: 'url(/public/images/image1.avif)' }
                   : card.title === 'No Middleman Needed'
@@ -175,9 +175,9 @@ function WhyChooseUsSlider() {
         {cards.map((_, idx) => (
           <button
             key={idx}
-            className={`w-3 h-3 rounded-full ${activeIndex === idx ? 'bg-[#3a5f46]' : 'bg-gray-300'} transition`}
+            className={w-3 h-3 rounded-full ${activeIndex === idx ? 'bg-[#3a5f46]' : 'bg-gray-300'} transition}
             onClick={() => setActiveIndex(idx)}
-            aria-label={`Go to slide ${idx + 1}`}
+            aria-label={Go to slide ${idx + 1}}
           />
         ))}
       </div>
@@ -461,7 +461,7 @@ function LandingPage() {
                 onClick={() => setShowFeature1Info(true)}
               >
                 Explore
-                <span className="inline-block transition-transform duration-300 group-hover/button:translate-x-2 group-hover/button:drop-shadow-glow">➡️</span>
+                <span className="inline-block transition-transform duration-300 group-hover/button:translate-x-2 group-hover/button:drop-shadow-glow">➡</span>
               </button>
             </div>
           </div>
@@ -477,7 +477,7 @@ function LandingPage() {
                 onClick={() => setShowFeature2Info(true)}
               >
                 Explore
-                <span className="inline-block transition-transform duration-300 group-hover/button:translate-x-2 group-hover/button:drop-shadow-glow">➡️</span>
+                <span className="inline-block transition-transform duration-300 group-hover/button:translate-x-2 group-hover/button:drop-shadow-glow">➡</span>
               </button>
             </div>
           </div>
@@ -493,7 +493,7 @@ function LandingPage() {
                 onClick={() => setShowFeature3Info(true)}
               >
                 Explore
-                <span className="inline-block transition-transform duration-300 group-hover/button:translate-x-2 group-hover/button:drop-shadow-glow">➡️</span>
+                <span className="inline-block transition-transform duration-300 group-hover/button:translate-x-2 group-hover/button:drop-shadow-glow">➡</span>
               </button>
             </div>
           </div>
@@ -509,7 +509,7 @@ function LandingPage() {
                 onClick={() => setShowFeature4Info(true)}
               >
                 Explore
-                <span className="inline-block transition-transform duration-300 group-hover/button:translate-x-2 group-hover/button:drop-shadow-glow">➡️</span>
+                <span className="inline-block transition-transform duration-300 group-hover/button:translate-x-2 group-hover/button:drop-shadow-glow">➡</span>
               </button>
             </div>
           </div>
@@ -622,7 +622,7 @@ function LandingPage() {
 
         <div className="relative w-full max-w-7xl mx-auto mb-4 sm:mb-8">
           <img ref={aboutUsImgRef} src="/public/images/TrashCollect.png" alt="Trash Collecting" className="w-full rounded-2xl shadow-lg" />
-          <div className={`absolute left-0 bottom-0 m-6 transition-transform duration-700 ${aboutUsVisible ? 'translate-x-0 opacity-100' : '-translate-x-20 opacity-0'}`}>
+          <div className={absolute left-0 bottom-0 m-6 transition-transform duration-700 ${aboutUsVisible ? 'translate-x-0 opacity-100' : '-translate-x-20 opacity-0'}}>
             <div className="bg-white/80 rounded-2xl shadow-lg p-4 sm:p-6 max-w-2xl text-justify w-full">
               <p className="text-gray-700 text-base md:text-lg text-justify">
                 TrashRoute is an innovative web-based platform built to improve how recyclable waste is managed and reused. We connect everyday people who have recyclable materials—like plastic, paper, glass, and metal—with industries that can reuse those materials in their production.<br />
@@ -649,7 +649,7 @@ function LandingPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 w-full">
           {/* Feature 1 */}
           <div className="flex flex-col items-center bg-gradient-to-br from-[#e6f4ea] to-[#cfe3d6] rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-shadow duration-300 hover:scale-105 group cursor-pointer border border-[#d0e9d6]">
-            <div className="text-4xl mb-4 drop-shadow">🗂️</div>
+            <div className="text-4xl mb-4 drop-shadow">🗂</div>
             <div className="font-bold text-[#3a5f46] text-lg mb-2 text-center group-hover:text-[#2e4d3a] transition-colors">Smart Waste Categorization</div>
             <div className="text-gray-600 text-base text-center">Our system intelligently categorizes waste to ensure proper handling and recycling.</div>
           </div>
