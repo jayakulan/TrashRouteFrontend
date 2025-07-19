@@ -9,6 +9,7 @@ import UserProfileDropdown from "./UserProfileDropdown"
 import { GoogleMap } from '@react-google-maps/api';
 import CustomerNotification from "./CustomerNotification";
 import { useGoogleMaps } from "../components/GoogleMapsProvider";
+import { getCookie } from "../utils/cookieUtils";
 
 
 // --- PlaceAutocompleteInput: Uses the new PlaceAutocompleteElement web component ---
@@ -106,7 +107,7 @@ const PinLocation = () => {
     setLoading(true);
     setMessage({ type: "", text: "" });
     try {
-      const token = localStorage.getItem('token');
+      const token = getCookie('token');
       const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Customer/CustomerLocationPin.php", {
         method: "POST",
         headers: {
@@ -255,8 +256,8 @@ const PinLocation = () => {
           <div className="flex items-center">
             <img src="/public/images/logo2.png" alt="Logo" className="h-16 w-34" />
           </div>
-          {/* Navigation Links with enhanced animations */}
-          <div className="hidden md:flex space-x-8 text-gray-700 font-medium">
+          {/* Navigation Links - right aligned */}
+          <div className="hidden md:flex space-x-8 text-gray-700 font-medium ml-auto">
             <a href="/" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Home</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
             <a href="/customer/trash-type" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Request Pickup</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
             <a href="/customer/track-pickup" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Track Pickup</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
@@ -267,19 +268,9 @@ const PinLocation = () => {
             <CustomerNotification onViewDetails={() => navigate('/customer/track-pickup')} />
             <UserProfileDropdown />
           </div>
-
-          <div className="flex items-center space-x-8">
-            <Link to="/" className="text-gray-700 hover:text-gray-900 font-medium">Home</Link>
-            <Link to="/customer/trash-type" className="text-gray-700 hover:text-gray-900 font-medium">Request Pickup</Link>
-            <Link to="/customer/track-pickup" className="text-gray-700 hover:text-gray-900 font-medium">Track Pickup</Link>
-            <Link to="/customer/history-log" className="text-gray-700 hover:text-gray-900 font-medium">History Log</Link>
-
-            <CustomerNotification iconOnly hasNew={false} />
-
           {/* Mobile menu button with animation */}
           <div className="md:hidden flex items-center">
             <CustomerNotification onViewDetails={() => navigate('/customer/track-pickup')} />
-
             <UserProfileDropdown />
             <button className="ml-2 relative group p-2 rounded-lg transition-all duration-300 hover:bg-[#3a5f46]/10">
               <div className="w-6 h-0.5 bg-gray-700 group-hover:bg-[#3a5f46] transition-all duration-300 mb-1.5"></div>

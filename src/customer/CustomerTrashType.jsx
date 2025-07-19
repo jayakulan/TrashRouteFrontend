@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom"
 import { Recycle, Bell, Minus, Plus, ArrowLeft } from "lucide-react"
 import MinimumWastePopup from "./MinimumWastePopup"
 import UserProfileDropdown from "./UserProfileDropdown"
+import CustomerNotification from "./CustomerNotification"
+import { setCookie, getCookie } from "../utils/cookieUtils";
 
 const CustomerTrashType = () => {
   const [wasteTypes, setWasteTypes] = useState({
@@ -23,7 +25,7 @@ const CustomerTrashType = () => {
 
   // Popup state
   const [isPopupOpen, setIsPopupOpen] = useState(() => {
-    const hide = localStorage.getItem("hideMinimumWastePopup") === "true"
+    const hide = getCookie("hideMinimumWastePopup") === "true"
     return !hide;
   })
 
@@ -33,7 +35,7 @@ const CustomerTrashType = () => {
     setIsPopupOpen(false)
   }
   const handleDontShowAgain = () => {
-    localStorage.setItem("hideMinimumWastePopup", "true")
+    setCookie("hideMinimumWastePopup", "true")
   }
 
   const updateQuantity = (type, newQuantity) => {
@@ -94,9 +96,9 @@ const CustomerTrashType = () => {
 
       console.log('Sending waste types data:', wasteTypesData);
 
-      // Get token from localStorage
-      const token = localStorage.getItem('token');
-      console.log('Token from localStorage:', token ? 'Token exists' : 'No token found');
+      // Get token from cookies
+      const token = getCookie('token');
+      console.log('Token from cookies:', token ? 'Token exists' : 'No token found');
       
       const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Customer/CustomerTrashType.php", {
         method: "POST",
@@ -111,10 +113,8 @@ const CustomerTrashType = () => {
       });
 
       const result = await response.json();
-      const addressToSave = result.data && result.data.address ? result.data.address : address;
-      localStorage.setItem('locationData', JSON.stringify({
-        latitude: coordinates.latitude,
-        longitude: coordinates.longitude,
+      const addressToSave = result.data && result.data.address ? result.data.address : "";
+      setCookie('locationData', JSON.stringify({
         address: addressToSave,
         requestIds: result.data.request_ids,
         totalUpdated: result.data.total_updated
@@ -123,18 +123,18 @@ const CustomerTrashType = () => {
       console.log('Response from server:', result);
       console.log('Response status:', response.status);
       console.log('Response headers:', response.headers);
+      console.log('Backend result:', result);
 
       if (result.success) {
         setMessage({ type: "success", text: "Waste types saved successfully!" });
         
-        // Store the request data in localStorage for the next step
-        localStorage.setItem('wasteTypesData', JSON.stringify(wasteTypesData));
-        localStorage.setItem('pickupRequests', JSON.stringify(result.data));
+        // Store the request data in cookies for the next step
+        // Note: We'll keep using localStorage for this data as it's temporary and doesn't need to persist across sessions
+        setCookie('wasteTypesData', JSON.stringify(wasteTypesData));
+        setCookie('pickupRequests', JSON.stringify(result.data));
         
         // Navigate to next step after a short delay
-        setTimeout(() => {
-          navigate('/customer/location-pin');
-        }, 1500);
+        navigate('/customer/location-pin');
       } else {
         setMessage({ type: "error", text: result.message || "Failed to save waste types" });
       }
@@ -244,15 +244,8 @@ const CustomerTrashType = () => {
           <div className="flex items-center">
             <img src="/public/images/logo2.png" alt="Logo" className="h-16 w-34" />
           </div>
-
-          <div className="flex items-center space-x-8">
-            <Link to="/" className="text-gray-700 hover:text-gray-900 font-medium">Home</Link>
-            <Link to="/customer/trash-type" className="text-gray-700 hover:text-gray-900 font-medium">Request Pickup</Link>
-            <Link to="/customer/track-pickup" className="text-gray-700 hover:text-gray-900 font-medium">Track Pickup</Link>
-            <Link to="/customer/history-log" className="text-gray-700 hover:text-gray-900 font-medium">History Log</Link>
-
-          {/* Navigation Links with enhanced animations */}
-          <div className="hidden md:flex space-x-8 text-gray-700 font-medium">
+          {/* Navigation Links - right aligned */}
+          <div className="hidden md:flex space-x-8 text-gray-700 font-medium ml-auto">
             <a href="/" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Home</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
             <a href="/customer/trash-type" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Request Pickup</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
             <a href="/customer/track-pickup" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Track Pickup</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
@@ -261,7 +254,6 @@ const CustomerTrashType = () => {
           {/* Notification and Profile */}
           <div className="hidden md:flex items-center space-x-4 ml-4">
             <CustomerNotification onViewDetails={() => navigate('/customer/track-pickup')} />
-
             <UserProfileDropdown />
           </div>
           {/* Mobile menu button with animation */}
