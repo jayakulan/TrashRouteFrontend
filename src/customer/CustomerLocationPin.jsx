@@ -5,7 +5,11 @@ import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Recycle, Search, Plus, Minus, Navigation, Bell } from "lucide-react"
 import UserProfileDropdown from "./UserProfileDropdown"
-import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
+
+import { GoogleMap } from '@react-google-maps/api';
+import CustomerNotification from "./CustomerNotification";
+import { useGoogleMaps } from "../components/GoogleMapsProvider";
+
 
 // --- PlaceAutocompleteInput: Uses the new PlaceAutocompleteElement web component ---
 function PlaceAutocompleteInput({ onPlaceSelect }) {
@@ -37,6 +41,7 @@ function PlaceAutocompleteInput({ onPlaceSelect }) {
 const GOOGLE_MAPS_MAP_ID = '2d11b98e205d938c1f59291f'; // Custom Map ID for TrashRoute
 
 const PinLocation = () => {
+  const { isLoaded, loadError: googleMapsError, isLoading: isGoogleMapsLoading } = useGoogleMaps();
   const [coordinates, setCoordinates] = useState({
     latitude: 9.6615, // Jaffna, Sri Lanka
     longitude: 80.0255,
@@ -50,12 +55,6 @@ const PinLocation = () => {
   const [message, setMessage] = useState({ type: "", text: "" });
   const navigate = useNavigate();
   const autocompleteInputRef = useRef(null);
-
-  // Use the static libraries array
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: 'AIzaSyA5iEKgAwrJWVkCMAsD7_IilJ0YSVf_VGk',
-    libraries: GOOGLE_MAPS_LIBRARIES
-  });
 
   const pickupDetails = {
     wasteTypes: "Mixed Recyclables, Cardboard",
@@ -207,36 +206,89 @@ const PinLocation = () => {
     lng: coordinates.longitude,
   };
 
+  // Show error if Google Maps failed to load
+  if (googleMapsError) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white border-b">
+          <nav className="container mx-auto px-8 py-4 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <img src="/images/logo.png" alt="Logo" className="h-16 w-34" />
+            </div>
+            <div className="flex items-center space-x-8">
+              <Link to="/" className="text-gray-700 hover:text-gray-900 font-medium">Home</Link>
+              <Link to="/customer/trash-type" className="text-gray-700 hover:text-gray-900 font-medium">Request Pickup</Link>
+              <Link to="/customer/track-pickup" className="text-gray-700 hover:text-gray-900 font-medium">Track Pickup</Link>
+              <Link to="/customer/history-log" className="text-gray-700 hover:text-gray-900 font-medium">History Log</Link>
+              <CustomerNotification onViewDetails={() => navigate('/customer/track-pickup')} />
+              <UserProfileDropdown />
+            </div>
+          </nav>
+        </header>
+
+        <main className="container mx-auto px-8 py-8">
+          <div className="bg-white border rounded-2xl shadow-sm p-8 text-center">
+            <div className="text-6xl mb-4">🗺️</div>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">Google Maps API Error</h3>
+            <p className="text-gray-500 mb-4">
+              Failed to load Google Maps API. Please refresh the page.
+            </p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="bg-[#3a5f46] text-white px-4 py-2 rounded hover:bg-[#2e4d3a]"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b">
-        <nav className="container mx-auto px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <img src="/images/logo.png" alt="Logo" className="h-16 w-34" />
+      {/* Accent bar at the very top */}
+      <div className="absolute top-0 left-0 right-0 w-screen h-1 bg-[#26a360] rounded-t-2xl z-50"></div>
+      <nav className="w-full bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-40 shadow-xl transition-all duration-300 relative">
+        <div className="w-full flex items-center justify-between h-20 px-4 md:px-8">
+          {/* Logo with animation */}
+          <div className="flex items-center">
+            <img src="/public/images/logo2.png" alt="Logo" className="h-16 w-34" />
           </div>
+          {/* Navigation Links with enhanced animations */}
+          <div className="hidden md:flex space-x-8 text-gray-700 font-medium">
+            <a href="/" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Home</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
+            <a href="/customer/trash-type" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Request Pickup</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
+            <a href="/customer/track-pickup" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Track Pickup</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
+            <a href="/customer/history-log" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">History Log</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
+          </div>
+          {/* Notification and Profile */}
+          <div className="hidden md:flex items-center space-x-4 ml-4">
+            <CustomerNotification onViewDetails={() => navigate('/customer/track-pickup')} />
+            <UserProfileDropdown />
+          </div>
+
           <div className="flex items-center space-x-8">
             <Link to="/" className="text-gray-700 hover:text-gray-900 font-medium">Home</Link>
             <Link to="/customer/trash-type" className="text-gray-700 hover:text-gray-900 font-medium">Request Pickup</Link>
             <Link to="/customer/track-pickup" className="text-gray-700 hover:text-gray-900 font-medium">Track Pickup</Link>
             <Link to="/customer/history-log" className="text-gray-700 hover:text-gray-900 font-medium">History Log</Link>
-<<<<<<< HEAD
-            <span className="mx-2" />
-            <button
-              className="relative focus:outline-none"
-              aria-label="Notifications"
-              style={{ background: 'none', border: 'none', padding: 0, margin: 0, cursor: 'pointer' }}
-              onClick={() => { /* Optionally: alert('Notifications clicked!') */ }}
-            >
-              <Bell className="w-7 h-7 text-gray-700 hover:text-green-700 transition" />
-            </button>
-=======
+
             <CustomerNotification iconOnly hasNew={false} />
->>>>>>> ea8637baa2efec7003ae2eec137906464b4b6d79
+
+          {/* Mobile menu button with animation */}
+          <div className="md:hidden flex items-center">
+            <CustomerNotification onViewDetails={() => navigate('/customer/track-pickup')} />
+
             <UserProfileDropdown />
+            <button className="ml-2 relative group p-2 rounded-lg transition-all duration-300 hover:bg-[#3a5f46]/10">
+              <div className="w-6 h-0.5 bg-gray-700 group-hover:bg-[#3a5f46] transition-all duration-300 mb-1.5"></div>
+              <div className="w-6 h-0.5 bg-gray-700 group-hover:bg-[#3a5f46] transition-all duration-300 mb-1.5"></div>
+              <div className="w-6 h-0.5 bg-gray-700 group-hover:bg-[#3a5f46] transition-all duration-300"></div>
+            </button>
           </div>
-        </nav>
-      </header>
+        </div>
+      </nav>
 
       {/* Main Content */}
       <main className="container mx-auto px-8 py-8 flex gap-12">
@@ -312,7 +364,17 @@ const PinLocation = () => {
             </div>
             {/* Google Map Integration */}
             <div style={{ width: '100%', height: 380 }}>
-              {isLoaded && (
+              {(isGoogleMapsLoading || !isLoaded || !window.google || !window.google.maps || !window.google.maps.Map) && (
+                <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-20">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3a5f46] mx-auto mb-4"></div>
+                    <p className="text-gray-600">
+                      {isGoogleMapsLoading ? "Loading Google Maps..." : "Initializing map..."}
+                    </p>
+                  </div>
+                </div>
+              )}
+              {isLoaded && window.google && window.google.maps && window.google.maps.Map && (
                 <GoogleMap
                   mapContainerStyle={mapContainerStyle}
                   center={center}

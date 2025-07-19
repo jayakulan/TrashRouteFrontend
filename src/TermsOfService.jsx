@@ -237,7 +237,7 @@ const TermsOfService = ({ isOpen, onClose }) => {
               
               <div className="ml-4 space-y-2 text-gray-700">
                 <p>📧 Email: legal@trashroute.lk</p>
-                <p>📍 Address: [Enter Your Organization's Address]</p>
+                <p>📍 Address: No.25 , Passara Road , Badulla , Sri Lanka</p>
                 <p>📞 Phone: [Optional]</p>
                 <p>🌐 Website: www.trashroute.lk</p>
               </div>

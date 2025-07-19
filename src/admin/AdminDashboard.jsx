@@ -1,12 +1,33 @@
 "use client"
 
+import { useState, useRef, useEffect } from "react"
+import UserProfileDropdown from "../customer/UserProfileDropdown"
 import { Link } from "react-router-dom"
 import { Diamond, Users, Building, Truck, MessageSquare, BarChart3, Menu, X } from "lucide-react"
-import UserProfileDropdown from "../customer/UserProfileDropdown"
-import { useState } from "react"
+import SidebarLinks from "./SidebarLinks";
+import Footer from "../footer";
 
 const AdminDashboard = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [sidebarHovered, setSidebarHovered] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setProfileOpen(false);
+      }
+    }
+    if (profileOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [profileOpen]);
 
   const stats = [
     {
@@ -106,188 +127,53 @@ const AdminDashboard = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-[#f7f9fb] flex">
-      {/* Sidebar Navigation */}
-      <div className="w-16 lg:w-20 bg-white shadow-lg fixed h-full z-30 hidden lg:block">
-        {/* Navigation Links */}
-        <nav className="mt-4">
-          <div className="px-2 lg:px-3 space-y-2">
-            <Link 
-              to="/admin/dashboard" 
-              className="flex items-center justify-center p-3 lg:p-4 text-[#3a5f46] bg-[#e6f4ea] rounded-lg font-semibold text-sm hover:bg-[#d0e9d6] transition-all duration-200 group relative"
-              title="Dashboard"
-            >
-              <Diamond className="w-5 h-5 lg:w-6 lg:h-6" />
-              {/* Tooltip for larger screens */}
-              <span className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50">
-                Dashboard
-              </span>
-            </Link>
-            <Link 
-              to="/admin/users" 
-              className="flex items-center justify-center p-3 lg:p-4 text-gray-700 hover:text-[#3a5f46] hover:bg-[#e6f4ea] rounded-lg transition-all duration-200 group relative"
-              title="Users"
-            >
-              <Users className="w-5 h-5 lg:w-6 lg:h-6" />
-              {/* Tooltip for larger screens */}
-              <span className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50">
-                Users
-              </span>
-            </Link>
-            <Link 
-              to="/admin/companies" 
-              className="flex items-center justify-center p-3 lg:p-4 text-gray-700 hover:text-[#3a5f46] hover:bg-[#e6f4ea] rounded-lg transition-all duration-200 group relative"
-              title="Companies"
-            >
-              <Building className="w-5 h-5 lg:w-6 lg:h-6" />
-              {/* Tooltip for larger screens */}
-              <span className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50">
-                Companies
-              </span>
-            </Link>
-            <Link 
-              to="/admin/requests" 
-              className="flex items-center justify-center p-3 lg:p-4 text-gray-700 hover:text-[#3a5f46] hover:bg-[#e6f4ea] rounded-lg transition-all duration-200 group relative"
-              title="Requests"
-            >
-              <Truck className="w-5 h-5 lg:w-6 lg:h-6" />
-              {/* Tooltip for larger screens */}
-              <span className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50">
-                Requests
-              </span>
-            </Link>
-            <Link 
-              to="/admin/feedback" 
-              className="flex items-center justify-center p-3 lg:p-4 text-gray-700 hover:text-[#3a5f46] hover:bg-[#e6f4ea] rounded-lg transition-all duration-200 group relative"
-              title="Feedback"
-            >
-              <MessageSquare className="w-5 h-5 lg:w-6 lg:h-6" />
-              {/* Tooltip for larger screens */}
-              <span className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50">
-                Feedback
-              </span>
-            </Link>
-            <Link 
-              to="/admin/reports" 
-              className="flex items-center justify-center p-3 lg:p-4 text-gray-700 hover:text-[#3a5f46] hover:bg-[#e6f4ea] rounded-lg transition-all duration-200 group relative"
-              title="Reports"
-            >
-              <BarChart3 className="w-5 h-5 lg:w-6 lg:h-6" />
-              {/* Tooltip for larger screens */}
-              <span className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50">
-                Reports
-              </span>
-            </Link>
-          </div>
-        </nav>
+    <div className="min-h-screen bg-[#f7f9fb] flex overflow-x-hidden">
+      {/* Sidebar: hidden on mobile, hover-expand on desktop */}
+      <div
+        className={`fixed top-0 left-0 h-full z-30 bg-white shadow-lg flex-col transition-all duration-300
+          hidden sm:flex
+          ${sidebarHovered ? 'w-64' : 'w-20'}
+        `}
+        onMouseEnter={() => setSidebarHovered(true)}
+        onMouseLeave={() => setSidebarHovered(false)}
+      >
+        <SidebarLinks sidebarOpen={sidebarHovered} />
+        <div className="p-4 border-t border-gray-200 mt-auto flex justify-center">
+          <UserProfileDropdown popupPosition="sidebar" />
+        </div>
       </div>
-
+      {/* Mobile Hamburger */}
+      <button
+        className="sm:hidden fixed top-4 left-4 z-40 p-2 bg-white rounded-full shadow"
+        onClick={() => setMobileMenuOpen(true)}
+      >
+        <Menu className="w-6 h-6 text-[#3a5f46]" />
+      </button>
+      {/* Mobile Sidebar Drawer */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex">
+          <div className="w-64 bg-white h-full shadow-lg flex flex-col">
+            <button
+              className="self-end m-4"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <X className="w-6 h-6 text-gray-600" />
+            </button>
+            <SidebarLinks sidebarOpen={true} onClick={() => setMobileMenuOpen(false)} />
+            <div className="p-4 border-t border-gray-200 mt-auto flex justify-center">
+              <UserProfileDropdown popupPosition="sidebar" />
+            </div>
+          </div>
+          <div className="flex-1" onClick={() => setMobileMenuOpen(false)} />
+        </div>
+      )}
       {/* Main Content Area */}
-      <div className="flex-1 lg:ml-16 xl:ml-20">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b px-4 sm:px-6 py-3 sm:py-4">
-          <div className="flex justify-between items-center">
-            {/* Left side - Mobile menu button and logo */}
-            <div className="flex items-center space-x-4">
-              {/* Mobile menu button */}
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden p-2 text-[#3a5f46] hover:bg-[#e6f4ea] rounded-lg transition"
-              >
-                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </button>
-
-              {/* Logo for all screen sizes */}
-              <div className="flex items-center">
-                <img src="/images/logo.png" alt="Logo" className="h-8 w-auto" />
-              </div>
-            </div>
-
-            {/* Right side - Account Icon */}
-            <div className="flex items-center">
-              <UserProfileDropdown />
-            </div>
-          </div>
-        </header>
-
-        {/* Mobile Navigation Overlay */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden fixed inset-0 z-40 bg-black bg-opacity-50">
-            <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg">
-              <div className="p-4 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center justify-center">
-                    <img src="/images/logo.png" alt="Logo" className="h-8 w-auto" />
-                  </div>
-                  <button
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="p-2 text-gray-400 hover:text-gray-600"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-              <nav className="mt-4 px-3 space-y-1">
-                <Link 
-                  to="/admin/dashboard" 
-                  className="flex items-center space-x-3 px-3 py-2.5 text-[#3a5f46] bg-[#e6f4ea] rounded-lg font-semibold text-sm"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Diamond className="w-4 h-4" />
-                  <span>Dashboard</span>
-                </Link>
-                <Link 
-                  to="/admin/users" 
-                  className="flex items-center space-x-3 px-3 py-2.5 text-gray-700 hover:text-[#3a5f46] hover:bg-[#e6f4ea] rounded-lg transition text-sm"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Users className="w-4 h-4" />
-                  <span>Users</span>
-                </Link>
-                <Link 
-                  to="/admin/companies" 
-                  className="flex items-center space-x-3 px-3 py-2.5 text-gray-700 hover:text-[#3a5f46] hover:bg-[#e6f4ea] rounded-lg transition text-sm"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Building className="w-4 h-4" />
-                  <span>Companies</span>
-                </Link>
-                <Link 
-                  to="/admin/requests" 
-                  className="flex items-center space-x-3 px-3 py-2.5 text-gray-700 hover:text-[#3a5f46] hover:bg-[#e6f4ea] rounded-lg transition text-sm"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Truck className="w-4 h-4" />
-                  <span>Requests</span>
-                </Link>
-                <Link 
-                  to="/admin/feedback" 
-                  className="flex items-center space-x-3 px-3 py-2.5 text-gray-700 hover:text-[#3a5f46] hover:bg-[#e6f4ea] rounded-lg transition text-sm"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <MessageSquare className="w-4 h-4" />
-                  <span>Feedback</span>
-                </Link>
-                <Link 
-                  to="/admin/reports" 
-                  className="flex items-center space-x-3 px-3 py-2.5 text-gray-700 hover:text-[#3a5f46] hover:bg-[#e6f4ea] rounded-lg transition text-sm"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <BarChart3 className="w-4 h-4" />
-                  <span>Reports</span>
-                </Link>
-              </nav>
-            </div>
-          </div>
-        )}
-
-        {/* Main Content */}
-        <main className="p-4 sm:p-6">
+      <div className={`flex-1 min-w-0 ml-0 sm:ml-20 transition-all duration-300 ${sidebarHovered ? 'lg:ml-64' : 'lg:ml-20'}`}>
+        <main className="p-4 sm:p-6 md:p-8">
           {/* Page Title */}
           <div className="mb-4 sm:mb-6">
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#3a5f46] tracking-tight mb-2">Dashboard</h1>
           </div>
-
           {/* Statistics Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
             {stats.map((stat, index) => (
@@ -297,7 +183,6 @@ const AdminDashboard = () => {
               </div>
             ))}
           </div>
-
           {/* Pickup Status Section */}
           <div className="mb-4 sm:mb-6 lg:mb-8">
             <h2 className="text-base sm:text-lg lg:text-xl font-bold text-[#3a5f46] mb-3 sm:mb-4 lg:mb-6">Pickup Status</h2>
@@ -310,7 +195,6 @@ const AdminDashboard = () => {
               ))}
             </div>
           </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
             {/* Recent Activity Section */}
             <div>
@@ -324,7 +208,6 @@ const AdminDashboard = () => {
                 ))}
               </div>
             </div>
-
             {/* Quick Links Section */}
             <div>
               <h2 className="text-base sm:text-lg lg:text-xl font-bold text-[#3a5f46] mb-3 sm:mb-4 lg:mb-6">Quick Links</h2>
@@ -348,9 +231,10 @@ const AdminDashboard = () => {
             </div>
           </div>
         </main>
+        <Footer admin={true} />
       </div>
     </div>
   )
 }
 
-export default AdminDashboard
+export default AdminDashboard;

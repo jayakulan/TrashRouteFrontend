@@ -1,115 +1,174 @@
 import { Link, useNavigate } from "react-router-dom"
-import { Recycle, Bell, X } from "lucide-react"
+import { Recycle, Bell } from "lucide-react"
 import { useState, useEffect } from "react"
 import UserProfileDropdown from "./UserProfileDropdown"
-<<<<<<< HEAD
 import binIcon from '/images/bin.png';
-=======
 import CustomerNotification from "./CustomerNotification";
->>>>>>> ea8637baa2efec7003ae2eec137906464b4b6d79
+import { useAuth } from "../context/AuthContext";
+import { getCookie } from "../utils/cookieUtils";
 
 const ConfirmPickup = () => {
   const [confirmed, setConfirmed] = useState(false)
   const [showPopup, setShowPopup] = useState(false);
-<<<<<<< HEAD
-  const [showBellDot, setShowBellDot] = useState(false);
-  const [showNotificationPopup, setShowNotificationPopup] = useState(false);
-  const [showBellPopup, setShowBellPopup] = useState(false);
-  const [showBellDetails, setShowBellDetails] = useState(false);
+  const [pickupSummary, setPickupSummary] = useState({
+    wasteTypes: "Loading...",
+    approximateTotalWeight: "Loading...",
+    pickupLocation: "Loading...",
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [otpData, setOtpData] = useState(null);
+  const [otpList, setOtpList] = useState([]);
+  const [schedulingLoading, setSchedulingLoading] = useState(false);
   const navigate = useNavigate();
-  // Get data from localStorage
-  const wasteTypesData = JSON.parse(localStorage.getItem('wasteTypesData') || '[]');
-  // Get address from locationData (set by CustomerLocationPin)
-  let pickupLocation = '';
-  let longitude = '';
-  let latitude = '';
-  try {
-    const locationData = JSON.parse(localStorage.getItem('locationData') || '{}');
-    pickupLocation = locationData.address || '';
-    longitude = locationData.longitude || '';
-    latitude = locationData.latitude || '';
-  } catch (e) {
-    pickupLocation = '';
-    longitude = '';
-    latitude = '';
-  }
+  const { user } = useAuth();
 
-  // Prepare display strings
-  const wasteTypes = wasteTypesData.filter(w => w.selected).map(w => w.type).join(', ');
-  const quantities = wasteTypesData.filter(w => w.selected).map(w => `${w.type}: ${w.quantity} kg`).join(', ');
-
-  const pickupSummary = {
-    wasteTypes,
-    quantities,
-    pickupLocation,
-  }
-=======
-  const [wasteTypes, setWasteTypes] = useState([]);
-  const [location, setLocation] = useState(null);
-  const navigate = useNavigate();
-
+  // Fetch pickup summary data from API
   useEffect(() => {
-    // Get waste types from localStorage
-    const wasteTypesData = JSON.parse(localStorage.getItem('wasteTypesData')) || [];
-    setWasteTypes(wasteTypesData.filter(w => w.selected));
-    // Get location from localStorage
-    const locationData = JSON.parse(localStorage.getItem('locationData'));
-    setLocation(locationData);
-  }, []);
->>>>>>> ea8637baa2efec7003ae2eec137906464b4b6d79
+    const fetchPickupSummary = async () => {
+      try {
+        const token = getCookie('token');
+        const user = getCookie('user');
+        
+        console.log('Token exists:', !!token);
+        console.log('User exists:', !!user);
+        
+        if (!token || !user) {
+          setError('Please log in to view pickup summary.');
+          setLoading(false);
+          setTimeout(() => {
+            navigate('/login');
+          }, 2000);
+          return;
+        }
 
-  const handleConfirmSchedule = () => {
-    setConfirmed(true)
+        // Check if user is a customer
+        const userData = typeof user === 'string' ? JSON.parse(user) : user;
+        if (userData.role !== 'customer') {
+          setError('Access denied. This page is for customers only.');
+          setLoading(false);
+          setTimeout(() => {
+            navigate('/');
+          }, 2000);
+          return;
+        }
+
+        const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Customer/pickupsummary.php', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        console.log('Response status:', response.status);
+        
+        const data = await response.json();
+        console.log('Response data:', data);
+
+        if (data.success) {
+          // Deduplicate waste types if it's an array
+          let wasteTypes = data.data.waste_types;
+          if (Array.isArray(wasteTypes)) {
+            wasteTypes = [...new Set(wasteTypes)];
+          }
+          
+          setPickupSummary({
+            wasteTypes: Array.isArray(wasteTypes) ? wasteTypes.join(', ') : wasteTypes,
+            approximateTotalWeight: data.data.approximate_total_weight,
+            pickupLocation: data.data.pickup_location,
+          });
+          
+          // If OTP list exists, set it
+          if (data.data.otp_list && data.data.otp_list.length > 0) {
+            setOtpList(data.data.otp_list);
+          }
+        } else {
+          setError(data.message || 'Failed to fetch pickup summary');
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+        setError('Network error: ' + err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPickupSummary();
+  }, []);
+
+  const handleConfirmSchedule = async () => {
+    setSchedulingLoading(true);
+    try {
+      const token = getCookie('token');
+      if (!token) {
+        setError('No authentication token found. Please log in again.');
+        return;
+      }
+
+      const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Customer/pickupotp.php', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setOtpData(data.data);
+        setOtpList(data.data.otp_list || []);
+        setConfirmed(true);
     setShowPopup(true);
-    setShowBellDot(true); // Show red dot on bell
-    console.log("Pickup schedule confirmed")
-    // Handle schedule confirmation logic here
-    // This would typically submit the pickup request to the backend
+        console.log("OTPs generated successfully:", data.data.otp_list);
+      } else {
+        setError(data.message || 'Failed to generate OTPs');
+      }
+    } catch (err) {
+      console.error('Schedule error:', err);
+      setError('Network error: ' + err.message);
+    } finally {
+      setSchedulingLoading(false);
+    }
   }
 
   const handleClosePopup = () => setShowPopup(false);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b">
-        <nav className="container mx-auto px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <img src="/images/logo.png" alt="Logo" className="h-16 w-34" />
+      {/* Accent bar at the very top */}
+      <div className="absolute top-0 left-0 right-0 w-screen h-1 bg-[#26a360] rounded-t-2xl z-50"></div>
+      <nav className="w-full bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-40 shadow-xl transition-all duration-300 relative">
+        <div className="w-full flex items-center justify-between h-20 px-4 md:px-8">
+          {/* Logo with animation */}
+          <div className="flex items-center">
+            <img src="/public/images/logo2.png" alt="Logo" className="h-16 w-34" />
           </div>
-          <div className="flex items-center space-x-8">
-            <Link to="/" className="text-gray-700 hover:text-gray-900 font-medium">Home</Link>
-            <Link to="/customer/trash-type" className="text-gray-700 hover:text-gray-900 font-medium">Request Pickup</Link>
-            <Link to="/customer/track-pickup" className="text-gray-700 hover:text-gray-900 font-medium">Track Pickup</Link>
-            <Link to="/customer/history-log" className="text-gray-700 hover:text-gray-900 font-medium">History Log</Link>
-<<<<<<< HEAD
-            <span className="mx-2" />
-            <button
-              className="relative focus:outline-none"
-              aria-label="Notifications"
-              style={{ background: 'none', border: 'none', padding: 0, margin: 0, cursor: 'pointer' }}
-              type="button"
-              onClick={() => {
-                setShowBellPopup((prev) => !prev);
-                setShowBellDot(false); // Remove red dot when notification is viewed
-              }}
-            >
-              <Bell className="w-7 h-7 text-gray-700 hover:text-green-700 transition" />
-              {showBellDot && (
-                <span className="absolute top-0 right-0 block w-3 h-3 bg-red-500 rounded-full ring-2 ring-white animate-pulse" />
-              )}
-            </button>
-=======
-            {confirmed ? (
-              <CustomerNotification hasNew={true} onViewDetails={() => navigate('/customer/track-pickup')} />
-            ) : (
-              <CustomerNotification iconOnly hasNew={false} />
-            )}
->>>>>>> ea8637baa2efec7003ae2eec137906464b4b6d79
+          {/* Navigation Links with enhanced animations */}
+          <div className="hidden md:flex space-x-8 text-gray-700 font-medium">
+            <a href="/" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Home</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
+            <a href="/customer/trash-type" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Request Pickup</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
+            <a href="/customer/track-pickup" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Track Pickup</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
+            <a href="/customer/history-log" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">History Log</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
+          </div>
+          {/* Notification and Profile */}
+          <div className="hidden md:flex items-center space-x-4 ml-4">
+            <CustomerNotification onViewDetails={() => navigate('/customer/track-pickup')} />
             <UserProfileDropdown />
           </div>
-        </nav>
-      </header>
+          {/* Mobile menu button with animation */}
+          <div className="md:hidden flex items-center">
+            <CustomerNotification onViewDetails={() => navigate('/customer/track-pickup')} />
+            <UserProfileDropdown />
+            <button className="ml-2 relative group p-2 rounded-lg transition-all duration-300 hover:bg-[#3a5f46]/10">
+              <div className="w-6 h-0.5 bg-gray-700 group-hover:bg-[#3a5f46] transition-all duration-300 mb-1.5"></div>
+              <div className="w-6 h-0.5 bg-gray-700 group-hover:bg-[#3a5f46] transition-all duration-300 mb-1.5"></div>
+              <div className="w-6 h-0.5 bg-gray-700 group-hover:bg-[#3a5f46] transition-all duration-300"></div>
+            </button>
+          </div>
+        </div>
+      </nav>
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8 max-w-4xl">
@@ -149,77 +208,75 @@ const ConfirmPickup = () => {
         <div className="mb-12">
           <h2 className="text-xl font-semibold text-gray-900 mb-8">Pickup Summary</h2>
 
+          {loading ? (
+            <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+              <div className="text-gray-600">Loading pickup summary...</div>
+            </div>
+          ) : error ? (
+            <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+              <div className="text-red-600 mb-4">Error: {error}</div>
+              {error.includes('log in') && (
+                <button
+                  onClick={() => navigate('/login')}
+                  className="bg-theme-color text-white px-6 py-2 rounded-lg hover:bg-theme-color-dark transition-colors"
+                >
+                  Go to Login
+                </button>
+              )}
+            </div>
+          ) : (
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             <div className="divide-y divide-gray-200">
               {/* Waste Types */}
               <div className="px-6 py-6 flex justify-between items-center">
                 <div className="text-sm font-medium text-theme-color">Waste Types</div>
-                <div className="text-gray-900 font-medium">
-                  {wasteTypes.length > 0 ? wasteTypes.map(w => w.type).join(', ') : '—'}
-                </div>
+                <div className="text-gray-900 font-medium">{pickupSummary.wasteTypes}</div>
               </div>
-              {/* Quantities */}
-              <div className="px-6 py-6 flex justify-between items-center">
-                <div className="text-sm font-medium text-theme-color">Quantities (kg)</div>
-                <div className="text-gray-900 font-medium">
-                  {wasteTypes.length > 0 ? wasteTypes.map(w => `${w.type}: ${w.quantity}kg`).join(', ') : '—'}
-                </div>
-              </div>
-<<<<<<< HEAD
 
-              {/* Address */}
+              {/* Total Weight */}
               <div className="px-6 py-6 flex justify-between items-center">
-                <div className="text-sm font-medium text-theme-color">Address</div>
-                <div className="text-gray-900 font-medium">{pickupSummary.pickupLocation}</div>
-=======
-              {/* Address Row */}
-              <div className="px-6 py-6 flex justify-between items-center">
-                <div className="text-sm font-medium text-theme-color">Address</div>
-                <div className="text-gray-900 font-medium">
-                  {location && location.address ? location.address : '—'}
-                </div>
->>>>>>> ea8637baa2efec7003ae2eec137906464b4b6d79
+                  <div className="text-sm font-medium text-theme-color">Approximate Total Weight</div>
+                  <div className="text-gray-900 font-medium">{pickupSummary.approximateTotalWeight}</div>
               </div>
-              {/* Pickup Location (Coordinates) Row */}
+
+              {/* Pickup Location */}
               <div className="px-6 py-6 flex justify-between items-center">
-<<<<<<< HEAD
                 <div className="text-sm font-medium text-theme-color">Pickup Location</div>
-                <div className="text-gray-900 font-medium">
-                  {(longitude && latitude) ? (
-                    <>
-                      Longitude: <span className="font-mono">{longitude}</span><br />
-                      Latitude: <span className="font-mono">{latitude}</span>
-                    </>
-                  ) : (
-                    <span className="text-gray-500">Not set</span>
-                  )}
-=======
-                <div className="text-sm font-medium text-theme-color">Pickup Coordinates</div>
-                <div className="text-gray-900 font-medium">
-                  {location && location.latitude && location.longitude
-                    ? `Lat: ${location.latitude.toFixed(6)}, Lng: ${location.longitude.toFixed(6)}`
-                    : '—'}
->>>>>>> ea8637baa2efec7003ae2eec137906464b4b6d79
+                <div className="text-gray-900 font-medium">{pickupSummary.pickupLocation}</div>
                 </div>
+
+                {/* OTP Display (if scheduled) */}
+                {otpList.length > 0 && (
+                  <div className="px-6 py-6 bg-green-50 border-t border-green-200">
+                    <div className="text-sm font-medium text-theme-color mb-3">Pickup OTPs</div>
+                    <div className="space-y-2">
+                      {otpList.map((otpItem, index) => (
+                        <div key={index} className="flex justify-between items-center bg-white p-3 rounded border">
+                          <div className="text-sm text-gray-600">
+                            {otpItem.waste_type} ({otpItem.quantity} kg)
+                          </div>
+                          <div className="text-gray-900 font-mono font-bold text-lg tracking-wider">
+                            {otpItem.otp}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Confirm Button or Success Message */}
-        <div className="flex flex-col items-center gap-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="py-2 px-8 rounded-full text-base border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 mb-2"
-          >
-            ← Back
-          </button>
+        <div className="flex justify-center">
           {!confirmed ? (
             <button
               onClick={handleConfirmSchedule}
-              className="next-btn py-4 px-12 rounded-full text-lg"
+              disabled={schedulingLoading}
+              className={`next-btn py-4 px-12 rounded-full text-lg ${schedulingLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              Confirm Schedule
+              {schedulingLoading ? 'Scheduling...' : 'Confirm Schedule'}
             </button>
           ) : null}
         </div>
@@ -263,8 +320,6 @@ const ConfirmPickup = () => {
             position: 'relative',
             animation: 'zoomIn 0.35s cubic-bezier(.4,2,.6,1)',
           }}>
-<<<<<<< HEAD
-=======
             <button
               onClick={handleClosePopup}
               aria-label="Close success message"
@@ -288,119 +343,75 @@ const ConfirmPickup = () => {
               onMouseOver={e => e.currentTarget.style.background = '#24402e'}
               onMouseOut={e => e.currentTarget.style.background = '#3a5f46'}
             >
-              <X size={24} color="#fff" style={{ display: 'block' }} />
+              <img src={binIcon} alt="Close" style={{ width: '1.5rem', height: '1.5rem', objectFit: 'contain', filter: 'invert(1) brightness(2)', display: 'block', margin: '0 auto' }} />
             </button>
->>>>>>> ea8637baa2efec7003ae2eec137906464b4b6d79
             <div style={{ fontSize: '3rem', marginBottom: '1rem', animation: 'popIn 0.4s' }}>✅</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3a5f46', marginBottom: '0.5rem' }}>Pickup Scheduled Successfully!</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3a5f46', marginBottom: '0.5rem' }}>OTPs Generated Successfully!</div>
+            
+            {otpList.length > 0 && (
+              <div style={{ 
+                background: '#f0f9ff', 
+                border: '2px solid #3a5f46', 
+                borderRadius: '0.75rem', 
+                padding: '1rem', 
+                marginBottom: '1rem',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '1rem', color: '#3a5f46', fontWeight: 600, marginBottom: '0.5rem' }}>
+                  Your Pickup OTPs:
+                </div>
+                <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                  {otpList.map((otpItem, index) => (
+                    <div key={index} style={{ 
+                      background: '#fff',
+                      padding: '0.75rem',
+                      borderRadius: '0.5rem',
+                      border: '1px solid #3a5f46',
+                      marginBottom: '0.5rem',
+                      textAlign: 'left'
+                    }}>
+                      <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.25rem' }}>
+                        {otpItem.waste_type} ({otpItem.quantity} kg)
+                      </div>
+                      <div style={{ 
+                        fontSize: '1.5rem', 
+                        fontWeight: 700, 
+                        color: '#3a5f46', 
+                        letterSpacing: '0.25rem',
+                        fontFamily: 'monospace'
+                      }}>
+                        {otpItem.otp}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
             <div style={{ fontSize: '1.1rem', color: '#333', marginBottom: '1.5rem' }}>
-              You'll receive the pickup time and assigned company shortly.<br/>
+              Please provide these OTPs to the pickup company when they arrive.<br/>
               Thank you for choosing TrashRoute!
             </div>
-            <div style={{ fontSize: '1rem', color: '#3a5f46', fontWeight: 500, marginTop: '0.5rem' }}>Please wait...</div>
+            
             <button
-              onClick={() => setShowPopup(false)}
+              onClick={handleClosePopup}
               style={{
-                marginTop: '2rem',
-                padding: '0.75rem 2.5rem',
                 background: '#3a5f46',
-                color: '#fff',
+                color: 'white',
                 border: 'none',
-                borderRadius: '2rem',
-                fontSize: '1.1rem',
+                padding: '0.75rem 2rem',
+                borderRadius: '0.5rem',
+                fontSize: '1rem',
                 fontWeight: 600,
                 cursor: 'pointer',
-                boxShadow: '0 2px 8px 0 rgba(58, 95, 70, 0.18)',
-                transition: 'background 0.2s',
+                transition: 'background 0.2s'
               }}
+              onMouseOver={e => e.currentTarget.style.background = '#24402e'}
+              onMouseOut={e => e.currentTarget.style.background = '#3a5f46'}
             >
-              Got it
+              OK
             </button>
           </div>
-        </div>
-      )}
-      {showBellPopup && (
-        <div style={{
-          position: 'fixed',
-          top: '6.5rem',
-          right: '2.5rem',
-          zIndex: 1200,
-          background: '#fff',
-          borderRadius: showBellDetails ? '2rem' : '1.1rem',
-          boxShadow: '0 4px 24px 0 rgba(60,120,60,0.13), 0 1.5px 6px 0 rgba(0,0,0,0.10)',
-          borderLeft: '6px solid #43a047',
-          padding: showBellDetails ? '2rem 2.2rem 2rem 2.2rem' : '1.1rem 1.3rem 1.1rem 1.1rem',
-          minWidth: showBellDetails ? 390 : 320,
-          maxWidth: showBellDetails ? 390 : 340,
-          textAlign: 'left',
-          display: showBellDetails ? 'block' : 'flex',
-          alignItems: showBellDetails ? undefined : 'flex-start',
-          gap: showBellDetails ? undefined : '0.9rem',
-          animation: 'notifSlideIn 0.32s cubic-bezier(.4,2,.6,1)',
-        }}>
-          <style>{`
-            @keyframes notifSlideIn {
-              from { opacity: 0; transform: translateY(-18px) scale(0.97); }
-              to { opacity: 1; transform: translateY(0) scale(1); }
-            }
-          `}</style>
-          {!showBellDetails ? (
-            <>
-              <span style={{ fontSize: '2rem', color: '#43a047', background: '#e0f2f1', borderRadius: '50%', padding: '0.18em 0.32em', boxShadow: '0 1px 4px 0 #b2dfdb33', flexShrink: 0, marginTop: '0.1em' }}>✅</span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, color: '#256029', fontSize: '1.08rem', marginBottom: '0.18rem' }}>
-                  Pickup scheduled!
-                </div>
-                <div style={{ color: '#24402e', fontSize: '0.98rem', marginBottom: '0.3rem' }}>
-                  Your sorted waste will be collected by EcoGreen Recycling on July 7, 2025 (9:00 AM - 12:00 PM).
-                </div>
-                <div
-                  style={{ fontSize: '0.93rem', color: '#388e3c', fontWeight: 500, cursor: 'pointer', textDecoration: 'underline', marginTop: '0.1rem' }}
-                  onClick={() => setShowBellDetails(true)}
-                >
-                  View Details
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '0.7rem' }}>
-                <span style={{ fontSize: '2.5rem', color: '#43a047', background: '#e0f2f1', borderRadius: '50%', padding: '0.3em 0.45em', boxShadow: '0 2px 8px 0 #b2dfdb55', marginBottom: '0.5rem' }}>✅</span>
-                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#256029', marginBottom: '0.5rem', textAlign: 'center', letterSpacing: '0.01em' }}>
-                  Your Pickup Successfully Scheduled
-                </div>
-              </div>
-              <div style={{ fontSize: '1.08rem', fontWeight: 700, color: '#388e3c', marginBottom: '0.6rem', textAlign: 'center', letterSpacing: '0.01em' }}>
-                Status: <span style={{ color: '#256029' }}>Step 3 of 4</span> — <span style={{ color: '#2e7d32' }}>Scheduled</span>
-              </div>
-              <div style={{ borderTop: '1px solid #c8e6c9', margin: '0.7rem 0 0.7rem 0' }} />
-              <div style={{ fontSize: '1rem', color: '#24402e', marginBottom: '0.4rem' }}><b>Pickup Date:</b> July 7, 2025</div>
-              <div style={{ fontSize: '1rem', color: '#24402e', marginBottom: '0.4rem' }}><b>Time Window:</b> 9:00 AM - 12:00 PM</div>
-              <div style={{ fontSize: '1rem', color: '#24402e', marginBottom: '0.4rem' }}><b>Company:</b> EcoGreen Recycling</div>
-              <div style={{ fontSize: '1rem', color: '#24402e', marginBottom: '0.4rem' }}><b>Waste Summary:</b> Plastic (3kg), Glass (2kg)</div>
-              <div style={{ fontSize: '1rem', color: '#24402e', marginBottom: '0.4rem' }}><b>Location:</b> 123 Green St, Spring...</div>
-              <div style={{ fontSize: '1rem', color: '#24402e', marginBottom: '0.4rem' }}><b>Tracking ID:</b> #TR-002194</div>
-              <div style={{ fontSize: '1rem', color: '#256029', fontWeight: 600, marginBottom: '0.7rem' }}><b>Status:</b> On the Way</div>
-              <div style={{ background: '#fff', borderRadius: '0.9rem', padding: '1rem 1.1rem', margin: '0.7rem 0 0.2rem 0', color: '#256029', fontSize: '1.01rem', boxShadow: '0 2px 8px 0 #b2dfdb33', border: '1px solid #e0f2f1' }}>
-                <b>Smart Assistant:</b> We've locked in your pickup with EcoGreen.<br />Your sorted waste will be picked up at your scheduled time — just have it ready at your drop point!
-              </div>
-              <div style={{ background: '#e8f5e9', borderRadius: '0.8rem', padding: '0.9rem 1rem', margin: '0.5rem 0 0 0', color: '#24402e', fontSize: '0.98rem', border: '1px solid #b2dfdb' }}>
-                <div style={{ fontWeight: 700, marginBottom: '0.3rem', color: '#256029' }}>What You Need to Provide:</div>
-                <ul style={{ margin: 0, paddingLeft: '1.1em', listStyle: 'disc' }}>
-                  <li>Please have your sorted waste ready as listed above.</li>
-                  <li>Place everything at your designated drop point before your pickup window begins.</li>
-                  <li>Make sure all bags or containers are securely closed to keep things tidy and safe.</li>
-                  <li style={{marginTop: '0.5em', color: '#2e7d32', fontWeight: 600}}>Thank you for helping us keep the community clean!</li>
-                </ul>
-              </div>
-              <div
-                style={{ fontSize: '0.93rem', color: '#388e3c', fontWeight: 500, cursor: 'pointer', textDecoration: 'underline', marginTop: '0.7rem', textAlign: 'center' }}
-                onClick={() => setShowBellDetails(false)}
-              >
-                Hide Details
-              </div>
-            </>
-          )}
         </div>
       )}
     </div>

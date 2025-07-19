@@ -294,11 +294,13 @@ function LandingPage() {
   return (
     <div className="min-h-screen bg-[#f7f9fb] flex flex-col">
       {/* Navigation */}
-      <nav className="w-full bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-50 shadow-xl rounded-b-2xl transition-all duration-300 relative">
-        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-20">
+      {/* Accent bar at the very top */}
+      <div className="absolute top-0 left-0 right-0 w-screen h-1 bg-[#26a360] rounded-t-2xl z-50"></div>
+      <nav className="w-full bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-40 shadow-xl transition-all duration-300 relative">
+        <div className="w-full flex items-center justify-between h-20">
           {/* Logo with animation */}
           <div className="flex items-center">
-            <img src="/public/images/logo.png" alt="Logo" className="h-16 w-34" />
+            <img src="/public/images/logo2.png" alt="Logo" className="h-16 w-34" />
           </div>
           
           {/* Navigation Links with enhanced animations */}
@@ -361,8 +363,6 @@ function LandingPage() {
             </button>
           </div>
         </div>
-        {/* Accent bar at the very top */}
-        <div className="absolute top-0 left-0 w-full h-1 bg-[#26a360] rounded-t-2xl z-50"></div>
       </nav>
 
       {/* Hero Section - Video right after header */}
@@ -393,6 +393,7 @@ function LandingPage() {
               Connecting households with responsible waste processing companies for a cleaner, greener future.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
+
               <button
                 onClick={() => { setUserType('customer'); navigate('/login'); }}
                 className="px-8 py-3 rounded-md font-bold text-base bg-[#3a5f46] text-white shadow-lg hover:bg-[#2e4d3a] transition-all duration-300 transform hover:scale-105 border-2 border-[#3a5f46] hover:border-[#2e4d3a] hover:shadow-xl"
@@ -405,6 +406,7 @@ function LandingPage() {
               >
                 Sign up
               </button>
+
             </div>
           </div>
         </div>
