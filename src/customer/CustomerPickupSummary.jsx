@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { Recycle, Bell } from "lucide-react"
 import { useState, useEffect } from "react"
 import UserProfileDropdown from "./UserProfileDropdown"
-import binIcon from '/images/bin.png';
+// import binIcon from '/images/bin.png';
 import CustomerNotification from "./CustomerNotification";
 import { useAuth } from "../context/AuthContext";
 import { getCookie } from "../utils/cookieUtils";
@@ -311,10 +311,10 @@ const ConfirmPickup = () => {
           `}</style>
           <div style={{
             background: '#fff',
-            borderRadius: '1.5rem',
-            boxShadow: '0 8px 40px 0 rgba(58, 95, 70, 0.25)',
-            padding: '2.5rem 2.5rem 2rem 2.5rem',
-            minWidth: 340,
+            borderRadius: '1.25rem',
+            boxShadow: '0 4px 24px 0 rgba(58, 95, 70, 0.18)',
+            padding: '1.25rem 1.25rem 1rem 1.25rem',
+            minWidth: 300,
             maxWidth: '90vw',
             textAlign: 'center',
             position: 'relative',
@@ -327,34 +327,28 @@ const ConfirmPickup = () => {
                 position: 'absolute',
                 top: '1rem',
                 right: '1rem',
-                background: '#3a5f46',
+                background: 'transparent',
                 border: 'none',
-                width: '2.5rem',
-                height: '2.5rem',
-                borderRadius: '50%',
+                padding: 0,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                zIndex: 10,
-                boxShadow: '0 2px 8px 0 rgba(58, 95, 70, 0.18)',
-                transition: 'background 0.2s',
+                zIndex: 10
               }}
-              onMouseOver={e => e.currentTarget.style.background = '#24402e'}
-              onMouseOut={e => e.currentTarget.style.background = '#3a5f46'}
             >
-              <img src={binIcon} alt="Close" style={{ width: '1.5rem', height: '1.5rem', objectFit: 'contain', filter: 'invert(1) brightness(2)', display: 'block', margin: '0 auto' }} />
+              <img src="/images/close.png" alt="Close" style={{ width: '1.5rem', height: '1.5rem', objectFit: 'contain', display: 'block', margin: 0 }} />
             </button>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem', animation: 'popIn 0.4s' }}>✅</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3a5f46', marginBottom: '0.5rem' }}>OTPs Generated Successfully!</div>
+            <div style={{ fontSize: '2.2rem', marginBottom: '0.5rem', animation: 'popIn 0.4s' }}>✅</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#3a5f46', marginBottom: '0.25rem' }}>OTPs Generated Successfully!</div>
             
             {otpList.length > 0 && (
               <div style={{ 
                 background: '#f0f9ff', 
                 border: '2px solid #3a5f46', 
                 borderRadius: '0.75rem', 
-                padding: '1rem', 
-                marginBottom: '1rem',
+                padding: '0.5rem', 
+                marginBottom: '0.5rem',
                 textAlign: 'center'
               }}>
                 <div style={{ fontSize: '1rem', color: '#3a5f46', fontWeight: 600, marginBottom: '0.5rem' }}>
@@ -364,20 +358,20 @@ const ConfirmPickup = () => {
                   {otpList.map((otpItem, index) => (
                     <div key={index} style={{ 
                       background: '#fff',
-                      padding: '0.75rem',
-                      borderRadius: '0.5rem',
+                      padding: '0.4rem 0.6rem',
+                      borderRadius: '0.4rem',
                       border: '1px solid #3a5f46',
-                      marginBottom: '0.5rem',
+                      marginBottom: '0.3rem',
                       textAlign: 'left'
                     }}>
-                      <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.25rem' }}>
+                      <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.1rem' }}>
                         {otpItem.waste_type} ({otpItem.quantity} kg)
                       </div>
                       <div style={{ 
-                        fontSize: '1.5rem', 
+                        fontSize: '1.1rem', 
                         fontWeight: 700, 
                         color: '#3a5f46', 
-                        letterSpacing: '0.25rem',
+                        letterSpacing: '0.15rem',
                         fontFamily: 'monospace'
                       }}>
                         {otpItem.otp}
@@ -388,7 +382,7 @@ const ConfirmPickup = () => {
               </div>
             )}
             
-            <div style={{ fontSize: '1.1rem', color: '#333', marginBottom: '1.5rem' }}>
+            <div style={{ fontSize: '0.95rem', color: '#333', marginBottom: '0.7rem' }}>
               Please provide these OTPs to the pickup company when they arrive.<br/>
               Thank you for choosing TrashRoute!
             </div>
@@ -399,9 +393,9 @@ const ConfirmPickup = () => {
                 background: '#3a5f46',
                 color: 'white',
                 border: 'none',
-                padding: '0.75rem 2rem',
-                borderRadius: '0.5rem',
-                fontSize: '1rem',
+                padding: '0.5rem 1.2rem',
+                borderRadius: '0.4rem',
+                fontSize: '0.95rem',
                 fontWeight: 600,
                 cursor: 'pointer',
                 transition: 'background 0.2s'
