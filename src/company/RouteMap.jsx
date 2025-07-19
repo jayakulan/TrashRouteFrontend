@@ -6,6 +6,7 @@ import { Plus, Minus, Navigation, Check } from "lucide-react"
 import { GoogleMap, Polyline } from "@react-google-maps/api"
 import UserProfileDropdowncom from "./UserProfileDropdowncom"
 import { useGoogleMaps } from "../components/GoogleMapsProvider"
+import { getCookie } from "../utils/cookieUtils"
 
 const GOOGLE_MAPS_MAP_ID = "2d11b98e205d938c1f59291f" // Custom Map ID for TrashRoute
 
@@ -62,7 +63,7 @@ const RouteMap = () => {
 
   const location = useLocation();
   const params = useParams();
-  const company_id = location.state?.company_id || localStorage.getItem("company_id");
+  const company_id = location.state?.company_id || getCookie("company_id");
   const route_id = location.state?.route_id || params.route_id || null;
   const waste_type = location.state?.waste_type || null;
 
@@ -638,7 +639,12 @@ const RouteMap = () => {
                     }
                   }
                   const request_id = feedbackHousehold.request_id || 1;
-                  const company_id = 3;
+                  const company_id = getCookie("company_id");
+                  if (!company_id) {
+                    setFeedbackError("Company ID not found. Please log in again.");
+                    setFeedbackSubmitting(false);
+                    return;
+                  }
                   const payload = {
                     request_id,
                     company_id,

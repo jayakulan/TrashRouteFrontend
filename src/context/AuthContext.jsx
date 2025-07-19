@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { setCookie, getCookie, deleteCookie, setCookieObject, getCookieObject } from '../utils/cookieUtils';
 
 const AuthContext = createContext(null);
 
@@ -9,11 +10,11 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check for token in localStorage on app startup
-    const token = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
+    // Check for token in cookies on app startup
+    const token = getCookie('token');
+    const storedUser = getCookieObject('user');
     if (token && storedUser) {
-      setUser(JSON.parse(storedUser));
+      setUser(storedUser);
     }
     setLoading(false);
   }, []);
@@ -30,14 +31,20 @@ export const AuthProvider = ({ children }) => {
       
       if (result.success) {
         const { user: userData, token, profile } = result.data;
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(userData));
+        setCookie('token', token, 7); // 7 days expiration
+        setCookieObject('user', userData, 7);
         setUser(userData);
 
         // Store company_id and full company profile for company users
         if (userData.role === "company" && profile && profile.company_id) {
-          localStorage.setItem('company_id', profile.company_id);
-          localStorage.setItem('company_profile', JSON.stringify(profile));
+          setCookie('company_id', profile.company_id, 7);
+          setCookieObject('company_profile', profile, 7);
+        }
+
+        // Store customer_id and full customer profile for customer users
+        if (userData.role === "customer" && profile && profile.customer_id) {
+          setCookie('customer_id', profile.customer_id, 7);
+          setCookieObject('customer_profile', profile, 7);
         }
 
         // Navigate based on role
@@ -64,23 +71,43 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    deleteCookie('token');
+    deleteCookie('user');
+    deleteCookie('company_id');
+    deleteCookie('company_profile');
+    deleteCookie('customer_id');
+    deleteCookie('customer_profile');
     setUser(null);
     navigate('/');
   };
 
   const updateUser = (updatedUserData) => {
     setUser(updatedUserData);
-    localStorage.setItem('user', JSON.stringify(updatedUserData));
+    setCookieObject('user', updatedUserData, 7);
   };
 
   const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
+    const token = getCookie('token');
     return {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
     };
+  };
+
+  const getCustomerId = () => {
+    return getCookie('customer_id');
+  };
+
+  const getCompanyId = () => {
+    return getCookie('company_id');
+  };
+
+  const getCustomerProfile = () => {
+    return getCookieObject('customer_profile');
+  };
+
+  const getCompanyProfile = () => {
+    return getCookieObject('company_profile');
   };
 
   if (loading) {
@@ -88,7 +115,17 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, updateUser, getAuthHeaders }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      logout, 
+      updateUser, 
+      getAuthHeaders, 
+      getCustomerId, 
+      getCompanyId, 
+      getCustomerProfile, 
+      getCompanyProfile 
+    }}>
       {children}
     </AuthContext.Provider>
   );
