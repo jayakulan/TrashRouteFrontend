@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import ReactDOM from "react-dom";
 
 const UserProfileDropdown = ({ popupPosition }) => {
   const { user, logout, updateUser } = useAuth();
@@ -92,6 +93,7 @@ const UserProfileDropdown = ({ popupPosition }) => {
 
   return (
     <>
+      {/* Avatar and dropdown */}
       <div
         className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200 flex items-center justify-center cursor-pointer relative"
         ref={profileRef}
@@ -114,7 +116,7 @@ const UserProfileDropdown = ({ popupPosition }) => {
             <div className="font-semibold text-gray-900 text-lg mb-1">{user?.name || "User"}</div>
             <div className="text-sm text-gray-500 mb-4">{user?.email || "user@email.com"}</div>
             <button 
-              onClick={() => setShowEditModal(true)}
+              onClick={() => { setShowEditModal(true); setShowProfile(false); }}
               className="w-full text-center px-4 py-2 bg-[#3a5f46] text-white rounded-lg hover:bg-[#2e4d3a] transition-colors mb-2 font-medium"
             >
               Edit Profile
@@ -128,10 +130,11 @@ const UserProfileDropdown = ({ popupPosition }) => {
           </div>
         )}
       </div>
-      {/* Modal is now outside the avatar container */}
-      {showEditModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-4 md:p-8 relative overflow-y-auto max-h-[90vh]">
+
+      {/* Modal is OUTSIDE the dropdown and avatar, at the root level */}
+      {showEditModal && ReactDOM.createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-4 md:p-8 relative max-h-[90vh] overflow-y-auto flex flex-col justify-center">
             <button 
               onClick={() => setShowEditModal(false)} 
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl transition-colors"
@@ -212,7 +215,8 @@ const UserProfileDropdown = ({ popupPosition }) => {
               </button>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
