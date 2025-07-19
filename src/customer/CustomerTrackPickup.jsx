@@ -82,7 +82,21 @@ function ZigzagTimeline({ steps, currentStep }) {
 
 export default function CustomerTrackPickup() {
   const [selectedWaste, setSelectedWaste] = useState("plastics");
+  const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
   const navigate = useNavigate();
+  // Determine notification status and progress based on progressByType
+  const currentStep = progressByType[selectedWaste];
+  const isCompleted = currentStep === 3;
+  // Map step to progress percent
+  const progressPercents = [25, 50, 75, 100];
+  const notification = {
+    status: isCompleted ? "completed" : "on_the_way",
+    progressPercent: progressPercents[currentStep],
+    progressStep: currentStep + 1,
+    progressTotal: 4,
+    // You can add other notification fields as needed
+    onFeedback: () => setShowFeedbackPopup(true),
+  };
   return (
     <div className="min-h-screen bg-[#f7f9fb] flex flex-col">
       {/* Accent bar at the very top */}
@@ -93,21 +107,17 @@ export default function CustomerTrackPickup() {
           <div className="flex items-center">
             <img src="/public/images/logo2.png" alt="Logo" className="h-16 w-34" />
           </div>
-          {/* Navigation Links with enhanced animations */}
-          <div className="hidden md:flex space-x-8 text-gray-700 font-medium">
-            <a href="/" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Home</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
-            <a href="/customer/trash-type" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Request Pickup</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
-            <a href="/customer/track-pickup" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Track Pickup</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
-            <a href="/customer/history-log" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">History Log</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
-          </div>
-          {/* Notification and Profile */}
-          <div className="hidden md:flex items-center space-x-4 ml-4">
-            <CustomerNotification onViewDetails={() => navigate('/customer/track-pickup')} />
-            <UserProfileDropdown />
-          </div>
-          {/* Mobile menu button with animation */}
-          <div className="md:hidden flex items-center">
-            <CustomerNotification onViewDetails={() => navigate('/customer/track-pickup')} />
+ 
+          <div className="flex items-center space-x-8">
+            <Link to="/" className="text-gray-700 hover:text-gray-900 font-medium">Home</Link>
+            <Link to="/customer/trash-type" className="text-gray-700 hover:text-gray-900 font-medium">Request Pickup</Link>
+            <Link to="/customer/track-pickup" className="text-gray-700 hover:text-gray-900 font-medium">Track Pickup</Link>
+            <Link to="/customer/history-log" className="text-gray-700 hover:text-gray-900 font-medium">History Log</Link>
+            <CustomerNotification 
+              onViewDetails={() => navigate('/customer/track-pickup')} 
+              notification={notification}
+            />
+
             <UserProfileDropdown />
             <button className="ml-2 relative group p-2 rounded-lg transition-all duration-300 hover:bg-[#3a5f46]/10">
               <div className="w-6 h-0.5 bg-gray-700 group-hover:bg-[#3a5f46] transition-all duration-300 mb-1.5"></div>
@@ -135,6 +145,129 @@ export default function CustomerTrackPickup() {
           <ZigzagTimeline steps={steps} currentStep={progressByType[selectedWaste]} />
         </div>
       </main>
+      {/* Feedback Popup Modal */}
+      {showFeedbackPopup && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 1000,
+          background: 'rgba(0,0,0,0.55)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <FeedbackFormModal onClose={() => setShowFeedbackPopup(false)} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// FeedbackFormModal component
+function FeedbackFormModal({ onClose }) {
+  const [feedback, setFeedback] = React.useState("");
+  const [rating, setRating] = React.useState(5);
+  const [submitted, setSubmitted] = React.useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setSubmitted(true);
+    setTimeout(() => {
+      onClose();
+    }, 1800);
+  };
+
+  return (
+    <div style={{
+      background: '#fff',
+      borderRadius: '1.5rem',
+      boxShadow: '0 8px 40px 0 rgba(58, 95, 70, 0.25)',
+      padding: '2.5rem 2.5rem 2rem 2.5rem',
+      minWidth: 340,
+      maxWidth: '90vw',
+      textAlign: 'center',
+      position: 'relative',
+    }}>
+      <button
+        onClick={onClose}
+        aria-label="Close feedback form"
+        style={{
+          position: 'absolute',
+          top: '1rem',
+          right: '1rem',
+          background: '#3a5f46',
+          border: 'none',
+          width: '2.5rem',
+          height: '2.5rem',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          zIndex: 10,
+          color: '#fff',
+          fontSize: '1.5rem',
+        }}
+      >
+        ×
+      </button>
+      {!submitted ? (
+        <form onSubmit={handleSubmit}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3a5f46', marginBottom: '1.2rem' }}>Feedback</div>
+          <div style={{ marginBottom: '1rem' }}>
+            <label htmlFor="feedback-text" style={{ display: 'block', fontWeight: 500, marginBottom: 6 }}>Your Feedback</label>
+            <textarea
+              id="feedback-text"
+              value={feedback}
+              onChange={e => setFeedback(e.target.value)}
+              rows={4}
+              style={{ width: '100%', borderRadius: 8, border: '1px solid #ccc', padding: 10, resize: 'vertical' }}
+              required
+            />
+          </div>
+          <div style={{ marginBottom: '1.2rem' }}>
+            <label htmlFor="feedback-rating" style={{ display: 'block', fontWeight: 500, marginBottom: 6 }}>Rating</label>
+            <select
+              id="feedback-rating"
+              value={rating}
+              onChange={e => setRating(Number(e.target.value))}
+              style={{ width: '100%', borderRadius: 8, border: '1px solid #ccc', padding: 8 }}
+            >
+              <option value={5}>5 - Excellent</option>
+              <option value={4}>4 - Good</option>
+              <option value={3}>3 - Average</option>
+              <option value={2}>2 - Poor</option>
+              <option value={1}>1 - Very Poor</option>
+            </select>
+          </div>
+          <button
+            type="submit"
+            style={{
+              background: '#3a5f46',
+              color: '#fff',
+              fontWeight: 600,
+              fontSize: '1.1rem',
+              border: 'none',
+              borderRadius: 8,
+              padding: '0.7rem 2.2rem',
+              cursor: 'pointer',
+              marginTop: 10,
+              boxShadow: '0 2px 8px 0 rgba(58, 95, 70, 0.18)',
+              transition: 'background 0.2s',
+            }}
+          >
+            Submit Feedback
+          </button>
+        </form>
+      ) : (
+        <div>
+          <div style={{ fontSize: '2.2rem', marginBottom: '1rem' }}>🎉</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3a5f46', marginBottom: '0.5rem' }}>Thank you for your feedback!</div>
+          <div style={{ fontSize: '1.1rem', color: '#333', marginBottom: '1.5rem' }}>
+            We appreciate your input and will use it to improve our service.
+          </div>
+        </div>
+      )}
     </div>
   );
 }

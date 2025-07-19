@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { Recycle, Bell, Minus, Plus } from "lucide-react"
+import { Recycle, Bell, Minus, Plus, ArrowLeft } from "lucide-react"
 import MinimumWastePopup from "./MinimumWastePopup"
 import UserProfileDropdown from "./UserProfileDropdown"
 import CustomerNotification from "./CustomerNotification"
-import { getCookie } from "../utils/cookieUtils"
+import { setCookie, getCookie } from "../utils/cookieUtils";
 
 const CustomerTrashType = () => {
   const [wasteTypes, setWasteTypes] = useState({
@@ -25,7 +25,7 @@ const CustomerTrashType = () => {
 
   // Popup state
   const [isPopupOpen, setIsPopupOpen] = useState(() => {
-    const hide = localStorage.getItem("hideMinimumWastePopup") === "true"
+    const hide = getCookie("hideMinimumWastePopup") === "true"
     return !hide;
   })
 
@@ -35,11 +35,11 @@ const CustomerTrashType = () => {
     setIsPopupOpen(false)
   }
   const handleDontShowAgain = () => {
-    localStorage.setItem("hideMinimumWastePopup", "true")
+    setCookie("hideMinimumWastePopup", "true")
   }
 
   const updateQuantity = (type, newQuantity) => {
-    if (newQuantity >= 0 && newQuantity <= 50) {
+    if (newQuantity >= 3 && newQuantity <= 50) {
       setWasteTypes((prev) => ({
         ...prev,
         [type]: { ...prev[type], quantity: newQuantity },
@@ -113,23 +113,28 @@ const CustomerTrashType = () => {
       });
 
       const result = await response.json();
+      const addressToSave = result.data && result.data.address ? result.data.address : "";
+      setCookie('locationData', JSON.stringify({
+        address: addressToSave,
+        requestIds: result.data.request_ids,
+        totalUpdated: result.data.total_updated
+      }));
       
       console.log('Response from server:', result);
       console.log('Response status:', response.status);
       console.log('Response headers:', response.headers);
+      console.log('Backend result:', result);
 
       if (result.success) {
         setMessage({ type: "success", text: "Waste types saved successfully!" });
         
         // Store the request data in cookies for the next step
         // Note: We'll keep using localStorage for this data as it's temporary and doesn't need to persist across sessions
-        localStorage.setItem('wasteTypesData', JSON.stringify(wasteTypesData));
-        localStorage.setItem('pickupRequests', JSON.stringify(result.data));
+        setCookie('wasteTypesData', JSON.stringify(wasteTypesData));
+        setCookie('pickupRequests', JSON.stringify(result.data));
         
         // Navigate to next step after a short delay
-        setTimeout(() => {
-          navigate('/customer/location-pin');
-        }, 1500);
+        navigate('/customer/location-pin');
       } else {
         setMessage({ type: "error", text: result.message || "Failed to save waste types" });
       }
@@ -239,8 +244,8 @@ const CustomerTrashType = () => {
           <div className="flex items-center">
             <img src="/public/images/logo2.png" alt="Logo" className="h-16 w-34" />
           </div>
-          {/* Navigation Links with enhanced animations */}
-          <div className="hidden md:flex space-x-8 text-gray-700 font-medium">
+          {/* Navigation Links - right aligned */}
+          <div className="hidden md:flex space-x-8 text-gray-700 font-medium ml-auto">
             <a href="/" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Home</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
             <a href="/customer/trash-type" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Request Pickup</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
             <a href="/customer/track-pickup" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Track Pickup</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
@@ -266,6 +271,13 @@ const CustomerTrashType = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8 max-w-4xl">
+        <button
+          className="flex items-center text-theme-color hover:text-theme-color-dark font-medium mb-4"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="w-5 h-5 mr-2" />
+          Back
+        </button>
         {/* Breadcrumb */}
         <div className="flex items-center space-x-2 text-sm text-gray-600 mb-8">
           <Link to="/customer/trash-type" className="text-theme-color hover:text-theme-color-dark">
@@ -294,16 +306,10 @@ const CustomerTrashType = () => {
         </div>
 
         {/* Message Display */}
-        {message.text && (
-          <div className={`mb-6 p-4 rounded-lg ${
-            message.type === "success" 
-              ? "bg-green-50 border border-green-200 text-green-700" 
-              : "bg-red-50 border border-red-200 text-red-700"
-          }`}>
+        {message.text && message.type === "success" && (
+          <div className="mb-6 p-4 rounded-lg bg-green-50 border border-green-200 text-green-700">
             <div className="flex items-center space-x-2">
-              <span className="text-lg">
-                {message.type === "success" ? "✅" : "❌"}
-              </span>
+              <span className="text-lg">✅</span>
               <span className="font-medium">{message.text}</span>
             </div>
           </div>
@@ -369,25 +375,26 @@ const CustomerTrashType = () => {
                   {/* Quantity Controls */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">Quantity (kg)</span>
+                      <span className="text-sm font-medium text-gray-700">Approximate Quantity (kg)</span>
                     </div>
                     <div className="relative flex items-center">
                       <input
                         type="range"
-                        min="0"
+                        min="3"
                         max="50"
                         value={wasteTypes[wasteType.id].quantity}
                         onChange={(e) => handleSliderChange(wasteType.id, e.target.value)}
                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                         style={{
-                          background: `linear-gradient(to right, #3a5f46 0%, #3a5f46 ${(wasteTypes[wasteType.id].quantity / 50) * 100}%, #e5e7eb ${(wasteTypes[wasteType.id].quantity / 50) * 100}%, #e5e7eb 100%)`,
+                          background: `linear-gradient(to right, #3a5f46 0%, #3a5f46 ${((wasteTypes[wasteType.id].quantity - 3) / 47) * 100}%, #e5e7eb ${((wasteTypes[wasteType.id].quantity - 3) / 47) * 100}%, #e5e7eb 100%)`,
                           opacity: wasteTypes[wasteType.id].selected ? 1 : 0.5,
                         }}
                       />
                       <div className="flex items-center space-x-2 ml-4">
                         <button
-                          onClick={(e) => { e.stopPropagation(); updateQuantity(wasteType.id, wasteTypes[wasteType.id].quantity - 1) }}
+                          onClick={(e) => { e.stopPropagation(); updateQuantity(wasteType.id, Math.max(3, wasteTypes[wasteType.id].quantity - 1)) }}
                           className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 text-gray-600"
+                          disabled={wasteTypes[wasteType.id].quantity <= 3}
                         >
                           <Minus className="w-4 h-4" />
                         </button>
