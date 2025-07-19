@@ -166,7 +166,7 @@ const RouteMap = () => {
           <p className="text-gray-600 mb-6">View and manage your waste collection route.</p>
 
           <div className="bg-white border rounded-2xl shadow-sm p-8 text-center">
-            <div className="text-6xl mb-4">🗺️</div>
+            <div className="text-6xl mb-4">🗺</div>
             <h3 className="text-xl font-semibold text-gray-700 mb-2">Google Maps API Error</h3>
             <p className="text-gray-500 mb-4">
               Failed to load Google Maps API. Please refresh the page.
@@ -292,7 +292,7 @@ const RouteMap = () => {
           <p className="text-gray-600 mb-6">View and manage your waste collection route.</p>
 
           <div className="bg-white border rounded-2xl shadow-sm p-8 text-center">
-            <div className="text-6xl mb-4">🗺️</div>
+            <div className="text-6xl mb-4">🗺</div>
             <h3 className="text-xl font-semibold text-gray-700 mb-2">Google Maps API Error</h3>
             <p className="text-gray-500 mb-4">
               There was an issue loading the Google Maps API. Please check your API key configuration.
