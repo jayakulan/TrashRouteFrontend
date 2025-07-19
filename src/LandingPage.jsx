@@ -393,27 +393,20 @@ function LandingPage() {
               Connecting households with responsible waste processing companies for a cleaner, greener future.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              {/* Identical button style for both Sign In and Sign Up */}
-              {(() => {
-                const buttonClass = "flex items-center justify-center px-8 py-3 rounded-full font-normal text-lg bg-gradient-to-r from-[#3a5f46] to-[#26a360] text-white shadow-xl border-none hover:from-[#2e4d3a] hover:to-[#26a360] transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-[#3a5f46]/30 group";
-                const buttonFontStyle = { fontFamily: 'Montserrat, Poppins, Arial, sans-serif', letterSpacing: '0.04em' };
-                return <>
-                  <button
-                    onClick={() => { setUserType('customer'); navigate('/login'); }}
-                    className={buttonClass}
-                    style={buttonFontStyle}
-                  >
-                    <span className="transition-transform group-hover:-translate-y-1">Sign In</span>
-                  </button>
-                  <button
-                    onClick={() => { setUserType('company'); navigate('/signup'); }}
-                    className={buttonClass}
-                    style={buttonFontStyle}
-                  >
-                    <span className="transition-transform group-hover:-translate-y-1">Sign Up</span>
-                  </button>
-                </>;
-              })()}
+
+              <button
+                onClick={() => { setUserType('customer'); navigate('/login'); }}
+                className="px-8 py-3 rounded-md font-bold text-base bg-[#3a5f46] text-white shadow-lg hover:bg-[#2e4d3a] transition-all duration-300 transform hover:scale-105 border-2 border-[#3a5f46] hover:border-[#2e4d3a] hover:shadow-xl"
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => { setUserType('company'); navigate('/signup'); }}
+                className="px-8 py-3 rounded-md font-bold text-base bg-transparent text-[#3a5f46] shadow-lg hover:bg-[#3a5f46] hover:text-white transition-all duration-300 transform hover:scale-105 border-2 border-[#3a5f46] hover:shadow-xl"
+              >
+                Sign up
+              </button>
+
             </div>
           </div>
         </div>
