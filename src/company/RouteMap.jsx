@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Link, useLocation, useParams } from "react-router-dom"
+import { Link, useLocation, useParams, useNavigate } from "react-router-dom"
 import { Plus, Minus, Navigation, Check } from "lucide-react"
 import { GoogleMap, Polyline } from "@react-google-maps/api"
 import UserProfileDropdowncom from "./UserProfileDropdowncom"
@@ -61,6 +61,8 @@ const RouteMap = () => {
     entered_otp: ""
   });
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [feedbackError, setFeedbackError] = useState('');
 
   const location = useLocation();
   const params = useParams();
@@ -68,8 +70,11 @@ const RouteMap = () => {
   const route_id = location.state?.route_id || params.route_id || null;
   const waste_type = location.state?.waste_type || null;
 
+  const navigate = useNavigate();
+
   // Fetch customer data for this route
   useEffect(() => {
+    // Only fetch if both company_id and route_id are present
     if (!company_id || !route_id) return;
     setLoadingCustomers(true);
     setCustomersError("");
@@ -82,6 +87,7 @@ const RouteMap = () => {
       .then(result => {
         if (result.success) {
           setHouseholds(result.households);
+          setCustomersError(""); // Clear error on success
           
           // Create optimized path from customer locations
           if (result.households.length > 0) {
@@ -315,10 +321,16 @@ const RouteMap = () => {
     )
   }
 
+  const handleOpenFeedbackPopup = (household) => {
+    setFeedbackHousehold(household);
+    setShowFeedbackPopup(true);
+    setFeedbackMessage('');
+    setFeedbackError('');
+  };
+
   const handleCollectedClick = (household) => {
     if (!household.collected) {
-      setFeedbackHousehold(household);
-      setShowFeedbackPopup(true);
+      handleOpenFeedbackPopup(household);
     } else {
       toggleCollected(household.id);
     }
@@ -330,10 +342,15 @@ const RouteMap = () => {
         <nav className="container mx-auto px-6 py-4 flex justify-between">
           <img src="/images/logo.png" className="h-16" alt="Logo" />
           <div className="flex space-x-6 items-center">
-            <Link to="/" className="text-gray-700 hover:text-gray-900 font-medium">Home</Link>
             <Link to="/company-waste-prefer">Dashboard</Link>
             <Link to="/company/historylogs">Historylogs</Link>
               <UserProfileDropdowncom />
+              <button className="ml-2 relative group p-2 rounded-lg transition-all duration-300 hover:bg-[#3a5f46]/10">
+                <div className="w-6 h-0.5 bg-gray-700 group-hover:bg-[#3a5f46] transition-all duration-300 mb-1.5"></div>
+                <div className="w-6 h-0.5 bg-gray-700 group-hover:bg-[#3a5f46] transition-all duration-300 mb-1.5"></div>
+                <div className="w-6 h-0.5 bg-gray-700 group-hover:bg-[#3a5f46] transition-all duration-300"></div>
+              </button>
+            </div>
           </div>
         </nav>
       </header>
@@ -363,7 +380,7 @@ const RouteMap = () => {
         )}
 
         {/* Error State for Customers */}
-        {customersError && (
+        {customersError && households.length === 0 && (
           <div className="bg-red-50 border-l-4 border-red-400 text-red-700 px-4 py-3 rounded mb-6">
             <p className="font-semibold">Error loading customers:</p>
             <p>{customersError}</p>
@@ -554,7 +571,7 @@ const RouteMap = () => {
             <button
               type="button"
               aria-label="Close feedback form"
-              onClick={() => { setShowFeedbackPopup(false); setFeedbackHousehold(null); }}
+              onClick={() => { setShowFeedbackPopup(false); setFeedbackHousehold(null); setFeedbackMessage(''); setFeedbackError(''); }}
               className="absolute top-3 right-3 text-gray-400 hover:text-[#3a5f46] transition-colors text-2xl font-bold focus:outline-none"
             >
               &times;
@@ -563,16 +580,28 @@ const RouteMap = () => {
               <span className="inline-block bg-[#e6f4ea] text-[#3a5f46] px-2 py-1 rounded text-xs font-semibold">Feedback</span>
               Company Pickup
             </h3>
+            {feedbackMessage && (
+              <div className="mb-4 p-3 rounded bg-green-100 text-green-800 font-semibold text-center">
+                {feedbackMessage}
+              </div>
+            )}
+            {feedbackError && (
+              <div className="mb-4 p-3 rounded bg-red-100 text-red-800 font-semibold text-center">
+                {feedbackError}
+              </div>
+            )}
             <form
               className="space-y-5"
               onSubmit={async (e) => {
                 e.preventDefault();
                 setFeedbackSubmitting(true);
+                setFeedbackMessage('');
+                setFeedbackError('');
                 try {
                   // OTP verification if pickup is completed
                   if (feedback.pickup_completed) {
                     if (!feedback.entered_otp) {
-                      alert("Please enter the customer's OTP to verify the pickup.");
+                      setFeedbackError("Please enter the customer's OTP to verify the pickup.");
                       setFeedbackSubmitting(false);
                       return;
                     }
@@ -586,35 +615,52 @@ const RouteMap = () => {
                     });
                     const otpResult = await otpResponse.json();
                     if (!otpResult.success) {
-                      alert(otpResult.message);
+                      setFeedbackError(otpResult.message);
                       setFeedbackSubmitting(false);
                       return;
                     }
                   }
-                // TODO: Replace with your actual request_id and company_id logic
-                const request_id = feedbackHousehold.request_id || 1; // Example
-                const company_id = 3; // Example, get from context/auth
-                const payload = {
-                  request_id,
-                  company_id,
-                  pickup_completed: feedback.pickup_completed,
-                  rating: feedback.rating,
-                  comment: feedback.comment
-                };
-                await fetch("/api/company_feedback.php", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(payload)
-                });
-                toggleCollected(feedbackHousehold.id);
-                setShowFeedbackPopup(false);
-                setFeedbackHousehold(null);
-                  setFeedback({ pickup_completed: true, rating: 5, comment: "", entered_otp: "" });
-                  alert("Feedback submitted successfully!");
+                  const request_id = feedbackHousehold.request_id || 1;
+                  const company_id = 3;
+                  const payload = {
+                    request_id,
+                    company_id,
+                    pickup_completed: feedback.pickup_completed,
+                    rating: feedback.rating,
+                    comment: feedback.comment,
+                    entered_otp: feedback.entered_otp
+                  };
+                  const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/company_feedback.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                  });
+                  const data = await response.json();
+                  if (data.success) {
+                    setFeedbackMessage(data.message || "Feedback submitted successfully!");
+                    setFeedbackError('');
+                    setHouseholds(prev =>
+                      prev.map(h =>
+                        h.request_id === feedbackHousehold.request_id
+                          ? { ...h, status: 'Completed', collected: true }
+                          : h
+                      )
+                    );
+                    setTimeout(() => {
+                      setShowFeedbackPopup(false);
+                      setFeedbackHousehold(null);
+                      setFeedback({ pickup_completed: true, rating: 5, comment: "", entered_otp: "" });
+                      setFeedbackMessage('');
+                    }, 2000);
+                  } else {
+                    setFeedbackError(data.message || "Failed to submit feedback.");
+                    setFeedbackMessage('');
+                  }
                 } catch (err) {
-                  alert("Error submitting feedback: " + err.message);
+                  setFeedbackError("Error submitting feedback: " + err.message);
+                  setFeedbackMessage('');
                 } finally {
-                setFeedbackSubmitting(false);
+                  setFeedbackSubmitting(false);
                 }
               }}
             >
@@ -695,7 +741,7 @@ const RouteMap = () => {
               <div className="flex justify-end gap-2 mt-6">
                 <button
                   type="button"
-                  onClick={() => { setShowFeedbackPopup(false); setFeedbackHousehold(null); }}
+                  onClick={() => { setShowFeedbackPopup(false); setFeedbackHousehold(null); setFeedbackMessage(''); setFeedbackError(''); }}
                   className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition"
                 >
                   Cancel

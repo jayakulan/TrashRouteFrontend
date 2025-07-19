@@ -395,17 +395,20 @@ function LandingPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {/* Identical button style for both Sign In and Sign Up */}
               {(() => {
-                const buttonClass = "flex items-center justify-center px-8 py-3 rounded-full font-bold text-lg bg-gradient-to-r from-[#3a5f46] to-[#26a360] text-white shadow-xl border-none hover:from-[#2e4d3a] hover:to-[#26a360] transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-[#3a5f46]/30 group";
+                const buttonClass = "flex items-center justify-center px-8 py-3 rounded-full font-normal text-lg bg-gradient-to-r from-[#3a5f46] to-[#26a360] text-white shadow-xl border-none hover:from-[#2e4d3a] hover:to-[#26a360] transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-[#3a5f46]/30 group";
+                const buttonFontStyle = { fontFamily: 'Montserrat, Poppins, Arial, sans-serif', letterSpacing: '0.04em' };
                 return <>
                   <button
                     onClick={() => { setUserType('customer'); navigate('/login'); }}
                     className={buttonClass}
+                    style={buttonFontStyle}
                   >
                     <span className="transition-transform group-hover:-translate-y-1">Sign In</span>
                   </button>
                   <button
                     onClick={() => { setUserType('company'); navigate('/signup'); }}
                     className={buttonClass}
+                    style={buttonFontStyle}
                   >
                     <span className="transition-transform group-hover:-translate-y-1">Sign Up</span>
                   </button>
