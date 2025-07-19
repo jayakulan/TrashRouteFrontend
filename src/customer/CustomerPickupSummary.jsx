@@ -1,27 +1,135 @@
 import { Link, useNavigate } from "react-router-dom"
 import { Recycle, Bell } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import UserProfileDropdown from "./UserProfileDropdown"
 import binIcon from '/images/bin.png';
 import CustomerNotification from "./CustomerNotification";
+import { useAuth } from "../context/AuthContext";
 
 const ConfirmPickup = () => {
   const [confirmed, setConfirmed] = useState(false)
   const [showPopup, setShowPopup] = useState(false);
+  const [pickupSummary, setPickupSummary] = useState({
+    wasteTypes: "Loading...",
+    approximateTotalWeight: "Loading...",
+    pickupLocation: "Loading...",
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [otpData, setOtpData] = useState(null);
+  const [otpList, setOtpList] = useState([]);
+  const [schedulingLoading, setSchedulingLoading] = useState(false);
   const navigate = useNavigate();
-  const pickupSummary = {
-    wasteTypes: "Recyclables, Organics",
-    quantities: "2 bags, 1 bin",
-    totalWeight: "15 kg",
-    pickupLocation: "123 Maple Street, Anytown",
-  }
+  const { user } = useAuth();
 
-  const handleConfirmSchedule = () => {
-    setConfirmed(true)
+  // Fetch pickup summary data from API
+  useEffect(() => {
+    const fetchPickupSummary = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const user = localStorage.getItem('user');
+        
+        console.log('Token exists:', !!token);
+        console.log('User exists:', !!user);
+        
+        if (!token || !user) {
+          setError('Please log in to view pickup summary.');
+          setLoading(false);
+          setTimeout(() => {
+            navigate('/login');
+          }, 2000);
+          return;
+        }
+
+        // Check if user is a customer
+        const userData = JSON.parse(user);
+        if (userData.role !== 'customer') {
+          setError('Access denied. This page is for customers only.');
+          setLoading(false);
+          setTimeout(() => {
+            navigate('/');
+          }, 2000);
+          return;
+        }
+
+        const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Customer/pickupsummary.php', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        console.log('Response status:', response.status);
+        
+        const data = await response.json();
+        console.log('Response data:', data);
+
+        if (data.success) {
+          // Deduplicate waste types if it's an array
+          let wasteTypes = data.data.waste_types;
+          if (Array.isArray(wasteTypes)) {
+            wasteTypes = [...new Set(wasteTypes)];
+          }
+          
+          setPickupSummary({
+            wasteTypes: Array.isArray(wasteTypes) ? wasteTypes.join(', ') : wasteTypes,
+            approximateTotalWeight: data.data.approximate_total_weight,
+            pickupLocation: data.data.pickup_location,
+          });
+          
+          // If OTP list exists, set it
+          if (data.data.otp_list && data.data.otp_list.length > 0) {
+            setOtpList(data.data.otp_list);
+          }
+        } else {
+          setError(data.message || 'Failed to fetch pickup summary');
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+        setError('Network error: ' + err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPickupSummary();
+  }, []);
+
+  const handleConfirmSchedule = async () => {
+    setSchedulingLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('No authentication token found. Please log in again.');
+        return;
+      }
+
+      const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Customer/pickupotp.php', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setOtpData(data.data);
+        setOtpList(data.data.otp_list || []);
+        setConfirmed(true);
     setShowPopup(true);
-    console.log("Pickup schedule confirmed")
-    // Handle schedule confirmation logic here
-    // This would typically submit the pickup request to the backend
+        console.log("OTPs generated successfully:", data.data.otp_list);
+      } else {
+        setError(data.message || 'Failed to generate OTPs');
+      }
+    } catch (err) {
+      console.error('Schedule error:', err);
+      setError('Network error: ' + err.message);
+    } finally {
+      setSchedulingLoading(false);
+    }
   }
 
   const handleClosePopup = () => setShowPopup(false);
@@ -83,6 +191,23 @@ const ConfirmPickup = () => {
         <div className="mb-12">
           <h2 className="text-xl font-semibold text-gray-900 mb-8">Pickup Summary</h2>
 
+          {loading ? (
+            <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+              <div className="text-gray-600">Loading pickup summary...</div>
+            </div>
+          ) : error ? (
+            <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+              <div className="text-red-600 mb-4">Error: {error}</div>
+              {error.includes('log in') && (
+                <button
+                  onClick={() => navigate('/login')}
+                  className="bg-theme-color text-white px-6 py-2 rounded-lg hover:bg-theme-color-dark transition-colors"
+                >
+                  Go to Login
+                </button>
+              )}
+            </div>
+          ) : (
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             <div className="divide-y divide-gray-200">
               {/* Waste Types */}
@@ -91,25 +216,39 @@ const ConfirmPickup = () => {
                 <div className="text-gray-900 font-medium">{pickupSummary.wasteTypes}</div>
               </div>
 
-              {/* Quantities */}
-              <div className="px-6 py-6 flex justify-between items-center">
-                <div className="text-sm font-medium text-theme-color">Quantities</div>
-                <div className="text-gray-900 font-medium">{pickupSummary.quantities}</div>
-              </div>
-
               {/* Total Weight */}
               <div className="px-6 py-6 flex justify-between items-center">
-                <div className="text-sm font-medium text-theme-color">Total Weight</div>
-                <div className="text-gray-900 font-medium">{pickupSummary.totalWeight}</div>
+                  <div className="text-sm font-medium text-theme-color">Approximate Total Weight</div>
+                  <div className="text-gray-900 font-medium">{pickupSummary.approximateTotalWeight}</div>
               </div>
 
               {/* Pickup Location */}
               <div className="px-6 py-6 flex justify-between items-center">
                 <div className="text-sm font-medium text-theme-color">Pickup Location</div>
                 <div className="text-gray-900 font-medium">{pickupSummary.pickupLocation}</div>
+                </div>
+
+                {/* OTP Display (if scheduled) */}
+                {otpList.length > 0 && (
+                  <div className="px-6 py-6 bg-green-50 border-t border-green-200">
+                    <div className="text-sm font-medium text-theme-color mb-3">Pickup OTPs</div>
+                    <div className="space-y-2">
+                      {otpList.map((otpItem, index) => (
+                        <div key={index} className="flex justify-between items-center bg-white p-3 rounded border">
+                          <div className="text-sm text-gray-600">
+                            {otpItem.waste_type} ({otpItem.quantity} kg)
+                          </div>
+                          <div className="text-gray-900 font-mono font-bold text-lg tracking-wider">
+                            {otpItem.otp}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Confirm Button or Success Message */}
@@ -117,9 +256,10 @@ const ConfirmPickup = () => {
           {!confirmed ? (
             <button
               onClick={handleConfirmSchedule}
-              className="next-btn py-4 px-12 rounded-full text-lg"
+              disabled={schedulingLoading}
+              className={`next-btn py-4 px-12 rounded-full text-lg ${schedulingLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              Confirm Schedule
+              {schedulingLoading ? 'Scheduling...' : 'Confirm Schedule'}
             </button>
           ) : null}
         </div>
@@ -189,12 +329,71 @@ const ConfirmPickup = () => {
               <img src={binIcon} alt="Close" style={{ width: '1.5rem', height: '1.5rem', objectFit: 'contain', filter: 'invert(1) brightness(2)', display: 'block', margin: '0 auto' }} />
             </button>
             <div style={{ fontSize: '3rem', marginBottom: '1rem', animation: 'popIn 0.4s' }}>✅</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3a5f46', marginBottom: '0.5rem' }}>Pickup Scheduled Successfully!</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3a5f46', marginBottom: '0.5rem' }}>OTPs Generated Successfully!</div>
+            
+            {otpList.length > 0 && (
+              <div style={{ 
+                background: '#f0f9ff', 
+                border: '2px solid #3a5f46', 
+                borderRadius: '0.75rem', 
+                padding: '1rem', 
+                marginBottom: '1rem',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '1rem', color: '#3a5f46', fontWeight: 600, marginBottom: '0.5rem' }}>
+                  Your Pickup OTPs:
+                </div>
+                <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                  {otpList.map((otpItem, index) => (
+                    <div key={index} style={{ 
+                      background: '#fff',
+                      padding: '0.75rem',
+                      borderRadius: '0.5rem',
+                      border: '1px solid #3a5f46',
+                      marginBottom: '0.5rem',
+                      textAlign: 'left'
+                    }}>
+                      <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.25rem' }}>
+                        {otpItem.waste_type} ({otpItem.quantity} kg)
+                      </div>
+                      <div style={{ 
+                        fontSize: '1.5rem', 
+                        fontWeight: 700, 
+                        color: '#3a5f46', 
+                        letterSpacing: '0.25rem',
+                        fontFamily: 'monospace'
+                      }}>
+                        {otpItem.otp}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
             <div style={{ fontSize: '1.1rem', color: '#333', marginBottom: '1.5rem' }}>
-              You'll receive the pickup time and assigned company shortly.<br/>
+              Please provide these OTPs to the pickup company when they arrive.<br/>
               Thank you for choosing TrashRoute!
             </div>
-            <div style={{ fontSize: '1rem', color: '#3a5f46', fontWeight: 500, marginTop: '0.5rem' }}>Please wait...</div>
+            
+            <button
+              onClick={handleClosePopup}
+              style={{
+                background: '#3a5f46',
+                color: 'white',
+                border: 'none',
+                padding: '0.75rem 2rem',
+                borderRadius: '0.5rem',
+                fontSize: '1rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'background 0.2s'
+              }}
+              onMouseOver={e => e.currentTarget.style.background = '#24402e'}
+              onMouseOut={e => e.currentTarget.style.background = '#3a5f46'}
+            >
+              OK
+            </button>
           </div>
         </div>
       )}

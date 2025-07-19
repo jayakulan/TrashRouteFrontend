@@ -54,9 +54,9 @@ const Footer = () => {
       {/* Contact Us */}
       <div className="flex-1">
         <div className="font-bold text-lg mb-2">Contact Us</div>
-        <div className="text-sm">Email: support@trashroute.com</div>
-        <div className="text-sm">Phone: (555) 123-4567</div>
-        <div className="text-sm">Address: 123 Green Street, Eco City, EC 12345</div>
+        <div className="text-sm">Email: trashroute.wastemanagement@gmail.com</div>
+        <div className="text-sm">Phone: 0768304047</div>
+        <div className="text-sm">Address:<br/>No.25,<br/>Passara Road,<br/>Badulla,<br/>Sri Lanka</div>
         <div className="flex gap-4 mt-4">
           {/* Twitter (X) */}
           <a href="#" className="social-blink" aria-label="Twitter">

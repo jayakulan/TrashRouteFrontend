@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom'
+import { GoogleMapsProvider } from './components/GoogleMapsProvider'
+import GoogleMapsErrorBoundary from './components/GoogleMapsErrorBoundary'
 import Login from './Login.jsx'
 import LandingPage from './LandingPage.jsx'
 
@@ -101,32 +103,34 @@ function ScrollToTop() {
 
 function App() {
   return (
-    <>
-      <ScrollToTop />
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<CustomerSignUp />} />
-        <Route path="/company-signup" element={<CompanySignUp />} />
-        <Route path="/customer/trash-type" element={<CustomerTrashType />} />
-        <Route path="/customer/location-pin" element={<CustomerLocationPin />} />
-        <Route path="/customer/pickup-summary" element={<CustomerPickupSummary />} />
-        <Route path="/company-waste-prefer" element={<CompanyWastePrefer />} />
-        <Route path="/company/route-access" element={<RouteActivation />} />
-        <Route path="/company/route-map" element={<RouteMap />} />
-        <Route path="/company/historylogs" element={<CompanyHistoryLog />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/users" element={<ManageCustomers />} />
-        <Route path="/admin/companies" element={<ManageCompanies />} />
-        <Route path="/admin/requests" element={<PickupRequests />} />
-        <Route path="/admin/feedback" element={<FeedbackRatings />} />
-        <Route path="/admin/reports" element={<ReportsAnalytics />} />
-        <Route path="/customer/track-pickup" element={<CustomerTrackPickup />} />
-        <Route path="/customer/history-log" element={<CustomerHistoryLog />} />
-        <Route path="/otp-verification" element={<OtpVerification />} />
-      </Routes>
-      <Footer />
-    </>
+    <GoogleMapsErrorBoundary>
+      <GoogleMapsProvider>
+        <ScrollToTop />
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<CustomerSignUp />} />
+          <Route path="/company-signup" element={<CompanySignUp />} />
+          <Route path="/customer/trash-type" element={<CustomerTrashType />} />
+          <Route path="/customer/location-pin" element={<CustomerLocationPin />} />
+          <Route path="/customer/pickup-summary" element={<CustomerPickupSummary />} />
+          <Route path="/company-waste-prefer" element={<CompanyWastePrefer />} />
+          <Route path="/company/route-access" element={<RouteActivation />} />
+          <Route path="/company/route-map" element={<RouteMap />} />
+          <Route path="/company/historylogs" element={<CompanyHistoryLog />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/users" element={<ManageCustomers />} />
+          <Route path="/admin/companies" element={<ManageCompanies />} />
+          <Route path="/admin/requests" element={<PickupRequests />} />
+          <Route path="/admin/feedback" element={<FeedbackRatings />} />
+          <Route path="/admin/reports" element={<ReportsAnalytics />} />
+          <Route path="/customer/track-pickup" element={<CustomerTrackPickup />} />
+          <Route path="/customer/history-log" element={<CustomerHistoryLog />} />
+          <Route path="/otp-verification" element={<OtpVerification />} />
+        </Routes>
+        <Footer />
+      </GoogleMapsProvider>
+    </GoogleMapsErrorBoundary>
   )
 }
 

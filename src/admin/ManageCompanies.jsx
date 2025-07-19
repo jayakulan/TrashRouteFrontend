@@ -13,13 +13,14 @@ const ManageCompanies = () => {
     type: "All Types",
     location: "All Locations",
   })
+  const [autoRevertMsg, setAutoRevertMsg] = useState("");
 
   const companiesData = [
     {
       id: "#001",
       name: "Green Solutions Inc.",
       email: "contact@greensolutions.com",
-      phone: "+1 (555) 123-4567",
+      phone: "0768304047",
       location: "New York, NY",
       status: "Active",
       type: "Waste Management",
@@ -29,7 +30,7 @@ const ManageCompanies = () => {
       id: "#002",
       name: "EcoWaste Management",
       email: "info@ecowaste.com",
-      phone: "+1 (555) 234-5678",
+      phone: "0768304047",
       location: "Los Angeles, CA",
       status: "Active",
       type: "Recycling",
@@ -39,7 +40,7 @@ const ManageCompanies = () => {
       id: "#003",
       name: "RecyclePro",
       email: "hello@recyclepro.com",
-      phone: "+1 (555) 345-6789",
+      phone: "0768304047",
       location: "Chicago, IL",
       status: "Pending",
       type: "Waste Management",
@@ -49,7 +50,7 @@ const ManageCompanies = () => {
       id: "#004",
       name: "WasteAway Ltd.",
       email: "contact@wasteaway.com",
-      phone: "+1 (555) 456-7890",
+      phone: "0768304047",
       location: "Houston, TX",
       status: "Suspended",
       type: "Recycling",
@@ -59,7 +60,7 @@ const ManageCompanies = () => {
       id: "#005",
       name: "CleanEarth Services",
       email: "info@cleanearth.com",
-      phone: "+1 (555) 567-8901",
+      phone: "0768304047",
       location: "Phoenix, AZ",
       status: "Active",
       type: "Waste Management",
@@ -96,6 +97,17 @@ const ManageCompanies = () => {
     console.log("Delete company:", companyId)
     // Handle delete company logic
   }
+
+  const handleAutoRevert = async () => {
+    setAutoRevertMsg("Running auto-revert...");
+    try {
+      const res = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/auto_revert_pickup_status.php");
+      const data = await res.json();
+      setAutoRevertMsg(data.message || "Done.");
+    } catch (err) {
+      setAutoRevertMsg("Error: " + err.message);
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -419,6 +431,15 @@ const ManageCompanies = () => {
           <div className="mt-4 text-xs sm:text-sm text-[#618170]">
             Showing {filteredCompanies.length} of {companiesData.length} companies
           </div>
+          <button
+            onClick={handleAutoRevert}
+            className="px-4 py-2 bg-green-700 text-white rounded shadow hover:bg-green-800 mt-4"
+          >
+            Run Auto-Revert for Stale Pickup Requests
+          </button>
+          {autoRevertMsg && (
+            <div className="mt-2 text-sm text-green-700">{autoRevertMsg}</div>
+          )}
         </main>
       </div>
     </div>

@@ -1,27 +1,13 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useLocation, useParams } from "react-router-dom"
 import { Plus, Minus, Navigation, Check } from "lucide-react"
-import { GoogleMap, LoadScript, Polyline } from "@react-google-maps/api"
+import { GoogleMap, Polyline } from "@react-google-maps/api"
 import UserProfileDropdowncom from "./UserProfileDropdowncom"
-
-const GOOGLE_MAPS_API_KEY = "AIzaSyA5iEKgAwrJWVkCMAsD7_IilJ0YSVf_VGk"
+import { useGoogleMaps } from "../components/GoogleMapsProvider"
 
 const GOOGLE_MAPS_MAP_ID = "2d11b98e205d938c1f59291f" // Custom Map ID for TrashRoute
-
-function getRandomLatLng(center, radius) {
-  const y0 = center.lat
-  const x0 = center.lng
-  const rd = radius / 111300
-  const u = Math.random()
-  const v = Math.random()
-  const w = rd * Math.sqrt(u)
-  const t = 2 * Math.PI * v
-  const x = w * Math.cos(t)
-  const y = w * Math.sin(t)
-  return { lat: y0 + y, lng: x0 + x }
-}
 
 function getOptimizedPath(points) {
   if (points.length === 0) return []
@@ -48,6 +34,7 @@ function getOptimizedPath(points) {
 }
 
 const RouteMap = () => {
+  const { isLoaded: isGoogleMapsLoaded, loadError: googleMapsError, isLoading: isGoogleMapsLoading } = useGoogleMaps()
   const mapRef = useRef(null)
   const [map, setMap] = useState(null)
   const [currentLocation, setCurrentLocation] = useState(null)
@@ -56,8 +43,6 @@ const RouteMap = () => {
   const [markers, setMarkers] = useState([])
   const [apiError, setApiError] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-
-  const navigate = useNavigate();
 
   const [households, setHouseholds] = useState([
     { id: 1, address: "123 Elm Street", contact: "Sarah Miller", notes: "Leave bins by the curb", collected: false },
@@ -72,16 +57,50 @@ const RouteMap = () => {
   const [feedback, setFeedback] = useState({
     pickup_completed: true,
     rating: 5,
-    comment: ""
+    comment: "",
+    entered_otp: ""
   });
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
 
+  const location = useLocation();
+  const params = useParams();
+  const company_id = location.state?.company_id || localStorage.getItem("company_id");
+  const route_id = location.state?.route_id || params.route_id || null;
+  const waste_type = location.state?.waste_type || null;
+
+  // Fetch customer data for this route
   useEffect(() => {
-    const center = { lat: 20.5937, lng: 78.9629 }
-    const locations = Array.from({ length: 10 }, () => getRandomLatLng(center, 1000000))
-    const optimized = getOptimizedPath(locations)
-    setOptimizedLocations(optimized)
-  }, [])
+    if (!company_id || !route_id) return;
+    setLoadingCustomers(true);
+    setCustomersError("");
+    fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/Routemap.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `company_id=${company_id}&route_id=${route_id}`,
+    })
+      .then(res => res.json())
+      .then(result => {
+        if (result.success) {
+          setHouseholds(result.households);
+          
+          // Create optimized path from customer locations
+          if (result.households.length > 0) {
+            const locations = result.households.map(customer => ({
+              lat: customer.latitude,
+              lng: customer.longitude
+            }));
+            const optimized = getOptimizedPath(locations);
+            setOptimizedLocations(optimized);
+          }
+        } else {
+          setCustomersError(result.message || "Failed to fetch customer data");
+        }
+      })
+      .catch(err => {
+        setCustomersError("Network error. Please try again.");
+      })
+      .finally(() => setLoadingCustomers(false));
+  }, [company_id, route_id]);
 
   const onLoad = (map) => {
     setMap(map)
@@ -118,12 +137,47 @@ const RouteMap = () => {
     }
   }
 
-
-
   const onError = (error) => {
     console.error("Google Maps API Error:", error)
     setApiError(true)
     setIsLoading(false)
+  }
+
+  // Show error if Google Maps failed to load
+  if (googleMapsError) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white shadow-sm border-b">
+          <nav className="container mx-auto px-6 py-4 flex justify-between">
+            <img src="/images/logo.png" className="h-16" alt="Logo" />
+            <div className="flex space-x-6 items-center">
+              <Link to="/company-waste-prefer">Dashboard</Link>
+              <Link to="/company/historylogs">Historylogs</Link>
+              <UserProfileDropdowncom />
+            </div>
+          </nav>
+        </header>
+
+        <main className="container mx-auto px-6 py-8">
+          <h1 className="text-3xl font-bold mb-2">Route Map</h1>
+          <p className="text-gray-600 mb-6">View and manage your waste collection route.</p>
+
+          <div className="bg-white border rounded-2xl shadow-sm p-8 text-center">
+            <div className="text-6xl mb-4">🗺️</div>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">Google Maps API Error</h3>
+            <p className="text-gray-500 mb-4">
+              Failed to load Google Maps API. Please refresh the page.
+            </p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="bg-[#3a5f46] text-white px-4 py-2 rounded hover:bg-[#2e4d3a]"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </main>
+      </div>
+    )
   }
 
   const handleLocateMe = () => {
@@ -156,9 +210,32 @@ const RouteMap = () => {
         },
         (err) => {
           console.error("Location error:", err)
-          alert("Location access denied or unavailable.")
+          let errorMessage = "Location access denied or unavailable.";
+          
+          switch(err.code) {
+            case err.PERMISSION_DENIED:
+              errorMessage = "Location access denied. Please enable location services in your browser settings.";
+              break;
+            case err.POSITION_UNAVAILABLE:
+              errorMessage = "Location information unavailable. Please check your device's location services.";
+              break;
+            case err.TIMEOUT:
+              errorMessage = "Location request timed out. Please try again.";
+              break;
+            default:
+              errorMessage = "An unknown error occurred while getting your location.";
+          }
+          
+          alert(errorMessage);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000
         }
       )
+    } else {
+      alert("Geolocation is not supported by this browser.");
     }
   }
 
@@ -191,7 +268,7 @@ const RouteMap = () => {
     height: '400px'
   }
 
-  const center = { lat: 20.5937, lng: 78.9629 }
+  const center = { lat: 6.9271, lng: 79.8612 } // Colombo, Sri Lanka
 
   if (apiError) {
     return (
@@ -269,7 +346,29 @@ const RouteMap = () => {
             <span className="inline-block bg-[#e6f4ea] text-[#3a5f46] px-2 py-1 rounded text-xs font-semibold">Company</span>
           </h1>
           <p className="text-gray-600 mb-4">View, manage, and complete your waste collection route. Use the map and controls to optimize your workflow.</p>
+          {waste_type && (
+            <div className="bg-blue-50 border-l-4 border-blue-400 text-blue-700 px-4 py-3 rounded">
+              <p className="font-semibold">Waste Type: {waste_type}</p>
+              <p className="text-sm">Showing customers for {waste_type} waste collection</p>
+            </div>
+          )}
         </div>
+
+        {/* Loading State for Customers */}
+        {loadingCustomers && (
+          <div className="bg-white border rounded-2xl shadow-sm p-8 text-center mb-6">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3a5f46] mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading customer data...</p>
+          </div>
+        )}
+
+        {/* Error State for Customers */}
+        {customersError && (
+          <div className="bg-red-50 border-l-4 border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+            <p className="font-semibold">Error loading customers:</p>
+            <p>{customersError}</p>
+          </div>
+        )}
 
         {/* Map Card */}
         <div className="relative bg-white rounded-2xl shadow-xl border border-[#e6f4ea] overflow-hidden mb-10">
@@ -293,19 +392,18 @@ const RouteMap = () => {
             <span className="text-sm font-medium">Locate Me</span>
           </button>
 
-          {isLoading && (
+          {(isGoogleMapsLoading || isLoading) && (
             <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-20">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3a5f46] mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading map...</p>
+                <p className="text-gray-600">
+                  {isGoogleMapsLoading ? "Loading Google Maps..." : "Loading map..."}
+                </p>
               </div>
             </div>
           )}
 
-          <LoadScript 
-            googleMapsApiKey={GOOGLE_MAPS_API_KEY}
-            onError={onError}
-          >
+          {isGoogleMapsLoaded && window.google && window.google.maps && window.google.maps.Map ? (
             <GoogleMap
               mapContainerStyle={mapContainerStyle}
               center={center}
@@ -319,7 +417,7 @@ const RouteMap = () => {
                 zoomControl: false
               }}
             >
-              {optimizedLocations.length > 1 && (
+              {optimizedLocations.length > 1 && window.google.maps.Polyline && (
                 <Polyline
                   path={optimizedLocations}
                   geodesic={true}
@@ -329,14 +427,23 @@ const RouteMap = () => {
                 />
               )}
             </GoogleMap>
-          </LoadScript>
+          ) : (
+            <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-20">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3a5f46] mx-auto mb-4"></div>
+                <p className="text-gray-600">
+                  {isGoogleMapsLoading ? "Loading Google Maps..." : "Initializing map..."}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Household Details Card */}
         <div className="bg-white border rounded-2xl shadow-xl">
           <div className="p-6 border-b flex items-center justify-between">
             <h2 className="text-xl font-bold text-[#3a5f46] flex items-center gap-2">
-              <span>Household Details</span>
+              <span>Customer Details</span>
               <span className="inline-block bg-[#e6f4ea] text-[#3a5f46] px-2 py-1 rounded text-xs font-semibold">Route</span>
             </h2>
             <div className="flex items-center gap-2">
@@ -344,12 +451,20 @@ const RouteMap = () => {
               <div className="w-40 h-3 bg-gray-200 rounded-full overflow-hidden">
                 <div
                   className="h-3 rounded-full bg-[#3a5f46] transition-all"
-                  style={{ width: `${(collectedCount / totalCount) * 100}%` }}
+                  style={{ width: `${totalCount > 0 ? (collectedCount / totalCount) * 100 : 0}%` }}
                 ></div>
               </div>
               <span className="text-sm text-gray-700 font-semibold">{collectedCount}/{totalCount}</span>
             </div>
           </div>
+          
+          {totalCount === 0 && !loadingCustomers && !customersError ? (
+            <div className="p-8 text-center">
+              <div className="text-6xl mb-4">📭</div>
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">No Customers Found</h3>
+              <p className="text-gray-500">There are no customers with pickup requests for this waste type.</p>
+            </div>
+          ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-[#f7faf9] text-xs font-medium text-[#3a5f46] uppercase tracking-wider">
@@ -357,7 +472,8 @@ const RouteMap = () => {
                   <th className="px-6 py-3 text-left">#</th>
                   <th className="px-6 py-3 text-left">Address</th>
                   <th className="px-6 py-3 text-left">Contact</th>
-                  <th className="px-6 py-3 text-left">Notes</th>
+                    <th className="px-6 py-3 text-left">Details</th>
+                    <th className="px-6 py-3 text-left">Status</th>
                   <th className="px-6 py-3 text-left">Collected</th>
                 </tr>
               </thead>
@@ -366,8 +482,23 @@ const RouteMap = () => {
                   <tr key={h.id} className={idx % 2 === 0 ? "bg-[#f7faf9]" : "bg-white"}>
                     <td className="px-6 py-4 font-semibold text-gray-700">{h.id}</td>
                     <td className="px-6 py-4">{h.address}</td>
-                    <td className="px-6 py-4">{h.contact}</td>
+                      <td className="px-6 py-4">
+                        <div>
+                          <div className="font-medium">{h.contact}</div>
+                          <div className="text-sm text-gray-500">{h.customer_phone}</div>
+                        </div>
+                      </td>
                     <td className="px-6 py-4">{h.notes}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                          h.status === 'Request received' ? 'bg-blue-100 text-blue-800' :
+                          h.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                          h.status === 'Accepted' ? 'bg-green-100 text-green-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {h.status}
+                        </span>
+                      </td>
                     <td className="px-6 py-4">
                       <button
                         onClick={() => handleCollectedClick(h)}
@@ -389,10 +520,13 @@ const RouteMap = () => {
               </tbody>
             </table>
           </div>
+          )}
+          
+          {totalCount > 0 && (
           <div className="p-6 bg-[#f7faf9] flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-sm text-gray-700 font-medium flex items-center gap-2">
               <span>Route Completion:</span>
-              <span className="font-bold text-[#3a5f46]">{collectedCount} of {totalCount} households collected</span>
+                <span className="font-bold text-[#3a5f46]">{collectedCount} of {totalCount} customers collected</span>
             </div>
             <button
               onClick={() => navigate("/company-waste-prefer")}
@@ -407,6 +541,7 @@ const RouteMap = () => {
               Complete Route
             </button>
           </div>
+          )}
         </div>
       </main>
       {showFeedbackPopup && feedbackHousehold && (
@@ -433,6 +568,29 @@ const RouteMap = () => {
               onSubmit={async (e) => {
                 e.preventDefault();
                 setFeedbackSubmitting(true);
+                try {
+                  // OTP verification if pickup is completed
+                  if (feedback.pickup_completed) {
+                    if (!feedback.entered_otp) {
+                      alert("Please enter the customer's OTP to verify the pickup.");
+                      setFeedbackSubmitting(false);
+                      return;
+                    }
+                    const otpResponse = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/verifyotpcus.php", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        request_id: feedbackHousehold.request_id,
+                        entered_otp: feedback.entered_otp
+                      })
+                    });
+                    const otpResult = await otpResponse.json();
+                    if (!otpResult.success) {
+                      alert(otpResult.message);
+                      setFeedbackSubmitting(false);
+                      return;
+                    }
+                  }
                 // TODO: Replace with your actual request_id and company_id logic
                 const request_id = feedbackHousehold.request_id || 1; // Example
                 const company_id = 3; // Example, get from context/auth
@@ -451,8 +609,13 @@ const RouteMap = () => {
                 toggleCollected(feedbackHousehold.id);
                 setShowFeedbackPopup(false);
                 setFeedbackHousehold(null);
-                setFeedback({ pickup_completed: true, rating: 5, comment: "" });
+                  setFeedback({ pickup_completed: true, rating: 5, comment: "", entered_otp: "" });
+                  alert("Feedback submitted successfully!");
+                } catch (err) {
+                  alert("Error submitting feedback: " + err.message);
+                } finally {
                 setFeedbackSubmitting(false);
+                }
               }}
             >
               <div>
@@ -482,6 +645,27 @@ const RouteMap = () => {
                   </label>
                 </div>
               </div>
+              {/* OTP Verification Field - Only show if pickup is completed */}
+              {feedback.pickup_completed && (
+                <div>
+                  <label className="block mb-1 font-semibold text-[#3a5f46]">
+                    Customer OTP Verification
+                    <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <div className="text-sm text-gray-600 mb-2">
+                    Ask the customer for their OTP to verify the pickup request
+                  </div>
+                  <input
+                    type="text"
+                    value={feedback.entered_otp}
+                    onChange={e => setFeedback(f => ({ ...f, entered_otp: e.target.value }))}
+                    placeholder="Enter 6-digit OTP"
+                    maxLength={6}
+                    className="w-full border border-[#e6f4ea] rounded-lg p-3 focus:ring-2 focus:ring-[#3a5f46] focus:outline-none transition"
+                    required={feedback.pickup_completed}
+                  />
+                </div>
+              )}
               <div>
                 <label className="block mb-1 font-semibold text-[#3a5f46]">Rating</label>
                 <div className="flex gap-2">
