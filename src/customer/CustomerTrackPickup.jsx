@@ -195,21 +195,17 @@ function FeedbackFormModal({ onClose }) {
           position: 'absolute',
           top: '1rem',
           right: '1rem',
-          background: '#3a5f46',
+          background: 'transparent',
           border: 'none',
-          width: '2.5rem',
-          height: '2.5rem',
-          borderRadius: '50%',
+          padding: 0,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
-          zIndex: 10,
-          color: '#fff',
-          fontSize: '1.5rem',
+          zIndex: 10
         }}
       >
-        ×
+        <img src="/images/close.png" alt="Close" style={{ width: 24, height: 24, display: 'block' }} />
       </button>
       {!submitted ? (
         <form onSubmit={handleSubmit}>
@@ -243,7 +239,7 @@ function FeedbackFormModal({ onClose }) {
           <button
             type="submit"
             style={{
-              background: '#3a5f46',
+              background: '#5E856D',
               color: '#fff',
               fontWeight: 600,
               fontSize: '1.1rem',
@@ -255,6 +251,8 @@ function FeedbackFormModal({ onClose }) {
               boxShadow: '0 2px 8px 0 rgba(58, 95, 70, 0.18)',
               transition: 'background 0.2s',
             }}
+            onMouseOver={e => e.currentTarget.style.background = '#466a54'}
+            onMouseOut={e => e.currentTarget.style.background = '#5E856D'}
           >
             Submit Feedback
           </button>

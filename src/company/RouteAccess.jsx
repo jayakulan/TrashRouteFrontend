@@ -163,8 +163,36 @@ const RouteActivation = () => {
   const handleCloseModal = () => setShowModal(false)
   const handleProceed = async (e) => {
     e.preventDefault();
-    setPaymentLoading(true);
     setPaymentMessage("");
+    // Card number validation: 16 digits
+    if (!/^\d{16}$/.test(cardNumber)) {
+      setPaymentMessage("Card number must be exactly 16 digits.");
+      return;
+    }
+    // Expiry date validation: MM/YY and not expired
+    if (!/^\d{2}\/\d{2}$/.test(expiry)) {
+      setPaymentMessage("Expiry date must be in MM/YY format.");
+      return;
+    }
+    const [expMonth, expYear] = expiry.split('/').map(Number);
+    if (expMonth < 1 || expMonth > 12) {
+      setPaymentMessage("Expiry month must be between 01 and 12.");
+      return;
+    }
+    // Get current month/year
+    const now = new Date();
+    const currentYear = now.getFullYear() % 100; // last two digits
+    const currentMonth = now.getMonth() + 1;
+    if (expYear < currentYear || (expYear === currentYear && expMonth < currentMonth)) {
+      setPaymentMessage("Card expiry date has already passed.");
+      return;
+    }
+    // CVV validation: 3 digits
+    if (!/^\d{3}$/.test(cvv)) {
+      setPaymentMessage("CVV must be exactly 3 digits.");
+      return;
+    }
+    setPaymentLoading(true);
     const company_id = getCookie("company_id");
     if (!company_id) {
       setPaymentMessage("Company ID not found. Please log in again.");
@@ -227,21 +255,20 @@ const RouteActivation = () => {
             <div className="flex items-center">
               <img src="/public/images/logo2.png" alt="Logo" className="h-16 w-34" />
             </div>
-            {/* Navigation Links with enhanced animations */}
-            <div className="hidden md:flex space-x-8 text-gray-700 font-medium">
-              <a href="/company-waste-prefer" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Dashboard</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
-              <a href="/company/historylogs" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Historylogs</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
-            </div>
-            {/* Notification and Profile */}
-            <div className="hidden md:flex items-center space-x-4 ml-4">
+            {/* Navigation - right aligned, all in one flex */}
+            <div className="flex items-center space-x-8 ml-auto">
+              <a href="/company-waste-prefer" className="text-gray-700 hover:text-gray-900 font-medium">Dashboard</a>
+              <a href="/company/historylogs" className="text-gray-700 hover:text-gray-900 font-medium">Historylogs</a>
+              {/* Notification Bell Icon */}
               <button className="relative focus:outline-none" aria-label="Notifications">
                 <svg className="w-6 h-6 text-gray-700 hover:text-gray-900" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
               </button>
+              {/* User Avatar Dropdown */}
               <UserProfileDropdowncom />
             </div>
-            {/* Mobile menu button with notification/profile */}
+            {/* Mobile menu button with notification/profile remains unchanged */}
             <div className="md:hidden flex items-center">
               <button className="relative focus:outline-none" aria-label="Notifications">
                 <svg className="w-6 h-6 text-gray-700 hover:text-gray-900" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -538,7 +565,9 @@ const RouteActivation = () => {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md relative">
-            <button onClick={handleCloseModal} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
+            <button onClick={handleCloseModal} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 p-0 bg-transparent border-none" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none' }}>
+              <img src="/images/close.png" alt="Close" style={{ width: 24, height: 24, display: 'block' }} />
+            </button>
             <h2 className="text-2xl font-bold mb-4 text-center">Card Payment</h2>
             <form onSubmit={handleProceed} className="space-y-4">
               <div>
