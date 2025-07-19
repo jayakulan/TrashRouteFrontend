@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import ReactDOM from "react-dom";
 
 const UserProfileDropdown = () => {
   const { user, logout, updateUser } = useAuth();
@@ -91,44 +92,47 @@ const UserProfileDropdown = () => {
   };
 
   return (
-    <div
-      className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200 flex items-center justify-center cursor-pointer relative"
-      ref={profileRef}
-    >
-      <img
-        src={user?.profileImage || "https://randomuser.me/api/portraits/women/44.jpg"}
-        alt="User"
-        className="w-8 h-8 object-cover"
-        onClick={() => setShowProfile((prev) => !prev)}
-      />
-      {showProfile && (
-        <div className="fixed top-20 right-10 w-72 bg-white border-2 border-gray-400 rounded-lg shadow-2xl z-[9999] p-6 flex flex-col items-center">
-          <img src={user?.profileImage || "https://randomuser.me/api/portraits/women/44.jpg"} alt="User" className="w-16 h-16 rounded-full object-cover mb-3" />
-          <div className="font-semibold text-gray-900 text-lg mb-1">{user?.name || "User"}</div>
-          <div className="text-sm text-gray-500 mb-4">{user?.email || "user@email.com"}</div>
-          
-          {/* Edit Profile Button */}
-          <button 
-            onClick={() => setShowEditModal(true)}
-            className="w-full text-center px-4 py-2 bg-[#3a5f46] text-white rounded-lg hover:bg-[#2e4d3a] transition-colors mb-2 font-medium"
+    <>
+      <div
+        className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200 flex items-center justify-center cursor-pointer relative"
+        ref={profileRef}
+      >
+        <img
+          src={user?.profileImage || "https://randomuser.me/api/portraits/women/44.jpg"}
+          alt="User"
+          className="w-8 h-8 object-cover"
+          onClick={() => setShowProfile((prev) => !prev)}
+        />
+        {showProfile && (
+          <div
+            className={
+              popupPosition === "sidebar"
+                ? "absolute bottom-14 left-1/2 -translate-x-1/2 z-[9999] w-72 bg-white border-2 border-gray-400 rounded-lg shadow-2xl p-6 flex flex-col items-center"
+                : "fixed top-20 right-10 w-72 bg-white border-2 border-gray-400 rounded-lg shadow-2xl z-[9999] p-6 flex flex-col items-center"
+            }
           >
-            Edit Profile
-          </button>
-          
-          {/* Logout Button */}
-          <button 
-            onClick={handleLogout}
-            className="w-full text-center px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
-          >
-            Logout
-          </button>
-        </div>
-      )}
-
-      {/* Edit Profile Modal */}
+            <img src={user?.profileImage || "https://randomuser.me/api/portraits/women/44.jpg"} alt="User" className="w-16 h-16 rounded-full object-cover mb-3" />
+            <div className="font-semibold text-gray-900 text-lg mb-1">{user?.name || "User"}</div>
+            <div className="text-sm text-gray-500 mb-4">{user?.email || "user@email.com"}</div>
+            <button 
+              onClick={() => setShowEditModal(true)}
+              className="w-full text-center px-4 py-2 bg-[#3a5f46] text-white rounded-lg hover:bg-[#2e4d3a] transition-colors mb-2 font-medium"
+            >
+              Edit Profile
+            </button>
+            <button 
+              onClick={handleLogout}
+              className="w-full text-center px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
+            >
+              Logout
+            </button>
+          </div>
+        )}
+      </div>
+      {/* Modal is now outside the avatar container */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md relative">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-4 md:p-8 relative overflow-y-auto max-h-[90vh]">
             <button 
               onClick={() => setShowEditModal(false)} 
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl transition-colors"
@@ -216,7 +220,8 @@ const UserProfileDropdown = () => {
               </button>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

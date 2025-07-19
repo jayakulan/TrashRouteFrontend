@@ -26,7 +26,7 @@ const Footer = ({ admin }) => {
   // Use minimal style for admin pages
   const footerClass = admin
     ? "w-full bg-white text-[#3a5f46] border-t text-center py-4 px-2 transition-all duration-300"
-    : "mt-20 bg-[#3a5f46] py-2 text-white border-t px-4 sm:px-8";
+    : "mt-4 bg-[#3a5f46] py-2 text-white border-t px-2 sm:px-4";
 
   return (
     <footer className={footerClass}>
@@ -34,14 +34,14 @@ const Footer = ({ admin }) => {
         <div className="text-xs">© 2025 TrashRoute. All rights reserved.</div>
       ) : (
         <>
-          <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-stretch gap-8 md:gap-4 lg:gap-8">
+          <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-stretch gap-2 md:gap-2 lg:gap-2">
             {/* Brand/About */}
-            <div className="flex-1 mb-4 md:mb-0 min-w-[200px]">
+            <div className="flex-1 min-w-[200px]">
               <div className="font-bold text-lg mb-2">TrashRoute</div>
               <div className="text-sm leading-relaxed">Making waste management efficient and environmentally responsible.</div>
             </div>
             {/* Quick Links */}
-            <div className="flex-1 mb-4 md:mb-0 min-w-[200px]">
+            <div className="flex-1 min-w-[200px]">
               <div className="font-bold text-lg mb-2">Quick Links</div>
               <ul className="space-y-1 text-sm">
                 <li><a href="#about" className="hover:text-green-300 transition-colors" onClick={(e) => {
@@ -60,7 +60,7 @@ const Footer = ({ admin }) => {
               </ul>
             </div>
             {/* Contact Us */}
-            <div className="flex-1 min-w-[200px] p-4">
+            <div className="flex-1 min-w-[200px] p-2">
               <div className="font-bold text-lg mb-2">Contact Us</div>
               <div className="text-sm break-words">Email: trashroute.wastemanagement@gmail.com</div>
               <div className="text-sm">Phone: 0768304047</div>
@@ -87,7 +87,7 @@ const Footer = ({ admin }) => {
               </div>
             </div>
           </div>
-          <div className="text-center text-xs text-gray-300 mt-8 px-2 break-words">
+          <div className="text-center text-xs text-gray-300 mt-2 px-2 break-words">
             © 2025 TrashRoute. All rights reserved.
           </div>
           {/* Privacy Policy Popup */}
