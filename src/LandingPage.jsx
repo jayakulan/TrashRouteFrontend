@@ -292,19 +292,19 @@ function LandingPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#f7f9fb] flex flex-col">
+    <div className="min-h-screen bg-[#f7f9fb] flex flex-col overflow-x-hidden w-full">
       {/* Navigation */}
       {/* Accent bar at the very top */}
-      <div className="absolute top-0 left-0 right-0 w-screen h-1 bg-[#26a360] rounded-t-2xl z-50"></div>
+      <div className="w-full h-1 bg-[#26a360] rounded-t-2xl"></div>
       <nav className="w-full bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-40 shadow-xl transition-all duration-300 relative">
-        <div className="w-full flex items-center justify-between h-20">
+        <div className="w-full flex flex-wrap items-center justify-between h-20 px-2 sm:px-4">
           {/* Logo with animation */}
-          <div className="flex items-center">
+          <div className="flex items-center min-w-0">
             <img src="/public/images/logo2.png" alt="Logo" className="h-16 w-34" />
           </div>
           
           {/* Navigation Links with enhanced animations */}
-          <div className="hidden md:flex space-x-8 text-gray-700 font-medium">
+          <div className="hidden md:flex flex-wrap space-x-4 lg:space-x-8 text-gray-700 font-medium">
             <a 
               href="#about" 
               className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10" 
@@ -320,7 +320,7 @@ function LandingPage() {
               }}
             >
               <span className="relative z-10">About</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
               <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div>
             </a>
             
@@ -339,7 +339,7 @@ function LandingPage() {
               }}
             >
               <span className="relative z-10">Services</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
               <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div>
             </a>
             
@@ -349,13 +349,13 @@ function LandingPage() {
               className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10 focus:outline-none bg-transparent"
             >
               <span className="relative z-10">Contact</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
               <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div>
             </button>
           </div>
           
           {/* Mobile menu button with animation */}
-          <div className="md:hidden">
+          <div className="md:hidden flex-shrink-0">
             <button className="relative group p-2 rounded-lg transition-all duration-300 hover:bg-[#3a5f46]/10">
               <div className="w-6 h-0.5 bg-gray-700 group-hover:bg-[#3a5f46] transition-all duration-300 mb-1.5"></div>
               <div className="w-6 h-0.5 bg-gray-700 group-hover:bg-[#3a5f46] transition-all duration-300 mb-1.5"></div>
@@ -366,70 +366,78 @@ function LandingPage() {
       </nav>
 
       {/* Hero Section - Video right after header */}
-      <section className="relative w-full overflow-hidden bg-[#f7f9fb]" style={{ height: 'calc(90vh - 64px)' }}>
-        <div className="max-w-7xl mx-auto px-4 h-full relative bg-[#f7f9fb]">
-          <video
-            src="/homevedio.mp4"
+      <section className="relative w-full overflow-hidden bg-[#f7f9fb] min-h-[60vh] sm:min-h-[70vh] md:min-h-[80vh] lg:min-h-[90vh]">
+        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 h-full relative bg-[#f7f9fb]">
+          <img
+            src="/images/homepic.png"
+            alt="Home Hero"
             className="w-full h-full object-cover object-center z-0"
-            autoPlay
-            loop
-            muted
-            playsInline
-            onError={(e) => console.error('Video error:', e)}
-            onLoadStart={() => console.log('Video loading started')}
-            onCanPlay={() => console.log('Video can play')}
-          >
-            Your browser does not support the video tag.
-          </video>
+            style={{ minHeight: '250px', maxHeight: '90vh' }}
+          />
         </div>
         
         {/* Overlay for better text readability */}
         <div className="absolute inset-0 bg-[#f7f9fb]/40 z-10"></div>
         
         {/* Content overlay */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 z-10">
-          <div className="max-w-4xl mx-auto">
-            <p className="text-[#3a5f46] text-xl md:text-2xl lg:text-3xl mb-8 font-bold leading-relaxed tracking-wide">
-              Connecting households with responsible waste processing companies for a cleaner, greener future.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              {/* Identical button style for both Sign In and Sign Up */}
-              {(() => {
-                const buttonClass = "flex items-center justify-center px-8 py-3 rounded-full font-normal text-lg bg-gradient-to-r from-[#3a5f46] to-[#26a360] text-white shadow-xl border-none hover:from-[#2e4d3a] hover:to-[#26a360] transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-[#3a5f46]/30 group";
-                const buttonFontStyle = { fontFamily: 'Montserrat, Poppins, Arial, sans-serif', letterSpacing: '0.04em' };
-                return <>
-                  <button
-                    onClick={() => { setUserType('customer'); navigate('/login'); }}
-                    className={buttonClass}
-                    style={buttonFontStyle}
-                  >
-                    <span className="transition-transform group-hover:-translate-y-1">Sign In</span>
-                  </button>
-                  <button
-                    onClick={() => { setUserType('company'); navigate('/signup'); }}
-                    className={buttonClass}
-                    style={buttonFontStyle}
-                  >
-                    <span className="transition-transform group-hover:-translate-y-1">Sign Up</span>
-                  </button>
-                </>;
-              })()}
-            </div>
-          </div>
-        </div>
-        
-        {/* Headline positioned within the video */}
-        <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-10">
-          <h1 className="text-[#3a5f46] text-4xl md:text-6xl lg:text-7xl font-extrabold drop-shadow-2xl text-center px-4">
-            Revolutionizing Waste Management
+        <div className="absolute inset-0 flex flex-col justify-center items-start text-left px-4 sm:px-12 z-10 w-full max-w-4xl">
+          {/* Optional overlay for contrast */}
+          {/* <div className="absolute inset-0 bg-white/70 backdrop-blur-sm rounded-xl z-0"></div> */}
+          <h1 className="text-[#3a5f46] text-4xl md:text-6xl lg:text-7xl font-extrabold drop-shadow-2xl text-left px-0">
+            Revolutionizing{' '}<span className="whitespace-nowrap">Waste Management</span>
           </h1>
+          <p className="text-[#3a5f46] text-base md:text-lg lg:text-xl mt-4 font-bold leading-relaxed tracking-wide text-left px-0 max-w-2xl">
+            Connecting households with responsible waste processing companies for a cleaner, greener future.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-start w-full max-w-xs sm:max-w-md mt-6">
+            {/* Identical button style for both Sign In and Sign Up */}
+            {(() => {
+              const buttonClass =
+                "flex items-center justify-center px-8 py-3 border-2 border-[#00cc66] bg-[#3a5f46] text-white font-semibold text-lg rounded-lg shadow-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-[#00ff99]/30 group"
+                + " "
+                + "hover:bg-[#00ff99] hover:text-black hover:border-[#00ff99]"
+                + " "
+                + "shadow-[0_0_10px_rgba(0,255,100,0.5)]"
+                + " "
+                + "transition-all";
+              const buttonFontStyle = { fontFamily: 'Montserrat, Poppins, Arial, sans-serif', letterSpacing: '0.04em', borderRadius: '8px' };
+              return <>
+                <button
+                  onClick={() => { setUserType('customer'); navigate('/login'); }}
+                  className={buttonClass}
+                  style={buttonFontStyle}
+                >
+                  {/* Lock icon */}
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <rect x="5" y="11" width="14" height="8" rx="4" stroke="#00ff99" fill="none" />
+                    <path d="M12 15v2" stroke="#00ff99" strokeLinecap="round" />
+                    <path d="M8 11V7a4 4 0 018 0v4" stroke="#00ff99" />
+                  </svg>
+                  <span className="transition-transform group-hover:-translate-y-1">Sign In</span>
+                </button>
+                <button
+                  onClick={() => { setUserType('company'); navigate('/signup'); }}
+                  className={buttonClass}
+                  style={buttonFontStyle}
+                >
+                  {/* User-plus icon */}
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <circle cx="9" cy="8" r="4" stroke="#00ff99" />
+                    <path d="M17 11v6M20 14h-6" stroke="#00ff99" strokeLinecap="round" />
+                    <path d="M5 20v-1a4 4 0 014-4h0a4 4 0 014 4v1" stroke="#00ff99" />
+                  </svg>
+                  <span className="transition-transform group-hover:-translate-y-1">Sign Up</span>
+                </button>
+              </>;
+            })()}
+          </div>
         </div>
         
        
       </section>
 
       {/* How It Works */}
-      <section className="max-w-7xl mx-auto mt-16 px-4">
+      <section className="w-full max-w-7xl mx-auto mt-8 sm:mt-12 md:mt-16 px-2 sm:px-4">
 
         <div className="text-center mb-12">
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-[#3a5f46] mb-4 animate-fade-in-up">
@@ -440,7 +448,7 @@ function LandingPage() {
             Discover our innovative waste management process in four simple steps
           </p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 w-full">
           {/* Feature 1: Notify Trash Availability */}
           <div className="group bg-white rounded-xl p-0 flex flex-col items-center shadow transition-transform duration-300 hover:scale-105 hover:shadow-2xl overflow-hidden hover:bg-[#3a5f46]" style={{ minHeight: '270px', height: '270px' }}>
             <div className="w-full flex-shrink-0" style={{ height: '75%' }}>
@@ -567,7 +575,7 @@ function LandingPage() {
       </section>
 
       {/* Who Can Use TrashRoute? */}
-      <section className="max-w-7xl mx-auto mt-16 px-4">
+      <section className="w-full max-w-7xl mx-auto mt-8 sm:mt-12 md:mt-16 px-2 sm:px-4">
         <div className="text-center mb-12">
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-[#3a5f46] mb-4 animate-fade-in-up">
             Who Can Use TrashRoute?
@@ -577,7 +585,7 @@ function LandingPage() {
             Our platform serves three key user groups for comprehensive waste management
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8 w-full">
           {/* Local People */}
           <div className="flex flex-col items-center bg-white/70 backdrop-blur-md rounded-3xl p-8 shadow-2xl border border-blue-100 hover:shadow-blue-200 hover:-translate-y-2 transition-all duration-300" style={{background: 'linear-gradient(135deg, #e0e7ff 60%, #f0fdfa 100%)'}}>
             <div className="text-5xl mb-4">🏡</div>
@@ -600,9 +608,9 @@ function LandingPage() {
       </section>
 
       {/* About Us */}
-      <section id="about" ref={aboutUsRef} className="mt-16">
+      <section id="about" ref={aboutUsRef} className="mt-8 sm:mt-12 md:mt-16 w-full">
 
-        <div className="text-center mb-12 max-w-7xl mx-auto px-4">
+        <div className="text-center mb-8 sm:mb-12 max-w-7xl mx-auto px-2 sm:px-4">
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-[#3a5f46] mb-4 animate-fade-in-up">
             About Us
           </h2>
@@ -612,10 +620,10 @@ function LandingPage() {
           </p>
         </div>
 
-        <div className="relative w-full max-w-7xl mx-auto mb-8">
+        <div className="relative w-full max-w-7xl mx-auto mb-4 sm:mb-8">
           <img ref={aboutUsImgRef} src="/public/images/TrashCollect.png" alt="Trash Collecting" className="w-full rounded-2xl shadow-lg" />
           <div className={`absolute left-0 bottom-0 m-6 transition-transform duration-700 ${aboutUsVisible ? 'translate-x-0 opacity-100' : '-translate-x-20 opacity-0'}`}>
-            <div className="bg-white/80 rounded-2xl shadow-lg p-6 max-w-2xl text-justify">
+            <div className="bg-white/80 rounded-2xl shadow-lg p-4 sm:p-6 max-w-2xl text-justify w-full">
               <p className="text-gray-700 text-base md:text-lg text-justify">
                 TrashRoute is an innovative web-based platform built to improve how recyclable waste is managed and reused. We connect everyday people who have recyclable materials—like plastic, paper, glass, and metal—with industries that can reuse those materials in their production.<br />
                 Instead of collecting and storing waste, our system allows local users to simply notify the platform when they have recyclable items. TrashRoute then creates an optimized and categorized route for these materials and offers it to registered industries. When an industry accepts a route, they collect the materials directly from the listed locations.<br />
@@ -628,7 +636,7 @@ function LandingPage() {
 
 
       {/* Our Services */}
-      <section id="services" className="max-w-7xl mx-auto mt-16 px-4">
+      <section id="services" className="w-full max-w-7xl mx-auto mt-8 sm:mt-12 md:mt-16 px-2 sm:px-4">
         <div className="text-center mb-12">
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-[#3a5f46] mb-4 animate-fade-in-up">
             Our Services
@@ -638,7 +646,7 @@ function LandingPage() {
             Discover the key services that make TrashRoute unique and effective
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 w-full">
           {/* Feature 1 */}
           <div className="flex flex-col items-center bg-gradient-to-br from-[#e6f4ea] to-[#cfe3d6] rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-shadow duration-300 hover:scale-105 group cursor-pointer border border-[#d0e9d6]">
             <div className="text-4xl mb-4 drop-shadow">🗂️</div>
@@ -661,7 +669,9 @@ function LandingPage() {
       </section>
 
       {/* Why Choose Us */}
-      <WhyChooseUsSlider />
+      <div className="overflow-x-auto w-full max-w-full">
+        <WhyChooseUsSlider />
+      </div>
 
       <ScrollToTopButton />
 
