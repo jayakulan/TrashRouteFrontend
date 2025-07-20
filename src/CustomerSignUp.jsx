@@ -5,6 +5,7 @@ import React from "react"
 import { Link, useNavigate } from "react-router-dom"
 import ContactModal from "./ContactForm"
 import Navbar from './components/Navbar';
+import Footer from './footer.jsx'
 
 const SignUp = () => {
   // Add custom animations
@@ -449,6 +450,8 @@ const SignUp = () => {
       {showContactModal && (
         <ContactModal onClose={() => setShowContactModal(false)} />
       )}
+      
+      <Footer />
     </div>
   )
 }

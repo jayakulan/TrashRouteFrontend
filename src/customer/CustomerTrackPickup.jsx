@@ -5,6 +5,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { Bell } from "lucide-react";
 import UserProfileDropdown from "./UserProfileDropdown";
 import CustomerNotification from "./CustomerNotification";
+import Footer from "../footer.jsx";
+import CustomerHeader from "./CustomerHeader";
 
 const wasteTypes = [
   { key: "plastics", label: "Plastics" },
@@ -99,34 +101,7 @@ export default function CustomerTrackPickup() {
   };
   return (
     <div className="min-h-screen bg-[#f7f9fb] flex flex-col">
-      {/* Accent bar at the very top */}
-      <div className="absolute top-0 left-0 right-0 w-screen h-1 bg-[#26a360] rounded-t-2xl z-50"></div>
-      <nav className="w-full bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-40 shadow-xl transition-all duration-300 relative">
-        <div className="w-full flex items-center justify-between h-20 px-4 md:px-8">
-          {/* Logo with animation */}
-          <div className="flex items-center">
-            <img src="/public/images/logo2.png" alt="Logo" className="h-16 w-34" />
-          </div>
- 
-          <div className="flex items-center space-x-8">
-            <Link to="/" className="text-gray-700 hover:text-gray-900 font-medium">Home</Link>
-            <Link to="/customer/trash-type" className="text-gray-700 hover:text-gray-900 font-medium">Request Pickup</Link>
-            <Link to="/customer/track-pickup" className="text-gray-700 hover:text-gray-900 font-medium">Track Pickup</Link>
-            <Link to="/customer/history-log" className="text-gray-700 hover:text-gray-900 font-medium">History Log</Link>
-            <CustomerNotification 
-              onViewDetails={() => navigate('/customer/track-pickup')} 
-              notification={notification}
-            />
-
-            <UserProfileDropdown />
-            <button className="ml-2 relative group p-2 rounded-lg transition-all duration-300 hover:bg-[#3a5f46]/10">
-              <div className="w-6 h-0.5 bg-gray-700 group-hover:bg-[#3a5f46] transition-all duration-300 mb-1.5"></div>
-              <div className="w-6 h-0.5 bg-gray-700 group-hover:bg-[#3a5f46] transition-all duration-300 mb-1.5"></div>
-              <div className="w-6 h-0.5 bg-gray-700 group-hover:bg-[#3a5f46] transition-all duration-300"></div>
-            </button>
-          </div>
-        </div>
-      </nav>
+      <CustomerHeader />
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center py-10">
         <div className="flex gap-4 mb-8">
@@ -159,6 +134,8 @@ export default function CustomerTrackPickup() {
           <FeedbackFormModal onClose={() => setShowFeedbackPopup(false)} />
         </div>
       )}
+      
+      <Footer />
     </div>
   );
 }

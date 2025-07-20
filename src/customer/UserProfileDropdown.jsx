@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import ReactDOM from "react-dom";
 
-const UserProfileDropdown = () => {
+const UserProfileDropdown = ({ mode = "default" }) => {
   const { user, logout, updateUser } = useAuth();
   const [showProfile, setShowProfile] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -16,10 +16,15 @@ const UserProfileDropdown = () => {
   const [editSuccess, setEditSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const profileRef = useRef(null);
+  const modalRef = useRef(null);
 
   useEffect(() => {
     function handleClickOutside(event) {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setShowProfile(false);
+      }
+      // For admin modal, also close when clicking outside the modal
+      if (mode === "admin" && modalRef.current && !modalRef.current.contains(event.target) && !profileRef.current.contains(event.target)) {
         setShowProfile(false);
       }
     }
@@ -29,7 +34,7 @@ const UserProfileDropdown = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showProfile]);
+  }, [showProfile, mode]);
 
   // Update edit data when user changes
   useEffect(() => {
@@ -92,7 +97,7 @@ const UserProfileDropdown = () => {
   };
 
   return (
-    <div>
+    <div className="relative">
       <div
         className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200 flex items-center justify-center cursor-pointer relative"
         ref={profileRef}
@@ -103,7 +108,7 @@ const UserProfileDropdown = () => {
           className="w-8 h-8 object-cover"
           onClick={() => setShowProfile((prev) => !prev)}
         />
-        {showProfile && (
+        {showProfile && mode !== "admin" && (
           <div
             className="fixed top-20 right-10 w-72 bg-white border-2 border-gray-400 rounded-lg shadow-2xl z-[9999] p-6 flex flex-col items-center"
           >
@@ -215,6 +220,33 @@ const UserProfileDropdown = () => {
                 )}
               </button>
             </form>
+          </div>
+        </div>,
+        document.body
+      )}
+      
+      {/* Admin Profile Modal */}
+      {showProfile && mode === "admin" && ReactDOM.createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div 
+            ref={modalRef}
+            className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 flex flex-col items-center"
+          >
+            <img src={user?.profileImage || "https://randomuser.me/api/portraits/women/44.jpg"} alt="User" className="w-20 h-20 rounded-full object-cover mb-4" />
+            <div className="font-semibold text-gray-900 text-xl mb-1">{user?.name || "Admin User"}</div>
+            <div className="text-sm text-gray-500 mb-6">{user?.email || "admin@email.com"}</div>
+            <button 
+              onClick={() => setShowEditModal(true)}
+              className="w-full text-center px-4 py-3 bg-[#3a5f46] text-white rounded-lg hover:bg-[#2e4d3a] transition-colors mb-3 font-medium"
+            >
+              Edit Profile
+            </button>
+            <button 
+              onClick={handleLogout}
+              className="w-full text-center px-4 py-3 bg-[#6bbf7c] text-white rounded-lg hover:bg-[#57a86a] transition-colors font-medium"
+            >
+              Logout
+            </button>
           </div>
         </div>,
         document.body

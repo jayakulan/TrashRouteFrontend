@@ -5,6 +5,7 @@ import { Recycle } from "lucide-react"
 import { useAuth } from "./context/AuthContext"
 import ContactModal from "./ContactForm"
 import Navbar from './components/Navbar';
+import Footer from './footer.jsx'
 
 const Login = () => {
   // Add custom animations
@@ -497,6 +498,8 @@ const Login = () => {
 
        {/* Contact Modal */}
        {showContactModal && <ContactModal onClose={() => setShowContactModal(false)} />}
+       
+       <Footer />
      </div>
    )
  }
