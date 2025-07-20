@@ -100,7 +100,7 @@ const FeedbackRatings = () => {
       >
         <SidebarLinks sidebarOpen={sidebarHovered} />
         <div className="p-4 border-t border-gray-200 mt-auto flex justify-center">
-          <UserProfileDropdown popupPosition="sidebar" />
+          <UserProfileDropdown mode="admin" />
         </div>
       </div>
       {/* Main Content Area */}

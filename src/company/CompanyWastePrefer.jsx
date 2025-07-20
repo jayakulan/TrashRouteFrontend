@@ -1,7 +1,8 @@
 import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { Diamond } from "lucide-react"
 import UserProfileDropdowncom from "./UserProfileDropdowncom"
+import Footer from "../footer.jsx"
 
 const WastePreferences = () => {
   const [selectedWasteType, setSelectedWasteType] = useState("")
@@ -74,9 +75,12 @@ const WastePreferences = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <nav className="w-full bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-40 shadow-xl transition-all duration-300 relative">
+      {/* Fixed Header Container */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-lg">
+        {/* Accent bar at the very top */}
+        <div className="w-full h-1 bg-[#26a360]"></div>
+        {/* Navigation */}
+        <nav className="w-full bg-white/95 backdrop-blur-md border-b border-gray-200/50">
           <div className="w-full flex items-center justify-between h-20 px-4 md:px-8">
             {/* Logo with animation */}
             <div className="flex items-center">
@@ -84,8 +88,33 @@ const WastePreferences = () => {
             </div>
             {/* Navigation - right aligned */}
             <div className="flex items-center space-x-8">
-              <Link to="/company-waste-prefer" className="text-gray-700 hover:text-gray-900 font-medium">Dashboard</Link>
-              <Link to="/company/historylogs" className="text-gray-700 hover:text-gray-900 font-medium">Historylogs</Link>
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10 focus:outline-none bg-transparent"
+              >
+                <span className="relative z-10">Home</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
+                <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div>
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/company-waste-prefer")}
+                className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10 focus:outline-none bg-transparent"
+              >
+                <span className="relative z-10">Dashboard</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
+                <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div>
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/company/historylogs")}
+                className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10 focus:outline-none bg-transparent"
+              >
+                <span className="relative z-10">Historylogs</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
+                <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div>
+              </button>
               {/* Notification Bell Icon */}
               <button className="relative focus:outline-none" aria-label="Notifications">
                 <svg className="w-6 h-6 text-gray-700 hover:text-gray-900" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -111,10 +140,10 @@ const WastePreferences = () => {
             </div>
           </div>
         </nav>
-      </header>
+      </div>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-12 max-w-6xl">
+      <main className="container mx-auto px-6 py-12 max-w-6xl pt-[85px]">
         {/* Title Section */}
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Waste Preferences</h1>
@@ -215,6 +244,8 @@ const WastePreferences = () => {
           <div className="mt-8 text-center text-red-600 font-semibold">{error}</div>
         )}
       </main>
+      
+      <Footer />
     </div>
   )
 }

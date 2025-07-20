@@ -6,6 +6,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { Recycle } from "lucide-react"
 import ContactModal from "./ContactForm"
 import Navbar from './components/Navbar';
+import Footer from './footer.jsx'
 
 const CompanySignUp = () => {
   // Add custom animations
@@ -470,6 +471,8 @@ const CompanySignUp = () => {
           )}
         </div>
       </div>
+      
+      <Footer />
     </div>
   )
 }

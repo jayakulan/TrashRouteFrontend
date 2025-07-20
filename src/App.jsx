@@ -21,7 +21,6 @@ import FeedbackRatings from './admin/Feedback.jsx'
 import PickupRequests from './admin/Requests.jsx'
 import CustomerTrackPickup from './customer/CustomerTrackPickup.jsx'
 import CustomerHistoryLog from './customer/CustomerHistoryLog.jsx'
-import Footer from './footer.jsx'
 import OtpVerification from './OtpVerification.jsx'
 import CompanyHistoryLog from './company/CompanyHistoryLog';
 
@@ -128,7 +127,6 @@ function App() {
           <Route path="/customer/history-log" element={<CustomerHistoryLog />} />
           <Route path="/otp-verification" element={<OtpVerification />} />
         </Routes>
-        <Footer />
       </GoogleMapsProvider>
     </GoogleMapsErrorBoundary>
   )

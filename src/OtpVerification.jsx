@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import Footer from './footer.jsx';
 
 const OtpVerification = () => {
   const location = useLocation();
@@ -69,6 +70,8 @@ const OtpVerification = () => {
           </button>
         </form>
       </div>
+      
+      <Footer />
     </div>
   );
 };

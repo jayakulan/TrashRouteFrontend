@@ -139,7 +139,7 @@ const AdminDashboard = () => {
       >
         <SidebarLinks sidebarOpen={sidebarHovered} />
         <div className="p-4 border-t border-gray-200 mt-auto flex justify-center">
-          <UserProfileDropdown popupPosition="sidebar" />
+          <UserProfileDropdown mode="admin" />
         </div>
       </div>
       {/* Mobile Hamburger */}
@@ -161,7 +161,7 @@ const AdminDashboard = () => {
             </button>
             <SidebarLinks sidebarOpen={true} onClick={() => setMobileMenuOpen(false)} />
             <div className="p-4 border-t border-gray-200 mt-auto flex justify-center">
-              <UserProfileDropdown popupPosition="sidebar" />
+              <UserProfileDropdown mode="admin" />
             </div>
           </div>
           <div className="flex-1" onClick={() => setMobileMenuOpen(false)} />
