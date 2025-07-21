@@ -95,7 +95,7 @@ const SignUp = () => {
       name: formData.fullName,
       email: formData.email,
       password: formData.password,
-      role: "customer",
+      role: "customer", // lowercase
       contact_number: formData.phoneNumber,
       address: formData.address,
     }
@@ -132,7 +132,7 @@ const SignUp = () => {
           password: formData.password,
           address: formData.address,
           contact_number: formData.phoneNumber,
-          role: "customer"
+          role: "customer" // lowercase
         }),
         credentials: "include",
       })

@@ -103,7 +103,7 @@ const CompanySignUp = () => {
           address: formData.address,
           contact_number: formData.phoneNumber,
           company_reg_number: formData.companyRegNumber,
-          role: "company"
+          role: "company" // lowercase
         }),
         credentials: "include",
       });
