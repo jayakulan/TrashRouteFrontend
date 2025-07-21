@@ -161,7 +161,11 @@ export default function CustomerTrackPickup() {
                 boxShadow: '0 2px 8px 0 rgba(58, 95, 70, 0.10)',
                 transition: 'background 0.2s',
               }}
-              onClick={() => setShowFeedbackPopup(true)}
+              onMouseDown={e => {
+                e.stopPropagation();
+                console.log("Give Feedback clicked");
+                setShowFeedbackPopup(true);
+              }}
               onMouseOver={e => e.currentTarget.style.background = '#24402e'}
               onMouseOut={e => e.currentTarget.style.background = '#3a5f46'}
             >
@@ -392,6 +396,7 @@ function FeedbackFormModal({ onClose, onThankYou }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // Send feedback to backend here if needed
     setSubmitted(true);
     setTimeout(() => {
       if (onThankYou) onThankYou();
@@ -430,55 +435,55 @@ function FeedbackFormModal({ onClose, onThankYou }) {
       >
         <img src="/images/close.png" alt="Close" style={{ width: 24, height: 24, display: 'block' }} />
       </button>
-      <form onSubmit={handleSubmit}>
-        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3a5f46', marginBottom: '1.2rem' }}>Feedback</div>
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="feedback-text" style={{ display: 'block', fontWeight: 500, marginBottom: 6 }}>Your Feedback</label>
-          <textarea
-            id="feedback-text"
-            value={feedback}
-            onChange={e => setFeedback(e.target.value)}
-            rows={4}
-            style={{ width: '100%', borderRadius: 8, border: '1px solid #ccc', padding: 10, resize: 'vertical' }}
-            required
-          />
-        </div>
-        <div style={{ marginBottom: '1.2rem' }}>
-          <label htmlFor="feedback-rating" style={{ display: 'block', fontWeight: 500, marginBottom: 6 }}>Rating</label>
-          <select
-            id="feedback-rating"
-            value={rating}
-            onChange={e => setRating(Number(e.target.value))}
-            style={{ width: '100%', borderRadius: 8, border: '1px solid #ccc', padding: 8 }}
+        <form onSubmit={handleSubmit}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3a5f46', marginBottom: '1.2rem' }}>Feedback</div>
+          <div style={{ marginBottom: '1rem' }}>
+            <label htmlFor="feedback-text" style={{ display: 'block', fontWeight: 500, marginBottom: 6 }}>Your Feedback</label>
+            <textarea
+              id="feedback-text"
+              value={feedback}
+              onChange={e => setFeedback(e.target.value)}
+              rows={4}
+              style={{ width: '100%', borderRadius: 8, border: '1px solid #ccc', padding: 10, resize: 'vertical' }}
+              required
+            />
+          </div>
+          <div style={{ marginBottom: '1.2rem' }}>
+            <label htmlFor="feedback-rating" style={{ display: 'block', fontWeight: 500, marginBottom: 6 }}>Rating</label>
+            <select
+              id="feedback-rating"
+              value={rating}
+              onChange={e => setRating(Number(e.target.value))}
+              style={{ width: '100%', borderRadius: 8, border: '1px solid #ccc', padding: 8 }}
+            >
+              <option value={5}>5 - Excellent</option>
+              <option value={4}>4 - Good</option>
+              <option value={3}>3 - Average</option>
+              <option value={2}>2 - Poor</option>
+              <option value={1}>1 - Very Poor</option>
+            </select>
+          </div>
+          <button
+            type="submit"
+            style={{
+              background: '#5E856D',
+              color: '#fff',
+              fontWeight: 600,
+              fontSize: '1.1rem',
+              border: 'none',
+              borderRadius: 8,
+              padding: '0.7rem 2.2rem',
+              cursor: 'pointer',
+              marginTop: 10,
+              boxShadow: '0 2px 8px 0 rgba(58, 95, 70, 0.18)',
+              transition: 'background 0.2s',
+            }}
+            onMouseOver={e => e.currentTarget.style.background = '#466a54'}
+            onMouseOut={e => e.currentTarget.style.background = '#5E856D'}
           >
-            <option value={5}>5 - Excellent</option>
-            <option value={4}>4 - Good</option>
-            <option value={3}>3 - Average</option>
-            <option value={2}>2 - Poor</option>
-            <option value={1}>1 - Very Poor</option>
-          </select>
-        </div>
-        <button
-          type="submit"
-          style={{
-            background: '#5E856D',
-            color: '#fff',
-            fontWeight: 600,
-            fontSize: '1.1rem',
-            border: 'none',
-            borderRadius: 8,
-            padding: '0.7rem 2.2rem',
-            cursor: 'pointer',
-            marginTop: 10,
-            boxShadow: '0 2px 8px 0 rgba(58, 95, 70, 0.18)',
-            transition: 'background 0.2s',
-          }}
-          onMouseOver={e => e.currentTarget.style.background = '#466a54'}
-          onMouseOut={e => e.currentTarget.style.background = '#5E856D'}
-        >
-          Submit Feedback
-        </button>
-      </form>
+            Submit Feedback
+          </button>
+        </form>
     </div>
   );
 }
