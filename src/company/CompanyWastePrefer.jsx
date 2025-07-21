@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { Diamond } from "lucide-react"
 import UserProfileDropdowncom from "./UserProfileDropdowncom"
 import Footer from "../footer.jsx"
+import { setCookie, getCookie, deleteCookie } from '../utils/cookieUtils';
 
 const WastePreferences = () => {
   const [selectedWasteType, setSelectedWasteType] = useState("")
@@ -44,16 +45,24 @@ const WastePreferences = () => {
     setError("")
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault();
+    console.log("Submitting waste preference");
     setLoading(true)
     setError("")
     setResult(null)
     try {
+      const token = getCookie("token"); // or localStorage.getItem("token")
+      console.log("JWT token:", token); // Debug: check the value
+
       const res = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/Companywasteprefer.php", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Authorization": "Bearer " + token
+        },
         body: `waste_type=${selectedWasteType}`,
-      })
+      });
       const data = await res.json()
       if (data.success) {
         navigate("/company/route-access", {
@@ -196,22 +205,24 @@ const WastePreferences = () => {
         </div>
 
         {/* Submit Button */}
-        <div className="flex justify-center">
-          <button
-            onClick={handleSubmit}
-            disabled={!selectedWasteType || loading}
-            className={`
-              px-8 py-4 rounded-full font-semibold text-lg transition-all duration-200
-              ${
-                selectedWasteType && !loading
-                  ? "bg-[#3a5f46] hover:bg-[#2e4d3a] text-white shadow-lg hover:shadow-xl"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }
-            `}
-          >
-            {loading ? "Loading..." : "Submit Waste Preferences"}
-          </button>
-        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="flex justify-center">
+            <button
+              type="submit"
+              disabled={!selectedWasteType || loading}
+              className={`
+                px-8 py-4 rounded-full font-semibold text-lg transition-all duration-200
+                ${
+                  selectedWasteType && !loading
+                    ? "bg-[#3a5f46] hover:bg-[#2e4d3a] text-white shadow-lg hover:shadow-xl"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                }
+              `}
+            >
+              {loading ? "Loading..." : "Submit Waste Preferences"}
+            </button>
+          </div>
+        </form>
 
         {/* Selection Summary */}
         {selectedWasteType && (
