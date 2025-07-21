@@ -365,14 +365,7 @@ const PinLocation = () => {
               <div className="text-gray-700 text-sm mt-2">
                 <span className="font-medium">Address:</span> {address}
               </div>
-              {/* Static map preview */}
-              {coordinates.latitude && coordinates.longitude && (
-                <img
-                  src={`https://maps.googleapis.com/maps/api/staticmap?center=${coordinates.latitude},${coordinates.longitude}&zoom=16&size=320x120&markers=color:green%7C${coordinates.latitude},${coordinates.longitude}&key=YOUR_GOOGLE_MAPS_API_KEY`}
-                  alt="Pinned Location Map"
-                  style={{ borderRadius: '0.75rem', marginTop: 8, boxShadow: '0 2px 8px #0001' }}
-                />
-              )}
+              {/* Static map preview removed as per request */}
             </div>
           </div>
           {/* Next Button - Centered below coordinates card */}
