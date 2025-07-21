@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom"
 import { Recycle, Bell, Minus, Plus, ArrowLeft } from "lucide-react"
 import MinimumWastePopup from "./MinimumWastePopup"
 import UserProfileDropdown from "./UserProfileDropdown"
-import CustomerNotification from "./CustomerNotification"
 import { setCookie, getCookie } from "../utils/cookieUtils";
 import Footer from "../footer.jsx"
 import CustomerHeader from "./CustomerHeader";
@@ -242,13 +241,6 @@ const CustomerTrashType = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8 max-w-4xl">
-        <button
-          className="flex items-center text-theme-color hover:text-theme-color-dark font-medium mb-4"
-          onClick={() => navigate(-1)}
-        >
-          <ArrowLeft className="w-5 h-5 mr-2" />
-          Back
-        </button>
         {/* Breadcrumb */}
         <div className="flex items-center space-x-2 text-sm text-gray-600 mb-8">
           <Link to="/customer/trash-type" className="text-theme-color hover:text-theme-color-dark">
@@ -355,9 +347,9 @@ const CustomerTrashType = () => {
                         max="50"
                         value={wasteTypes[wasteType.id].quantity}
                         onChange={(e) => handleSliderChange(wasteType.id, e.target.value)}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                        className="w-full h-2 rounded-lg appearance-none cursor-pointer slider"
                         style={{
-                          background: `linear-gradient(to right, #3a5f46 0%, #3a5f46 ${((wasteTypes[wasteType.id].quantity - 3) / 47) * 100}%, #e5e7eb ${((wasteTypes[wasteType.id].quantity - 3) / 47) * 100}%, #e5e7eb 100%)`,
+                          background: `linear-gradient(to right, #3a5f46 0%, #3a5f46 ${wasteTypes[wasteType.id].selected ? ((wasteTypes[wasteType.id].quantity - 3) / 47) * 100 : 0}%, #e5e7eb ${wasteTypes[wasteType.id].selected ? ((wasteTypes[wasteType.id].quantity - 3) / 47) * 100 : 0}%, #e5e7eb 100%)`,
                           opacity: wasteTypes[wasteType.id].selected ? 1 : 0.5,
                         }}
                       />
@@ -369,7 +361,7 @@ const CustomerTrashType = () => {
                         >
                           <Minus className="w-4 h-4" />
                         </button>
-                        <span className="text-lg font-semibold text-gray-900 w-8 text-center">
+                        <span className={`text-lg font-semibold w-8 text-center ${wasteTypes[wasteType.id].selected ? 'text-green-700' : 'text-gray-900'}`}>
                           {wasteTypes[wasteType.id].quantity}
                         </span>
                         <button

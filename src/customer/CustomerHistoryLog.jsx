@@ -56,25 +56,9 @@ const HistoryLog = () => {
   const navigate = useNavigate()
   const historyData = [
     {
-      date: "July 20, 2024",
-      wasteType: "Mixed Recyclables",
-      quantity: "2 bags",
-      requestDate: "July 20, 2024, 10:00 AM",
-      pickupStatus: "Completed",
-      company: "GreenCycle",
-    },
-    {
-      date: "July 19, 2024",
-      wasteType: "Organic Waste",
-      quantity: "1 bag",
-      requestDate: "July 19, 2024, 9:00 AM",
-      pickupStatus: "Scheduled",
-      company: "EcoGreen",
-    },
-    {
       date: "July 18, 2024",
       wasteType: "Plastic Bottles",
-      quantity: "3 bags",
+      quantity: "4.5 kg",
       requestDate: "July 18, 2024, 11:00 AM",
       pickupStatus: "Missed",
       company: "PlasticRecycle",
@@ -82,7 +66,7 @@ const HistoryLog = () => {
     {
       date: "July 15, 2024",
       wasteType: "Paper Waste",
-      quantity: "2 bags",
+      quantity: "3.4 kg",
       requestDate: "July 15, 2024, 10:30 AM",
       pickupStatus: "Completed",
       company: "PaperCo",
@@ -90,18 +74,18 @@ const HistoryLog = () => {
     {
       date: "July 10, 2024",
       wasteType: "Glass Bottles",
-      quantity: "1 bag",
+      quantity: "6.7 kg",
       requestDate: "July 10, 2024, 12:00 PM",
       pickupStatus: "Completed",
       company: "GlassWorks",
     },
     {
-      date: "July 7, 2024",
-      wasteType: "Mixed Recyclables",
-      quantity: "4 bags",
-      requestDate: "July 7, 2024, 8:00 AM",
+      date: "July 5, 2024",
+      wasteType: "Metal",
+      quantity: "7 kg",
+      requestDate: "July 5, 2024, 9:00 AM",
       pickupStatus: "Completed",
-      company: "TrashRoute",
+      company: "EcoGreen",
     },
   ];
 
@@ -155,7 +139,7 @@ const HistoryLog = () => {
                 <tr>
                   <th className="px-6 py-4 text-left text-sm font-bold text-green-900">Date</th>
                   <th className="px-6 py-4 text-left text-sm font-bold text-green-900">Waste Type</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-green-900">Quantity</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-green-900">Quantity (kg)</th>
                   <th className="px-6 py-4 text-left text-sm font-bold text-green-900">Request Date</th>
                   <th className="px-6 py-4 text-left text-sm font-bold text-green-900">Pickup Status</th>
                   <th className="px-6 py-4 text-left text-sm font-bold text-green-900">Company</th>

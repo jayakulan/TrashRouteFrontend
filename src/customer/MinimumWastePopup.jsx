@@ -52,28 +52,7 @@ const MinimumWastePopup = ({ isOpen, onClose, onLearnMore, onDontShowAgain, clos
           animation: 'minwaste-slidein 0.5s cubic-bezier(.4,2,.6,1)',
         }}
       >
-        <button
-          onClick={onClose}
-          aria-label="Close"
-          style={{
-            position: 'absolute',
-            top: '1rem',
-            right: '1rem',
-            backgroundColor: '#e5e7eb',
-            border: 'none',
-            borderRadius: '9999px',
-            padding: '0.4rem',
-            cursor: 'pointer',
-            transition: 'background 0.2s',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          onMouseOver={e => (e.currentTarget.style.backgroundColor = '#d1d5db')}
-          onMouseOut={e => (e.currentTarget.style.backgroundColor = '#e5e7eb')}
-        >
-          <img src={icon} alt="Close" style={{ width: 20, height: 20, display: 'block' }} />
-        </button>
+        {/* Removed close button here */}
 
         <h2
           style={{
