@@ -76,12 +76,23 @@ const CompanySignUp = () => {
   const [showContactModal, setShowContactModal] = useState(false)
   const CORRECT_OTP = "123456" // Simulated correct OTP
   const navigate = useNavigate()
+  const [phoneError, setPhoneError] = useState("");
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
-    })
+    });
+    if (e.target.name === "phoneNumber") {
+      const value = e.target.value;
+      if (!/^\d{0,10}$/.test(value)) {
+        setPhoneError("Phone number must be numeric and up to 10 digits");
+      } else if (value.length !== 10 && value.length > 0) {
+        setPhoneError("Phone number must be exactly 10 digits");
+      } else {
+        setPhoneError("");
+      }
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -90,6 +101,10 @@ const CompanySignUp = () => {
     setSuccess("");
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match.");
+      return;
+    }
+    if (formData.phoneNumber.length !== 10 || !/^\d{10}$/.test(formData.phoneNumber)) {
+      setPhoneError("Phone number must be exactly 10 digits");
       return;
     }
     try {
@@ -357,8 +372,11 @@ const CompanySignUp = () => {
                   placeholder="Enter your phone number"
                   value={formData.phoneNumber}
                   onChange={handleChange}
+                  maxLength={10}
+                  pattern="\d{10}"
                 />
               </div>
+              {phoneError && <div className="text-red-600 text-xs mt-1">{phoneError}</div>}
             </div>
 
             {/* Company Registration Number Field */}
