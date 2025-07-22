@@ -76,12 +76,23 @@ const CompanySignUp = () => {
   const [showContactModal, setShowContactModal] = useState(false)
   const CORRECT_OTP = "123456" // Simulated correct OTP
   const navigate = useNavigate()
+  const [phoneError, setPhoneError] = useState("");
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
-    })
+    });
+    if (e.target.name === "phoneNumber") {
+      const value = e.target.value;
+      if (!/^\d{0,10}$/.test(value)) {
+        setPhoneError("Phone number must be numeric and up to 10 digits");
+      } else if (value.length !== 10 && value.length > 0) {
+        setPhoneError("Phone number must be exactly 10 digits");
+      } else {
+        setPhoneError("");
+      }
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -90,6 +101,10 @@ const CompanySignUp = () => {
     setSuccess("");
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match.");
+      return;
+    }
+    if (formData.phoneNumber.length !== 10 || !/^\d{10}$/.test(formData.phoneNumber)) {
+      setPhoneError("Phone number must be exactly 10 digits");
       return;
     }
     try {
@@ -153,7 +168,7 @@ const CompanySignUp = () => {
 
       {/* Main Content */}
       <div className="flex items-center justify-center min-h-[calc(100vh-80px)] px-6 py-8">
-        <div className="w-full max-w-md animate-fade-in-up">
+        <div className="w-full max-w-md relative animate-fade-in-up">
           <div className="text-center mb-6">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#3a5f46] to-[#2e4d3a] rounded-full mb-2 shadow-lg">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -357,8 +372,11 @@ const CompanySignUp = () => {
                   placeholder="Enter your phone number"
                   value={formData.phoneNumber}
                   onChange={handleChange}
+                  maxLength={10}
+                  pattern="\d{10}"
                 />
               </div>
+              {phoneError && <div className="text-red-600 text-xs mt-1">{phoneError}</div>}
             </div>
 
             {/* Company Registration Number Field */}
@@ -406,71 +424,71 @@ const CompanySignUp = () => {
               </Link>
             </div>
           </form>
-
-          {/* OTP Modal */}
-          {showOtpModal && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50 animate-fade-in">
-              <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm relative animate-scale-in">
-                <div className="text-center mb-6">
-                  <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-[#3a5f46] to-[#2e4d3a] rounded-full mb-4">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">OTP Verification</h2>
-                  <p className="text-gray-600">Enter the 6-digit code sent to your email</p>
-                </div>
-                <form onSubmit={handleOtpVerify} className="space-y-6">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={otp}
-                      onChange={e => { setOtp(e.target.value); setOtpError(""); }}
-                      maxLength={6}
-                      className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] focus:bg-white transition-all duration-300 text-center tracking-widest text-2xl font-bold"
-                      placeholder="000000"
-                      autoFocus
-                    />
-                  </div>
-                  {otpError && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-center animate-shake">
-                      <div className="flex items-center justify-center space-x-2">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span className="font-medium">{otpError}</span>
-                      </div>
-                    </div>
-                  )}
-                  <button
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] hover:from-[#2e4d3a] hover:to-[#1a3d2a] text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:ring-offset-2 transform hover:scale-105 shadow-lg"
-                  >
-                    <div className="flex items-center justify-center space-x-2">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span>Verify OTP</span>
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105"
-                    onClick={() => setShowOtpModal(false)}
-                  >
-                    Cancel
-                  </button>
-                </form>
-              </div>
-            </div>
-          )}
-
-          {/* Contact Modal */}
-          {showContactModal && (
-            <ContactModal onClose={() => setShowContactModal(false)} />
-          )}
         </div>
       </div>
+
+      {/* OTP Modal - covers the entire page */}
+      {showOtpModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm relative animate-scale-in">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-[#3a5f46] to-[#2e4d3a] rounded-full mb-4">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">OTP Verification</h2>
+              <p className="text-gray-600">Enter the 6-digit code sent to your email</p>
+            </div>
+            <form onSubmit={handleOtpVerify} className="space-y-6">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={otp}
+                  onChange={e => { setOtp(e.target.value); setOtpError(""); }}
+                  maxLength={6}
+                  className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] focus:bg-white transition-all duration-300 text-center tracking-widest text-2xl font-bold"
+                  placeholder="000000"
+                  autoFocus
+                />
+              </div>
+              {otpError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-center animate-shake">
+                  <div className="flex items-center justify-center space-x-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="font-medium">{otpError}</span>
+                  </div>
+                </div>
+              )}
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] hover:from-[#2e4d3a] hover:to-[#1a3d2a] text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:ring-offset-2 transform hover:scale-105 shadow-lg"
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Verify OTP</span>
+                </div>
+              </button>
+              <button
+                type="button"
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105"
+                onClick={() => setShowOtpModal(false)}
+              >
+                Cancel
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Contact Modal */}
+      {showContactModal && (
+        <ContactModal onClose={() => setShowContactModal(false)} />
+      )}
       
       <Footer />
     </div>
