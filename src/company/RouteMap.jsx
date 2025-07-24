@@ -765,22 +765,25 @@ const RouteMap = () => {
                   />
                 </div>
               )}
-              <div>
-                <label className="block mb-1 font-semibold text-[#3a5f46]">Rating</label>
-                <div className="flex gap-2">
-                  {[1,2,3,4,5].map(n => (
-                    <button
-                      type="button"
-                      key={n}
-                      className={`w-10 h-10 rounded-full flex items-center justify-center border text-lg font-bold transition-colors focus:outline-none ${feedback.rating === n ? 'bg-[#3a5f46] text-white border-[#3a5f46] scale-110 shadow' : 'bg-gray-100 text-[#3a5f46] border-gray-200 hover:bg-[#e6f4ea]'}`}
-                      onClick={() => setFeedback(f => ({ ...f, rating: n }))}
-                      aria-label={`Rate ${n}`}
-                    >
-                      {n}
-                    </button>
-                  ))}
+              {/* Rating Field - Only show if pickup is completed */}
+              {feedback.pickup_completed && (
+                <div>
+                  <label className="block mb-1 font-semibold text-[#3a5f46]">Rating</label>
+                  <div className="flex gap-2">
+                    {[1,2,3,4,5].map(n => (
+                      <button
+                        type="button"
+                        key={n}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center border text-lg font-bold transition-colors focus:outline-none ${feedback.rating === n ? 'bg-[#3a5f46] text-white border-[#3a5f46] scale-110 shadow' : 'bg-gray-100 text-[#3a5f46] border-gray-200 hover:bg-[#e6f4ea]'}`}
+                        onClick={() => setFeedback(f => ({ ...f, rating: n }))}
+                        aria-label={`Rate ${n}`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
               <div>
                 <label className="block mb-1 font-semibold text-[#3a5f46]">Comment</label>
                 <textarea

@@ -607,8 +607,6 @@ const RouteActivation = () => {
                   <option value="">Select Card Type</option>
                   <option value="Visa">Visa</option>
                   <option value="MasterCard">MasterCard</option>
-                  <option value="Amex">Amex</option>
-                  <option value="Rupay">Rupay</option>
                 </select>
               </div>
               <div>

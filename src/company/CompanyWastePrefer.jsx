@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Diamond } from "lucide-react"
 import UserProfileDropdowncom from "./UserProfileDropdowncom"
@@ -10,7 +10,12 @@ const WastePreferences = () => {
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [showPopup, setShowPopup] = useState(true)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    setShowPopup(true)
+  }, [])
 
   const wasteTypes = [
     {
@@ -84,6 +89,20 @@ const WastePreferences = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Custom Info Popup */}
+      {showPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center relative border-t-8 border-[#26a360] animate-fade-in">
+            <p className="text-gray-700 mb-6 font-bold text-xl">You can select a waste type at a time.</p>
+            <button
+              className="mt-2 px-6 py-2 bg-[#26a360] hover:bg-[#218a4d] text-white font-semibold rounded-full shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#26a360]"
+              onClick={() => setShowPopup(false)}
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
       {/* Fixed Header Container */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-lg">
         {/* Accent bar at the very top */}
