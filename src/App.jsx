@@ -18,11 +18,13 @@ import ManageCustomers from './admin/ManageCustomers.jsx'
 import ManageCompanies from './admin/ManageCompanies.jsx'
 import ReportsAnalytics from './admin/Reports.jsx'
 import FeedbackRatings from './admin/Feedback.jsx'
+import ContactUsManagement from './admin/ContactUsManagement.jsx'
 import PickupRequests from './admin/Requests.jsx'
 import CustomerTrackPickup from './customer/CustomerTrackPickup.jsx'
 import CustomerHistoryLog from './customer/CustomerHistoryLog.jsx'
 import OtpVerification from './OtpVerification.jsx'
 import CompanyHistoryLog from './company/CompanyHistoryLog';
+import NotificationManagement from './admin/NotificationManagement.jsx';
 
 function ScrollToTopButton() {
   const [visible, setVisible] = useState(false);
@@ -122,7 +124,9 @@ function App() {
           <Route path="/admin/companies" element={<ManageCompanies />} />
           <Route path="/admin/requests" element={<PickupRequests />} />
           <Route path="/admin/feedback" element={<FeedbackRatings />} />
+          <Route path="/admin/contactus" element={<ContactUsManagement />} />
           <Route path="/admin/reports" element={<ReportsAnalytics />} />
+          <Route path="/admin/notifications" element={<NotificationManagement />} />
           <Route path="/customer/track-pickup" element={<CustomerTrackPickup />} />
           <Route path="/customer/history-log" element={<CustomerHistoryLog />} />
           <Route path="/otp-verification" element={<OtpVerification />} />
