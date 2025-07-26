@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Diamond, Users, Building, Truck, MessageSquare, BarChart3, Bell } from "lucide-react";
+import { Diamond, Users, Building, Truck, MessageSquare, BarChart3, Bell, Map, MapPin } from "lucide-react";
 import { Mail } from "lucide-react";
 
 const links = [
@@ -10,6 +10,8 @@ const links = [
   { to: "/admin/feedback", icon: <MessageSquare />, label: "Feedback" },
   { to: "/admin/notifications", icon: <Bell />, label: "Notifications" },
   { to: "/admin/contactus", icon: <Mail />, label: "Contact Us" },
+  { to: "/admin/routes", icon: <Map />, label: "Routes" },
+  { to: "/admin/route-mapping", icon: <MapPin />, label: "Route Mapping" },
   { to: "/admin/reports", icon: <BarChart3 />, label: "Reports" },
 ];
 
