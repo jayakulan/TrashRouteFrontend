@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom'
 import { GoogleMapsProvider } from './components/GoogleMapsProvider'
 import GoogleMapsErrorBoundary from './components/GoogleMapsErrorBoundary'
+import ProtectedRoute from './components/ProtectedRoute'
+import URLProtection from './components/URLProtection'
 import Login from './Login.jsx'
 import LandingPage from './LandingPage.jsx'
 
@@ -129,8 +131,6 @@ function App() {
           <Route path="/admin/contactus" element={<ContactUsManagement />} />
           <Route path="/admin/reports" element={<ReportsAnalytics />} />
           <Route path="/admin/notifications" element={<NotificationManagement />} />
-          <Route path="/admin/routes" element={<RoutesManagement />} />
-          <Route path="/admin/route-mapping" element={<RouteMappingManagement />} />
           <Route path="/customer/track-pickup" element={<CustomerTrackPickup />} />
           <Route path="/customer/history-log" element={<CustomerHistoryLog />} />
           <Route path="/otp-verification" element={<OtpVerification />} />
