@@ -20,11 +20,13 @@ import ManageCustomers from './admin/ManageCustomers.jsx'
 import ManageCompanies from './admin/ManageCompanies.jsx'
 import ReportsAnalytics from './admin/Reports.jsx'
 import FeedbackRatings from './admin/Feedback.jsx'
+import ContactUsManagement from './admin/ContactUsManagement.jsx'
 import PickupRequests from './admin/Requests.jsx'
 import CustomerTrackPickup from './customer/CustomerTrackPickup.jsx'
 import CustomerHistoryLog from './customer/CustomerHistoryLog.jsx'
 import OtpVerification from './OtpVerification.jsx'
 import CompanyHistoryLog from './company/CompanyHistoryLog';
+import NotificationManagement from './admin/NotificationManagement.jsx';
 
 function ScrollToTopButton() {
   const [visible, setVisible] = useState(false);
@@ -112,6 +114,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<CustomerSignUp />} />
           <Route path="/company-signup" element={<CompanySignUp />} />
+
           
           {/* Customer Protected Routes */}
           <Route path="/customer/trash-type" element={
@@ -225,6 +228,7 @@ function App() {
           } />
           
           {/* OTP Verification (no role restriction) */}
+
           <Route path="/otp-verification" element={<OtpVerification />} />
         </Routes>
       </GoogleMapsProvider>
