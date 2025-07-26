@@ -76,9 +76,20 @@ const RouteMap = () => {
     if (!company_id || !route_id) return;
     setLoadingCustomers(true);
     setCustomersError("");
+    
+    const token = getCookie("token");
+    if (!token) {
+      setCustomersError("Authentication token not found. Please log in again.");
+      setLoadingCustomers(false);
+      return;
+    }
+    
     fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/Routemap.php", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: { 
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": "Bearer " + token
+      },
       body: `company_id=${company_id}&route_id=${route_id}`,
     })
       .then(res => res.json())
