@@ -27,6 +27,8 @@ import CustomerHistoryLog from './customer/CustomerHistoryLog.jsx'
 import OtpVerification from './OtpVerification.jsx'
 import CompanyHistoryLog from './company/CompanyHistoryLog';
 import NotificationManagement from './admin/NotificationManagement.jsx';
+import RoutesManagement from './admin/RoutesManagement.jsx';
+import RouteMappingManagement from './admin/RouteMappingManagement.jsx';
 
 function ScrollToTopButton() {
   const [visible, setVisible] = useState(false);
@@ -114,6 +116,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<CustomerSignUp />} />
           <Route path="/company-signup" element={<CompanySignUp />} />
+
 
           
           {/* Customer Protected Routes */}
@@ -242,6 +245,7 @@ function App() {
           } />
           
           {/* OTP Verification (no role restriction) */}
+
 
           <Route path="/otp-verification" element={<OtpVerification />} />
         </Routes>
