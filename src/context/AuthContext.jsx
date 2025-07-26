@@ -70,15 +70,56 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      // Call backend logout endpoint to clear server-side sessions
+      const token = getCookie('token');
+      if (token) {
+        await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/auth/logout.php", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          }
+        });
+      }
+    } catch (error) {
+      console.log("Backend logout failed, continuing with frontend cleanup");
+    }
+    
+    // Clear all cookies
     deleteCookie('token');
     deleteCookie('user');
     deleteCookie('company_id');
     deleteCookie('company_profile');
     deleteCookie('customer_id');
     deleteCookie('customer_profile');
+    
+    // Clear user state
     setUser(null);
-    navigate('/');
+    
+    // Clear browser cache and storage
+    if (typeof window !== 'undefined') {
+      // Clear localStorage
+      localStorage.clear();
+      
+      // Clear sessionStorage
+      sessionStorage.clear();
+      
+      // Clear browser cache for the domain
+      if ('caches' in window) {
+        caches.keys().then(names => {
+          names.forEach(name => {
+            caches.delete(name);
+          });
+        });
+      }
+      
+      // Force reload to clear any cached pages
+      window.location.href = '/';
+    } else {
+      navigate('/');
+    }
   };
 
   const updateUser = (updatedUserData) => {
