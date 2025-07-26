@@ -226,6 +226,20 @@ function App() {
               </ProtectedRoute>
             </URLProtection>
           } />
+          <Route path="/admin/contact-us" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="admin">
+                <ContactUsManagement />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
+          <Route path="/admin/notifications" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="admin">
+                <NotificationManagement />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
           
           {/* OTP Verification (no role restriction) */}
 
