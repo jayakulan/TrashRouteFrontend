@@ -5,7 +5,7 @@ import { Link } from "react-router-dom"
 import { Search, Bell, Diamond } from "lucide-react"
 import SidebarLinks from "./SidebarLinks";
 import Footer from "../footer";
-import UserProfileDropdown from "../customer/UserProfileDropdown";
+import AdminProfileDropdown from "./AdminProfileDropdown";
 
 const RoutesManagement = () => {
   const [searchQuery, setSearchQuery] = useState("")
@@ -147,7 +147,7 @@ const RoutesManagement = () => {
       >
         <SidebarLinks sidebarOpen={sidebarHovered} />
         <div className="p-4 border-t border-gray-200 mt-auto flex justify-center">
-          <UserProfileDropdown mode="admin" />
+          <AdminProfileDropdown />
         </div>
       </div>
       {/* Main Content Area */}

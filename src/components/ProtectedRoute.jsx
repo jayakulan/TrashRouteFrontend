@@ -13,6 +13,86 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
 
   useEffect(() => {
     const checkAuth = () => {
+      // Check if this is an admin route
+      if (requiredRole === 'admin') {
+        checkAdminAuth();
+      } else {
+        checkRegularAuth();
+      }
+    };
+
+    const checkAdminAuth = () => {
+      // Check for admin authentication in cookies
+      const token = getCookie('token');
+      const user = getCookie('user');
+
+      // If no authentication cookies, redirect to login
+      if (!token || !user) {
+        
+        // Redirect to login with return URL
+        navigate('/login', { 
+          state: { 
+            from: location.pathname,
+            message: 'Please log in as admin to access this page'
+          }
+        });
+        return;
+      }
+
+      // Verify admin token with backend
+      const verifyAdminToken = async () => {
+        try {
+          const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/auth/check_session.php', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            credentials: 'include'
+          });
+          
+          const result = await response.json();
+          
+          if (!result.success) {
+            // Token is invalid, redirect to login
+            navigate('/login', { 
+              state: { 
+                from: location.pathname,
+                message: 'Admin session expired. Please log in again.'
+              }
+            });
+            return;
+          }
+
+          // Check if user is actually an admin
+          const userData = JSON.parse(user);
+          if (userData.role !== 'admin') {
+            
+            navigate('/login', { 
+              state: { 
+                from: location.pathname,
+                message: 'Access denied. Admin role required.'
+              }
+            });
+            return;
+          }
+
+          setIsValidAccess(true);
+          setIsChecking(false);
+        } catch (error) {
+          navigate('/login', { 
+            state: { 
+              from: location.pathname,
+              message: 'Admin authentication failed. Please log in again.'
+            }
+          });
+        }
+      };
+
+      verifyAdminToken();
+    };
+
+    const checkRegularAuth = () => {
       const token = getCookie('token');
       const storedUser = getCookie('user');
 
@@ -118,7 +198,9 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white p-8 rounded-lg shadow-md">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3a5f46] mx-auto"></div>
-          <p className="text-center mt-4 text-gray-600">Verifying access...</p>
+          <p className="text-center mt-4 text-gray-600">
+            {requiredRole === 'admin' ? 'Verifying admin access...' : 'Verifying access...'}
+          </p>
         </div>
       </div>
     );
