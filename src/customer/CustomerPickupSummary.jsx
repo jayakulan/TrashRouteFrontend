@@ -16,6 +16,10 @@ const ConfirmPickup = () => {
     wasteTypes: "Loading...",
     approximateTotalWeight: "Loading...",
     pickupLocation: "Loading...",
+    coordinates: {
+      latitude: "Loading...",
+      longitude: "Loading..."
+    }
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -79,6 +83,10 @@ const ConfirmPickup = () => {
             wasteTypes: Array.isArray(wasteTypes) ? wasteTypes.join(', ') : wasteTypes,
             approximateTotalWeight: data.data.approximate_total_weight,
             pickupLocation: data.data.pickup_location,
+            coordinates: data.data.coordinates || {
+              latitude: "N/A",
+              longitude: "N/A"
+            }
           });
           
           // If OTP list exists, set it
@@ -211,10 +219,15 @@ const ConfirmPickup = () => {
               </div>
 
               {/* Pickup Location */}
-              <div className="px-6 py-6 flex justify-between items-center">
+              <div className="px-6 py-6 flex justify-between items-start">
                 <div className="text-sm font-medium text-theme-color">Pickup Location</div>
-                <div className="text-gray-900 font-medium">{pickupSummary.pickupLocation}</div>
+                <div className="text-gray-900 font-medium text-right">
+                  <div className="mb-2">{pickupSummary.pickupLocation}</div>
+                  <div className="text-xs text-gray-500">
+                    Lat: {pickupSummary.coordinates.latitude}, Long: {pickupSummary.coordinates.longitude}
+                  </div>
                 </div>
+              </div>
 
                 {/* OTP Display (if scheduled) */}
                 {otpList.length > 0 && (
@@ -354,6 +367,15 @@ const ConfirmPickup = () => {
             )}
             
             <div style={{ fontSize: '0.95rem', color: '#333', marginBottom: '0.7rem' }}>
+              <div style={{ marginBottom: '0.5rem', fontWeight: 600, color: '#3a5f46' }}>
+                Pickup Location:
+              </div>
+              <div style={{ fontSize: '0.9rem', marginBottom: '0.3rem' }}>
+                {pickupSummary.pickupLocation}
+              </div>
+              <div style={{ fontSize: '0.8rem', color: '#666', marginBottom: '0.7rem' }}>
+                Coordinates: {pickupSummary.coordinates.latitude}, {pickupSummary.coordinates.longitude}
+              </div>
               Please provide these OTPs to the pickup company when they arrive.<br/>
               Thank you for choosing TrashRoute!
             </div>

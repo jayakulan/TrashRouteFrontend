@@ -7,6 +7,7 @@ import { Recycle } from "lucide-react"
 import ContactModal from "./ContactForm"
 import Navbar from './components/Navbar';
 import Footer from './footer.jsx'
+import CompanyValidator from './utils/companyValidation.js'
 
 const CompanySignUp = () => {
   // Add custom animations
@@ -68,47 +69,57 @@ const CompanySignUp = () => {
     phoneNumber: "",
     companyRegNumber: "",
   })
-  const [error, setError] = useState("")
+  const [errors, setErrors] = useState({})
   const [success, setSuccess] = useState("")
   const [showOtpModal, setShowOtpModal] = useState(false)
   const [otp, setOtp] = useState("")
   const [otpError, setOtpError] = useState("")
   const [showContactModal, setShowContactModal] = useState(false)
-  const CORRECT_OTP = "123456" // Simulated correct OTP
   const navigate = useNavigate()
-  const [phoneError, setPhoneError] = useState("");
+  const [passwordStrength, setPasswordStrength] = useState({ strength: 'weak', color: 'text-red-500' })
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
-    if (e.target.name === "phoneNumber") {
-      const value = e.target.value;
-      if (!/^\d{0,10}$/.test(value)) {
-        setPhoneError("Phone number must be numeric and up to 10 digits");
-      } else if (value.length !== 10 && value.length > 0) {
-        setPhoneError("Phone number must be exactly 10 digits");
-      } else {
-        setPhoneError("");
-      }
+    
+    // Clear success message
+    setSuccess("");
+    
+    // Validate field in real-time
+    const fieldError = CompanyValidator.getFieldError(name, value, formData);
+    setErrors(prev => ({
+      ...prev,
+      [name]: fieldError
+    }));
+    
+    // Update password strength
+    if (name === 'password') {
+      const strengthResult = CompanyValidator.validatePasswordStrength(value);
+      setPasswordStrength({
+        strength: strengthResult.strength,
+        color: CompanyValidator.getPasswordStrengthColor(strengthResult.strength)
+      });
     }
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    
+    // Validate entire form
+    const validation = CompanyValidator.validateForm(formData);
+    if (!validation.isValid) {
+      setErrors(validation.errors);
+      return;
+    }
+    
+    setErrors({});
     setSuccess("");
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-    if (formData.phoneNumber.length !== 10 || !/^\d{10}$/.test(formData.phoneNumber)) {
-      setPhoneError("Phone number must be exactly 10 digits");
-      return;
-    }
+    
     try {
-      const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/request_otp_company.php", {
+      const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/request_otp_company_validated.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -127,10 +138,15 @@ const CompanySignUp = () => {
         setSuccess("OTP sent! Please enter the OTP sent to your email.");
         setShowOtpModal(true);
       } else {
-        setError(result.message || "Failed to send OTP");
+        // Handle validation errors from backend
+        if (result.errors) {
+          setErrors(result.errors);
+        } else {
+          setErrors({ general: result.message || "Failed to send OTP" });
+        }
       }
     } catch (err) {
-      setError("Server error");
+      setErrors({ general: "Server error" });
     }
   };
 
@@ -208,13 +224,13 @@ const CompanySignUp = () => {
             </button>
           </div>
 
-          {error && (
+          {errors.general && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-center mb-4 animate-shake">
               <div className="flex items-center justify-center space-x-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span className="font-medium">{error}</span>
+                <span className="font-medium">{errors.general}</span>
               </div>
             </div>
           )}
@@ -247,12 +263,19 @@ const CompanySignUp = () => {
                   name="companyName"
                   type="text"
                   required
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] focus:bg-white transition-all duration-300"
+                  className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:bg-white transition-all duration-300 ${
+                    errors.companyName 
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                      : 'border-gray-200 focus:ring-[#3a5f46] focus:border-[#3a5f46]'
+                  }`}
                   placeholder="Enter your company name"
                   value={formData.companyName}
                   onChange={handleChange}
                 />
               </div>
+              {errors.companyName && (
+                <p className="text-red-600 text-xs mt-1">{errors.companyName}</p>
+              )}
             </div>
 
             {/* Email Field */}
@@ -271,12 +294,19 @@ const CompanySignUp = () => {
                   name="email"
                   type="email"
                   required
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] focus:bg-white transition-all duration-300"
+                  className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:bg-white transition-all duration-300 ${
+                    errors.email 
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                      : 'border-gray-200 focus:ring-[#3a5f46] focus:border-[#3a5f46]'
+                  }`}
                   placeholder="Enter your email address"
                   value={formData.email}
                   onChange={handleChange}
                 />
               </div>
+              {errors.email && (
+                <p className="text-red-600 text-xs mt-1">{errors.email}</p>
+              )}
             </div>
 
             {/* Password Field */}
@@ -295,12 +325,48 @@ const CompanySignUp = () => {
                   name="password"
                   type="password"
                   required
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] focus:bg-white transition-all duration-300"
+                  className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:bg-white transition-all duration-300 ${
+                    errors.password 
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                      : 'border-gray-200 focus:ring-[#3a5f46] focus:border-[#3a5f46]'
+                  }`}
                   placeholder="Create a strong password"
                   value={formData.password}
                   onChange={handleChange}
                 />
               </div>
+              {formData.password && (
+                <div className="mt-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs text-gray-600">Password strength:</span>
+                    <span className={`text-xs font-medium ${passwordStrength.color}`}>
+                      {CompanyValidator.getPasswordStrengthText(passwordStrength.strength)}
+                    </span>
+                  </div>
+                  <div className="mt-1 flex space-x-1">
+                    {[1, 2, 3, 4, 5].map((level) => {
+                      const strengthLevel = passwordStrength.strength === 'weak' ? 1 : 
+                                         passwordStrength.strength === 'medium' ? 2 :
+                                         passwordStrength.strength === 'strong' ? 3 :
+                                         passwordStrength.strength === 'very-strong' ? 4 : 0;
+                      
+                      const barColor = level <= strengthLevel 
+                        ? passwordStrength.color.replace('text-', 'bg-')
+                        : 'bg-gray-200';
+                      
+                      return (
+                        <div
+                          key={level}
+                          className={`h-1 flex-1 rounded-full ${barColor}`}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              {errors.password && (
+                <p className="text-red-600 text-xs mt-1">{errors.password}</p>
+              )}
             </div>
 
             {/* Confirm Password Field */}
@@ -319,12 +385,19 @@ const CompanySignUp = () => {
                   name="confirmPassword"
                   type="password"
                   required
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] focus:bg-white transition-all duration-300"
+                  className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:bg-white transition-all duration-300 ${
+                    errors.confirmPassword 
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                      : 'border-gray-200 focus:ring-[#3a5f46] focus:border-[#3a5f46]'
+                  }`}
                   placeholder="Confirm your password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
                 />
               </div>
+              {errors.confirmPassword && (
+                <p className="text-red-600 text-xs mt-1">{errors.confirmPassword}</p>
+              )}
             </div>
 
             {/* Address Field */}
@@ -344,12 +417,19 @@ const CompanySignUp = () => {
                   name="address"
                   type="text"
                   required
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] focus:bg-white transition-all duration-300"
+                  className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:bg-white transition-all duration-300 ${
+                    errors.address 
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                      : 'border-gray-200 focus:ring-[#3a5f46] focus:border-[#3a5f46]'
+                  }`}
                   placeholder="Enter your company address"
                   value={formData.address}
                   onChange={handleChange}
                 />
               </div>
+              {errors.address && (
+                <p className="text-red-600 text-xs mt-1">{errors.address}</p>
+              )}
             </div>
 
             {/* Phone Number Field */}
@@ -368,7 +448,11 @@ const CompanySignUp = () => {
                   name="phoneNumber"
                   type="tel"
                   required
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] focus:bg-white transition-all duration-300"
+                  className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:bg-white transition-all duration-300 ${
+                    errors.phoneNumber 
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                      : 'border-gray-200 focus:ring-[#3a5f46] focus:border-[#3a5f46]'
+                  }`}
                   placeholder="Enter your phone number"
                   value={formData.phoneNumber}
                   onChange={handleChange}
@@ -376,7 +460,9 @@ const CompanySignUp = () => {
                   pattern="\d{10}"
                 />
               </div>
-              {phoneError && <div className="text-red-600 text-xs mt-1">{phoneError}</div>}
+              {errors.phoneNumber && (
+                <p className="text-red-600 text-xs mt-1">{errors.phoneNumber}</p>
+              )}
             </div>
 
             {/* Company Registration Number Field */}
@@ -395,12 +481,19 @@ const CompanySignUp = () => {
                   name="companyRegNumber"
                   type="text"
                   required
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] focus:bg-white transition-all duration-300"
+                  className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:bg-white transition-all duration-300 ${
+                    errors.companyRegNumber 
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                      : 'border-gray-200 focus:ring-[#3a5f46] focus:border-[#3a5f46]'
+                  }`}
                   placeholder="Enter your company registration number"
                   value={formData.companyRegNumber}
                   onChange={handleChange}
                 />
               </div>
+              {errors.companyRegNumber && (
+                <p className="text-red-600 text-xs mt-1">{errors.companyRegNumber}</p>
+              )}
             </div>
 
             {/* Register Button */}
