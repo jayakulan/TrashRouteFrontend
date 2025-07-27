@@ -25,7 +25,19 @@ const ManageCustomers = () => {
     const fetchCustomers = async () => {
       try {
         setLoading(true)
-        const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/managecustomers.php')
+        const token = localStorage.getItem('adminToken');
+        const headers = {
+          'Content-Type': 'application/json'
+        };
+        
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/managecustomers.php', {
+          headers,
+          credentials: 'include'
+        })
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
@@ -85,14 +97,22 @@ const ManageCustomers = () => {
     try {
       setDeletingCustomer(customerId);
       
+      const token = localStorage.getItem('adminToken');
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(`http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/deleteusers.php?action=delete`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers,
         body: JSON.stringify({
           customerId: customerId
-        })
+        }),
+        credentials: 'include'
       });
 
       if (!response.ok) {
