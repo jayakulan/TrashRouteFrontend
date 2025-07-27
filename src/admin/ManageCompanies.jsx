@@ -140,8 +140,8 @@ const ManageCompanies = () => {
         </div>
       </div>
       {/* Main Content Area */}
-      <div className={`flex-1 min-w-0 ml-20 transition-all duration-300 ${sidebarHovered ? 'lg:ml-64' : 'lg:ml-20'}`}>
-        <main>
+      <div className={`flex-1 min-w-0 ml-0 sm:ml-20 transition-all duration-300 ${sidebarHovered ? 'lg:ml-64' : 'lg:ml-20'}`}>
+        <main className="p-4 sm:p-6 md:p-8">
           {/* Page Header */}
           <div className="mb-4 sm:mb-6">
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#3a5f46] mb-2">Manage Companies</h1>
