@@ -47,6 +47,8 @@ export const AuthProvider = ({ children }) => {
           setCookieObject('customer_profile', profile, 7);
         }
 
+
+
         // Navigate based on role
         switch (userData.role) {
           case "admin":

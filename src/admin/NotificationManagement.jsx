@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import { Search, Bell } from "lucide-react"
 import SidebarLinks from "./SidebarLinks";
-import UserProfileDropdown from "../customer/UserProfileDropdown";
+import AdminProfileDropdown from "./AdminProfileDropdown";
 import Footer from "../footer";
 import { Menu, X } from "lucide-react";
 
@@ -91,7 +91,7 @@ const NotificationsManagement = () => {
       >
         <SidebarLinks sidebarOpen={sidebarHovered} />
         <div className="p-4 border-t border-gray-200 mt-auto flex justify-center">
-          <UserProfileDropdown mode="admin" />
+          <AdminProfileDropdown />
         </div>
       </div>
       {/* Mobile Hamburger */}
@@ -113,7 +113,7 @@ const NotificationsManagement = () => {
             </button>
             <SidebarLinks sidebarOpen={true} onClick={() => setMobileMenuOpen(false)} />
             <div className="p-4 border-t border-gray-200 mt-auto flex justify-center">
-              <UserProfileDropdown mode="admin" />
+              <AdminProfileDropdown />
             </div>
           </div>
           <div className="flex-1" onClick={() => setMobileMenuOpen(false)} />

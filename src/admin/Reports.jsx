@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import { Search, ChevronDown, BarChart3, Diamond, Menu, X, Users, Building, Truck, MessageSquare, Download, Calendar, TrendingUp, TrendingDown } from "lucide-react"
 import SidebarLinks from "./SidebarLinks"
-import UserProfileDropdown from "../customer/UserProfileDropdown"
+import AdminProfileDropdown from "./AdminProfileDropdown"
 import Footer from "../footer";
 
 const Reports = () => {
@@ -135,7 +135,7 @@ const Reports = () => {
       >
         <SidebarLinks sidebarOpen={sidebarHovered} />
         <div className="p-4 border-t border-gray-200 mt-auto flex justify-center">
-          <UserProfileDropdown mode="admin" />
+          <AdminProfileDropdown />
         </div>
       </div>
       {/* Main Content Area */}

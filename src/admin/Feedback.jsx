@@ -4,8 +4,7 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import { Search, ChevronDown, Star, Diamond, Bell, Menu, X, Users, Building, Truck, MessageSquare, BarChart3 } from "lucide-react"
 import SidebarLinks from "./SidebarLinks"
-import UserProfileDropdown from "../customer/UserProfileDropdown"
-import Footer from "../footer";
+import AdminProfileDropdown from "./AdminProfileDropdown"
 
 const FeedbackRatings = () => {
   const [searchQuery, setSearchQuery] = useState("")
@@ -89,7 +88,7 @@ const FeedbackRatings = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f9fb] flex overflow-x-hidden">
+    <div className="min-h-screen bg-[#f7f9fb] flex">
       {/* Hover-expand Sidebar */}
       <div
         className={`fixed top-0 left-0 h-full z-30 bg-white shadow-lg flex flex-col transition-all duration-300
@@ -100,7 +99,7 @@ const FeedbackRatings = () => {
       >
         <SidebarLinks sidebarOpen={sidebarHovered} />
         <div className="p-4 border-t border-gray-200 mt-auto flex justify-center">
-          <UserProfileDropdown mode="admin" />
+          <AdminProfileDropdown />
         </div>
       </div>
       {/* Main Content Area */}
@@ -216,7 +215,6 @@ const FeedbackRatings = () => {
             Showing {filteredFeedback.length} of {feedbackData.length} feedback entries
           </div>
         </main>
-        <Footer admin={true} />
       </div>
     </div>
   )
