@@ -8,7 +8,6 @@ const UserProfileDropdown = ({ mode = "default" }) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editData, setEditData] = useState({
     name: user?.name || "",
-    email: user?.email || "",
     phone: user?.phone || "",
     address: user?.address || "",
   });
@@ -41,7 +40,6 @@ const UserProfileDropdown = ({ mode = "default" }) => {
     if (user) {
       setEditData({
         name: user.name || "",
-        email: user.email || "",
         phone: user.phone || "",
         address: user.address || "",
       });
@@ -156,18 +154,7 @@ const UserProfileDropdown = ({ mode = "default" }) => {
                 />
               </div>
               
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">Email Address</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={editData.email}
-                  onChange={handleEditChange}
-                  required
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] transition-colors"
-                  placeholder="Enter your email address"
-                />
-              </div>
+
               
               <div>
                 <label className="block text-gray-700 font-medium mb-2">Phone Number</label>
