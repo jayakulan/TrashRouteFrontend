@@ -113,9 +113,8 @@ export default function CustomerNotification({ hasNew = true, onViewDetails, not
           marginTop: '0.5rem', // small gap below bell
         }}
       >
-        {/* Greeting/Title */}
+        {/* Title Only */}
         <div className="flex flex-col items-start mb-2">
-          <span className="text-lg font-semibold text-gray-700 mb-1">{notification.greeting}</span>
           <span className="text-2xl font-extrabold notif-title-bounce" style={{ color: THEME_GREEN }}>{notification.title}</span>
         </div>
         {/* Progress Bar or Badge */}
