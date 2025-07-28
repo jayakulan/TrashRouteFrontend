@@ -1,15 +1,21 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Diamond } from "lucide-react"
 import UserProfileDropdowncom from "./UserProfileDropdowncom"
 import Footer from "../footer.jsx"
+import { setCookie, getCookie, deleteCookie } from '../utils/cookieUtils';
 
 const WastePreferences = () => {
   const [selectedWasteType, setSelectedWasteType] = useState("")
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [showPopup, setShowPopup] = useState(true)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    setShowPopup(true)
+  }, [])
 
   const wasteTypes = [
     {
@@ -44,16 +50,24 @@ const WastePreferences = () => {
     setError("")
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault();
+    console.log("Submitting waste preference");
     setLoading(true)
     setError("")
     setResult(null)
     try {
+      const token = getCookie("token"); // or localStorage.getItem("token")
+      console.log("JWT token:", token); // Debug: check the value
+
       const res = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/Companywasteprefer.php", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Authorization": "Bearer " + token
+        },
         body: `waste_type=${selectedWasteType}`,
-      })
+      });
       const data = await res.json()
       if (data.success) {
         navigate("/company/route-access", {
@@ -75,6 +89,20 @@ const WastePreferences = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Custom Info Popup */}
+      {showPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center relative border-t-8 border-[#26a360] animate-fade-in">
+            <p className="text-gray-700 mb-6 font-bold text-xl">You can select a waste type at a time.</p>
+            <button
+              className="mt-2 px-6 py-2 bg-[#26a360] hover:bg-[#218a4d] text-white font-semibold rounded-full shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#26a360]"
+              onClick={() => setShowPopup(false)}
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
       {/* Fixed Header Container */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-lg">
         {/* Accent bar at the very top */}
@@ -196,22 +224,24 @@ const WastePreferences = () => {
         </div>
 
         {/* Submit Button */}
-        <div className="flex justify-center">
-          <button
-            onClick={handleSubmit}
-            disabled={!selectedWasteType || loading}
-            className={`
-              px-8 py-4 rounded-full font-semibold text-lg transition-all duration-200
-              ${
-                selectedWasteType && !loading
-                  ? "bg-[#3a5f46] hover:bg-[#2e4d3a] text-white shadow-lg hover:shadow-xl"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }
-            `}
-          >
-            {loading ? "Loading..." : "Submit Waste Preferences"}
-          </button>
-        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="flex justify-center">
+            <button
+              type="submit"
+              disabled={!selectedWasteType || loading}
+              className={`
+                px-8 py-4 rounded-full font-semibold text-lg transition-all duration-200
+                ${
+                  selectedWasteType && !loading
+                    ? "bg-[#3a5f46] hover:bg-[#2e4d3a] text-white shadow-lg hover:shadow-xl"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                }
+              `}
+            >
+              {loading ? "Loading..." : "Submit Waste Preferences"}
+            </button>
+          </div>
+        </form>
 
         {/* Selection Summary */}
         {selectedWasteType && (

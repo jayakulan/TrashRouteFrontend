@@ -200,7 +200,11 @@ export default function CustomerNotification({ hasNew = true, onViewDetails, not
               style={{ background: '#5E856D' }}
               onMouseOver={e => e.currentTarget.style.background = '#466a54'}
               onMouseOut={e => e.currentTarget.style.background = '#5E856D'}
-              onClick={notification.onFeedback || (() => alert('Feedback clicked!'))}
+              onClick={e => {
+                e.stopPropagation();
+                console.log("Give Feedback clicked");
+                setShowFeedbackPopup(true);
+              }}
             >
               Give Feedback
             </button>

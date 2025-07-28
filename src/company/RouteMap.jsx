@@ -76,9 +76,20 @@ const RouteMap = () => {
     if (!company_id || !route_id) return;
     setLoadingCustomers(true);
     setCustomersError("");
+    
+    const token = getCookie("token");
+    if (!token) {
+      setCustomersError("Authentication token not found. Please log in again.");
+      setLoadingCustomers(false);
+      return;
+    }
+    
     fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/Routemap.php", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: { 
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": "Bearer " + token
+      },
       body: `company_id=${company_id}&route_id=${route_id}`,
     })
       .then(res => res.json())
@@ -253,17 +264,18 @@ const RouteMap = () => {
     }
   }
 
-  const toggleCollected = (id) => {
+  const toggleCollected = (requestId) => {
     setHouseholds(prev =>
-      prev.map(h => (h.id === id ? { ...h, collected: !h.collected } : h))
+      prev.map(h => (h.request_id === requestId ? { ...h, collected: !h.collected } : h))
     )
   }
 
   const collectedCount = households.filter(h => h.collected).length
   const totalCount = households.length
   const filteredHouseholds = households.filter(h =>
-    h.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    h.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     h.contact.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    h.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
     h.notes.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
@@ -329,7 +341,7 @@ const RouteMap = () => {
     if (!household.collected) {
       handleOpenFeedbackPopup(household);
     } else {
-      toggleCollected(household.id);
+      toggleCollected(household.request_id);
     }
   };
 
@@ -533,36 +545,38 @@ const RouteMap = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-[#f7faf9] text-xs font-medium text-[#3a5f46] uppercase tracking-wider">
                 <tr>
-                  <th className="px-6 py-3 text-left">#</th>
-                  <th className="px-6 py-3 text-left">Address</th>
+                  <th className="px-6 py-3 text-left">Name</th>
+                  <th className="px-6 py-3 text-left">Latitude</th>
+                  <th className="px-6 py-3 text-left">Longitude</th>
                   <th className="px-6 py-3 text-left">Contact</th>
-                    <th className="px-6 py-3 text-left">Details</th>
-                    <th className="px-6 py-3 text-left">Status</th>
+                  <th className="px-6 py-3 text-left">Details</th>
+                  <th className="px-6 py-3 text-left">Status</th>
                   <th className="px-6 py-3 text-left">Collected</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
                 {filteredHouseholds.map((h, idx) => (
-                  <tr key={h.id} className={idx % 2 === 0 ? "bg-[#f7faf9]" : "bg-white"}>
-                    <td className="px-6 py-4 font-semibold text-gray-700">{h.id}</td>
-                    <td className="px-6 py-4">{h.address}</td>
-                      <td className="px-6 py-4">
-                        <div>
-                          <div className="font-medium">{h.contact}</div>
-                          <div className="text-sm text-gray-500">{h.customer_phone}</div>
-                        </div>
-                      </td>
+                  <tr key={h.request_id} className={idx % 2 === 0 ? "bg-[#f7faf9]" : "bg-white"}>
+                    <td className="px-6 py-4 font-semibold text-gray-700">{h.name}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{h.latitude}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{h.longitude}</td>
+                    <td className="px-6 py-4">
+                      <div>
+                        <div className="font-medium">{h.contact}</div>
+                        <div className="text-sm text-gray-500">{h.address}</div>
+                      </div>
+                    </td>
                     <td className="px-6 py-4">{h.notes}</td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                          h.status === 'Request received' ? 'bg-blue-100 text-blue-800' :
-                          h.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                          h.status === 'Accepted' ? 'bg-green-100 text-green-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {h.status}
-                        </span>
-                      </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        h.status === 'Request received' ? 'bg-blue-100 text-blue-800' :
+                        h.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                        h.status === 'Accepted' ? 'bg-green-100 text-green-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {h.status}
+                      </span>
+                    </td>
                     <td className="px-6 py-4">
                       <button
                         onClick={() => handleCollectedClick(h)}
@@ -765,22 +779,25 @@ const RouteMap = () => {
                   />
                 </div>
               )}
-              <div>
-                <label className="block mb-1 font-semibold text-[#3a5f46]">Rating</label>
-                <div className="flex gap-2">
-                  {[1,2,3,4,5].map(n => (
-                    <button
-                      type="button"
-                      key={n}
-                      className={`w-10 h-10 rounded-full flex items-center justify-center border text-lg font-bold transition-colors focus:outline-none ${feedback.rating === n ? 'bg-[#3a5f46] text-white border-[#3a5f46] scale-110 shadow' : 'bg-gray-100 text-[#3a5f46] border-gray-200 hover:bg-[#e6f4ea]'}`}
-                      onClick={() => setFeedback(f => ({ ...f, rating: n }))}
-                      aria-label={`Rate ${n}`}
-                    >
-                      {n}
-                    </button>
-                  ))}
+              {/* Rating Field - Only show if pickup is completed */}
+              {feedback.pickup_completed && (
+                <div>
+                  <label className="block mb-1 font-semibold text-[#3a5f46]">Rating</label>
+                  <div className="flex gap-2">
+                    {[1,2,3,4,5].map(n => (
+                      <button
+                        type="button"
+                        key={n}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center border text-lg font-bold transition-colors focus:outline-none ${feedback.rating === n ? 'bg-[#3a5f46] text-white border-[#3a5f46] scale-110 shadow' : 'bg-gray-100 text-[#3a5f46] border-gray-200 hover:bg-[#e6f4ea]'}`}
+                        onClick={() => setFeedback(f => ({ ...f, rating: n }))}
+                        aria-label={`Rate ${n}`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
               <div>
                 <label className="block mb-1 font-semibold text-[#3a5f46]">Comment</label>
                 <textarea

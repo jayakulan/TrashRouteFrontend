@@ -9,7 +9,6 @@ const UserProfileDropdowncom = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editData, setEditData] = useState({
     name: user?.name || "",
-    email: user?.email || "",
     contact_number: user?.contact_number || "",
     address: user?.address || "",
   });
@@ -112,18 +111,7 @@ const UserProfileDropdowncom = () => {
                   placeholder="Company Name"
                 />
               </div>
-              <div>
-                <label className="block text-gray-700 font-medium mb-1">Email Address</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={editData.email}
-                  onChange={handleEditChange}
-                  required
-                  className="w-full border rounded-lg px-3 py-2"
-                  placeholder="Email Address"
-                />
-              </div>
+
               <div>
                 <label className="block text-gray-700 font-medium mb-1">Contact Number</label>
                 <input

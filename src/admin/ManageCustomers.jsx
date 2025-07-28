@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { Search, ChevronDown, Users, Diamond, Menu, X, Building, Truck, MessageSquare, BarChart3 } from "lucide-react"
-import UserProfileDropdown from "../customer/UserProfileDropdown"
+import AdminProfileDropdown from "./AdminProfileDropdown"
 import SidebarLinks from "./SidebarLinks";
 import Footer from "../footer";
 
@@ -25,7 +25,19 @@ const ManageCustomers = () => {
     const fetchCustomers = async () => {
       try {
         setLoading(true)
-        const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/managecustomers.php')
+        const token = localStorage.getItem('adminToken');
+        const headers = {
+          'Content-Type': 'application/json'
+        };
+        
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/managecustomers.php', {
+          headers,
+          credentials: 'include'
+        })
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
@@ -85,14 +97,22 @@ const ManageCustomers = () => {
     try {
       setDeletingCustomer(customerId);
       
+      const token = localStorage.getItem('adminToken');
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(`http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/deleteusers.php?action=delete`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers,
         body: JSON.stringify({
           customerId: customerId
-        })
+        }),
+        credentials: 'include'
       });
 
       if (!response.ok) {
@@ -148,7 +168,7 @@ const ManageCustomers = () => {
       >
         <SidebarLinks sidebarOpen={sidebarHovered} />
         <div className="p-4 border-t border-gray-200 mt-auto flex justify-center">
-          <UserProfileDropdown mode="admin" />
+          <AdminProfileDropdown />
         </div>
       </div>
       {/* Main Content Area */}

@@ -7,6 +7,7 @@ import { Recycle } from "lucide-react"
 import ContactModal from "./ContactForm"
 import Navbar from './components/Navbar';
 import Footer from './footer.jsx'
+import CompanyValidator from './utils/companyValidation.js'
 
 const CompanySignUp = () => {
   // Add custom animations
@@ -68,32 +69,57 @@ const CompanySignUp = () => {
     phoneNumber: "",
     companyRegNumber: "",
   })
-  const [error, setError] = useState("")
+  const [errors, setErrors] = useState({})
   const [success, setSuccess] = useState("")
   const [showOtpModal, setShowOtpModal] = useState(false)
   const [otp, setOtp] = useState("")
   const [otpError, setOtpError] = useState("")
   const [showContactModal, setShowContactModal] = useState(false)
-  const CORRECT_OTP = "123456" // Simulated correct OTP
   const navigate = useNavigate()
+  const [passwordStrength, setPasswordStrength] = useState({ strength: 'weak', color: 'text-red-500' })
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
-    })
+      [name]: value,
+    });
+    
+    // Clear success message
+    setSuccess("");
+    
+    // Validate field in real-time
+    const fieldError = CompanyValidator.getFieldError(name, value, formData);
+    setErrors(prev => ({
+      ...prev,
+      [name]: fieldError
+    }));
+    
+    // Update password strength
+    if (name === 'password') {
+      const strengthResult = CompanyValidator.validatePasswordStrength(value);
+      setPasswordStrength({
+        strength: strengthResult.strength,
+        color: CompanyValidator.getPasswordStrengthColor(strengthResult.strength)
+      });
+    }
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match.");
+    
+    // Validate entire form
+    const validation = CompanyValidator.validateForm(formData);
+    if (!validation.isValid) {
+      setErrors(validation.errors);
       return;
     }
+    
+    setErrors({});
+    setSuccess("");
+    
     try {
-      const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/request_otp_company.php", {
+      const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/request_otp_company_validated.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -103,7 +129,7 @@ const CompanySignUp = () => {
           address: formData.address,
           contact_number: formData.phoneNumber,
           company_reg_number: formData.companyRegNumber,
-          role: "company"
+          role: "company" // lowercase
         }),
         credentials: "include",
       });
@@ -112,10 +138,15 @@ const CompanySignUp = () => {
         setSuccess("OTP sent! Please enter the OTP sent to your email.");
         setShowOtpModal(true);
       } else {
-        setError(result.message || "Failed to send OTP");
+        // Handle validation errors from backend
+        if (result.errors) {
+          setErrors(result.errors);
+        } else {
+          setErrors({ general: result.message || "Failed to send OTP" });
+        }
       }
     } catch (err) {
-      setError("Server error");
+      setErrors({ general: "Server error" });
     }
   };
 
@@ -153,7 +184,7 @@ const CompanySignUp = () => {
 
       {/* Main Content */}
       <div className="flex items-center justify-center min-h-[calc(100vh-80px)] px-6 py-8">
-        <div className="w-full max-w-md animate-fade-in-up">
+        <div className="w-full max-w-md relative animate-fade-in-up">
           <div className="text-center mb-6">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#3a5f46] to-[#2e4d3a] rounded-full mb-2 shadow-lg">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -193,13 +224,13 @@ const CompanySignUp = () => {
             </button>
           </div>
 
-          {error && (
+          {errors.general && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-center mb-4 animate-shake">
               <div className="flex items-center justify-center space-x-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span className="font-medium">{error}</span>
+                <span className="font-medium">{errors.general}</span>
               </div>
             </div>
           )}
@@ -232,12 +263,19 @@ const CompanySignUp = () => {
                   name="companyName"
                   type="text"
                   required
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] focus:bg-white transition-all duration-300"
+                  className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:bg-white transition-all duration-300 ${
+                    errors.companyName 
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                      : 'border-gray-200 focus:ring-[#3a5f46] focus:border-[#3a5f46]'
+                  }`}
                   placeholder="Enter your company name"
                   value={formData.companyName}
                   onChange={handleChange}
                 />
               </div>
+              {errors.companyName && (
+                <p className="text-red-600 text-xs mt-1">{errors.companyName}</p>
+              )}
             </div>
 
             {/* Email Field */}
@@ -256,12 +294,19 @@ const CompanySignUp = () => {
                   name="email"
                   type="email"
                   required
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] focus:bg-white transition-all duration-300"
+                  className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:bg-white transition-all duration-300 ${
+                    errors.email 
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                      : 'border-gray-200 focus:ring-[#3a5f46] focus:border-[#3a5f46]'
+                  }`}
                   placeholder="Enter your email address"
                   value={formData.email}
                   onChange={handleChange}
                 />
               </div>
+              {errors.email && (
+                <p className="text-red-600 text-xs mt-1">{errors.email}</p>
+              )}
             </div>
 
             {/* Password Field */}
@@ -280,12 +325,48 @@ const CompanySignUp = () => {
                   name="password"
                   type="password"
                   required
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] focus:bg-white transition-all duration-300"
+                  className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:bg-white transition-all duration-300 ${
+                    errors.password 
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                      : 'border-gray-200 focus:ring-[#3a5f46] focus:border-[#3a5f46]'
+                  }`}
                   placeholder="Create a strong password"
                   value={formData.password}
                   onChange={handleChange}
                 />
               </div>
+              {formData.password && (
+                <div className="mt-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs text-gray-600">Password strength:</span>
+                    <span className={`text-xs font-medium ${passwordStrength.color}`}>
+                      {CompanyValidator.getPasswordStrengthText(passwordStrength.strength)}
+                    </span>
+                  </div>
+                  <div className="mt-1 flex space-x-1">
+                    {[1, 2, 3, 4, 5].map((level) => {
+                      const strengthLevel = passwordStrength.strength === 'weak' ? 1 : 
+                                         passwordStrength.strength === 'medium' ? 2 :
+                                         passwordStrength.strength === 'strong' ? 3 :
+                                         passwordStrength.strength === 'very-strong' ? 4 : 0;
+                      
+                      const barColor = level <= strengthLevel 
+                        ? passwordStrength.color.replace('text-', 'bg-')
+                        : 'bg-gray-200';
+                      
+                      return (
+                        <div
+                          key={level}
+                          className={`h-1 flex-1 rounded-full ${barColor}`}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              {errors.password && (
+                <p className="text-red-600 text-xs mt-1">{errors.password}</p>
+              )}
             </div>
 
             {/* Confirm Password Field */}
@@ -304,12 +385,19 @@ const CompanySignUp = () => {
                   name="confirmPassword"
                   type="password"
                   required
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] focus:bg-white transition-all duration-300"
+                  className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:bg-white transition-all duration-300 ${
+                    errors.confirmPassword 
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                      : 'border-gray-200 focus:ring-[#3a5f46] focus:border-[#3a5f46]'
+                  }`}
                   placeholder="Confirm your password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
                 />
               </div>
+              {errors.confirmPassword && (
+                <p className="text-red-600 text-xs mt-1">{errors.confirmPassword}</p>
+              )}
             </div>
 
             {/* Address Field */}
@@ -329,12 +417,19 @@ const CompanySignUp = () => {
                   name="address"
                   type="text"
                   required
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] focus:bg-white transition-all duration-300"
+                  className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:bg-white transition-all duration-300 ${
+                    errors.address 
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                      : 'border-gray-200 focus:ring-[#3a5f46] focus:border-[#3a5f46]'
+                  }`}
                   placeholder="Enter your company address"
                   value={formData.address}
                   onChange={handleChange}
                 />
               </div>
+              {errors.address && (
+                <p className="text-red-600 text-xs mt-1">{errors.address}</p>
+              )}
             </div>
 
             {/* Phone Number Field */}
@@ -353,12 +448,21 @@ const CompanySignUp = () => {
                   name="phoneNumber"
                   type="tel"
                   required
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] focus:bg-white transition-all duration-300"
+                  className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:bg-white transition-all duration-300 ${
+                    errors.phoneNumber 
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                      : 'border-gray-200 focus:ring-[#3a5f46] focus:border-[#3a5f46]'
+                  }`}
                   placeholder="Enter your phone number"
                   value={formData.phoneNumber}
                   onChange={handleChange}
+                  maxLength={10}
+                  pattern="\d{10}"
                 />
               </div>
+              {errors.phoneNumber && (
+                <p className="text-red-600 text-xs mt-1">{errors.phoneNumber}</p>
+              )}
             </div>
 
             {/* Company Registration Number Field */}
@@ -377,12 +481,19 @@ const CompanySignUp = () => {
                   name="companyRegNumber"
                   type="text"
                   required
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] focus:bg-white transition-all duration-300"
+                  className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:bg-white transition-all duration-300 ${
+                    errors.companyRegNumber 
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                      : 'border-gray-200 focus:ring-[#3a5f46] focus:border-[#3a5f46]'
+                  }`}
                   placeholder="Enter your company registration number"
                   value={formData.companyRegNumber}
                   onChange={handleChange}
                 />
               </div>
+              {errors.companyRegNumber && (
+                <p className="text-red-600 text-xs mt-1">{errors.companyRegNumber}</p>
+              )}
             </div>
 
             {/* Register Button */}
@@ -406,71 +517,71 @@ const CompanySignUp = () => {
               </Link>
             </div>
           </form>
-
-          {/* OTP Modal */}
-          {showOtpModal && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50 animate-fade-in">
-              <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm relative animate-scale-in">
-                <div className="text-center mb-6">
-                  <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-[#3a5f46] to-[#2e4d3a] rounded-full mb-4">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">OTP Verification</h2>
-                  <p className="text-gray-600">Enter the 6-digit code sent to your email</p>
-                </div>
-                <form onSubmit={handleOtpVerify} className="space-y-6">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={otp}
-                      onChange={e => { setOtp(e.target.value); setOtpError(""); }}
-                      maxLength={6}
-                      className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] focus:bg-white transition-all duration-300 text-center tracking-widest text-2xl font-bold"
-                      placeholder="000000"
-                      autoFocus
-                    />
-                  </div>
-                  {otpError && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-center animate-shake">
-                      <div className="flex items-center justify-center space-x-2">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span className="font-medium">{otpError}</span>
-                      </div>
-                    </div>
-                  )}
-                  <button
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] hover:from-[#2e4d3a] hover:to-[#1a3d2a] text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:ring-offset-2 transform hover:scale-105 shadow-lg"
-                  >
-                    <div className="flex items-center justify-center space-x-2">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span>Verify OTP</span>
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105"
-                    onClick={() => setShowOtpModal(false)}
-                  >
-                    Cancel
-                  </button>
-                </form>
-              </div>
-            </div>
-          )}
-
-          {/* Contact Modal */}
-          {showContactModal && (
-            <ContactModal onClose={() => setShowContactModal(false)} />
-          )}
         </div>
       </div>
+
+      {/* OTP Modal - covers the entire page */}
+      {showOtpModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm relative animate-scale-in">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-[#3a5f46] to-[#2e4d3a] rounded-full mb-4">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">OTP Verification</h2>
+              <p className="text-gray-600">Enter the 6-digit code sent to your email</p>
+            </div>
+            <form onSubmit={handleOtpVerify} className="space-y-6">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={otp}
+                  onChange={e => { setOtp(e.target.value); setOtpError(""); }}
+                  maxLength={6}
+                  className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] focus:bg-white transition-all duration-300 text-center tracking-widest text-2xl font-bold"
+                  placeholder="000000"
+                  autoFocus
+                />
+              </div>
+              {otpError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-center animate-shake">
+                  <div className="flex items-center justify-center space-x-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="font-medium">{otpError}</span>
+                  </div>
+                </div>
+              )}
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] hover:from-[#2e4d3a] hover:to-[#1a3d2a] text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:ring-offset-2 transform hover:scale-105 shadow-lg"
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Verify OTP</span>
+                </div>
+              </button>
+              <button
+                type="button"
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105"
+                onClick={() => setShowOtpModal(false)}
+              >
+                Cancel
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Contact Modal */}
+      {showContactModal && (
+        <ContactModal onClose={() => setShowContactModal(false)} />
+      )}
       
       <Footer />
     </div>

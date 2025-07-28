@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import UserProfileDropdown from "../customer/UserProfileDropdown"
+import AdminProfileDropdown from "./AdminProfileDropdown"
 import { Link } from "react-router-dom"
 import { Diamond, Users, Building, Truck, MessageSquare, BarChart3, Menu, X } from "lucide-react"
 import SidebarLinks from "./SidebarLinks";
@@ -139,7 +139,7 @@ const AdminDashboard = () => {
       >
         <SidebarLinks sidebarOpen={sidebarHovered} />
         <div className="p-4 border-t border-gray-200 mt-auto flex justify-center">
-          <UserProfileDropdown mode="admin" />
+          <AdminProfileDropdown />
         </div>
       </div>
       {/* Mobile Hamburger */}
@@ -161,7 +161,7 @@ const AdminDashboard = () => {
             </button>
             <SidebarLinks sidebarOpen={true} onClick={() => setMobileMenuOpen(false)} />
             <div className="p-4 border-t border-gray-200 mt-auto flex justify-center">
-              <UserProfileDropdown mode="admin" />
+              <AdminProfileDropdown />
             </div>
           </div>
           <div className="flex-1" onClick={() => setMobileMenuOpen(false)} />

@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom'
 import { GoogleMapsProvider } from './components/GoogleMapsProvider'
 import GoogleMapsErrorBoundary from './components/GoogleMapsErrorBoundary'
+import ProtectedRoute from './components/ProtectedRoute'
+import URLProtection from './components/URLProtection'
 import Login from './Login.jsx'
 import LandingPage from './LandingPage.jsx'
 
@@ -18,11 +20,15 @@ import ManageCustomers from './admin/ManageCustomers.jsx'
 import ManageCompanies from './admin/ManageCompanies.jsx'
 import ReportsAnalytics from './admin/Reports.jsx'
 import FeedbackRatings from './admin/Feedback.jsx'
+import ContactUsManagement from './admin/ContactUsManagement.jsx'
 import PickupRequests from './admin/Requests.jsx'
 import CustomerTrackPickup from './customer/CustomerTrackPickup.jsx'
 import CustomerHistoryLog from './customer/CustomerHistoryLog.jsx'
 import OtpVerification from './OtpVerification.jsx'
 import CompanyHistoryLog from './company/CompanyHistoryLog';
+import NotificationManagement from './admin/NotificationManagement.jsx';
+import RoutesManagement from './admin/RoutesManagement.jsx';
+import RouteMappingManagement from './admin/RouteMappingManagement.jsx';
 
 function ScrollToTopButton() {
   const [visible, setVisible] = useState(false);
@@ -110,21 +116,151 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<CustomerSignUp />} />
           <Route path="/company-signup" element={<CompanySignUp />} />
-          <Route path="/customer/trash-type" element={<CustomerTrashType />} />
-          <Route path="/customer/location-pin" element={<CustomerLocationPin />} />
-          <Route path="/customer/pickup-summary" element={<CustomerPickupSummary />} />
-          <Route path="/company-waste-prefer" element={<CompanyWastePrefer />} />
-          <Route path="/company/route-access" element={<RouteActivation />} />
-          <Route path="/company/route-map" element={<RouteMap />} />
-          <Route path="/company/historylogs" element={<CompanyHistoryLog />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/users" element={<ManageCustomers />} />
-          <Route path="/admin/companies" element={<ManageCompanies />} />
-          <Route path="/admin/requests" element={<PickupRequests />} />
-          <Route path="/admin/feedback" element={<FeedbackRatings />} />
-          <Route path="/admin/reports" element={<ReportsAnalytics />} />
-          <Route path="/customer/track-pickup" element={<CustomerTrackPickup />} />
-          <Route path="/customer/history-log" element={<CustomerHistoryLog />} />
+
+
+          
+          {/* Customer Protected Routes */}
+          <Route path="/customer/trash-type" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="customer">
+                <CustomerTrashType />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
+          <Route path="/customer/location-pin" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="customer">
+                <CustomerLocationPin />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
+          <Route path="/customer/pickup-summary" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="customer">
+                <CustomerPickupSummary />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
+          <Route path="/customer/track-pickup" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="customer">
+                <CustomerTrackPickup />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
+          <Route path="/customer/history-log" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="customer">
+                <CustomerHistoryLog />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
+          
+          {/* Company Protected Routes */}
+          <Route path="/company-waste-prefer" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="company">
+                <CompanyWastePrefer />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
+          <Route path="/company/route-access" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="company">
+                <RouteActivation />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
+          <Route path="/company/route-map" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="company">
+                <RouteMap />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
+          <Route path="/company/historylogs" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="company">
+                <CompanyHistoryLog />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
+          
+          {/* Admin Protected Routes */}
+          <Route path="/admin/dashboard" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="admin">
+                <AdminDashboard />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
+          <Route path="/admin/users" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="admin">
+                <ManageCustomers />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
+          <Route path="/admin/companies" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="admin">
+                <ManageCompanies />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
+          <Route path="/admin/requests" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="admin">
+                <PickupRequests />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
+          <Route path="/admin/feedback" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="admin">
+                <FeedbackRatings />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
+          <Route path="/admin/reports" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="admin">
+                <ReportsAnalytics />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
+          <Route path="/admin/contact-us" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="admin">
+                <ContactUsManagement />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
+          <Route path="/admin/notifications" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="admin">
+                <NotificationManagement />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
+          <Route path="/admin/routes" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="admin">
+                <RoutesManagement />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
+          <Route path="/admin/route-mapping" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="admin">
+                <RouteMappingManagement />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
+          
+          {/* OTP Verification (no role restriction) */}
+
+
           <Route path="/otp-verification" element={<OtpVerification />} />
         </Routes>
       </GoogleMapsProvider>

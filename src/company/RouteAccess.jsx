@@ -65,29 +65,31 @@ const RouteActivation = () => {
 
   // Fetch backend data for route details
   useEffect(() => {
-    setLoadingBackend(true);
-    setBackendError("");
-    let url, body;
-    const company_id = getCookie("company_id");
-    if (!company_id) {
-      setBackendError("Company ID not found. Please log in again.");
-      setLoadingBackend(false);
-      return;
-    }
-    if (wasteType) {
-      url = "http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/Companywasteprefer.php";
-      body = `waste_type=${wasteType}&company_id=${company_id}`;
-    } else {
-      url = "http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/Routeaccess.php";
-      body = `company_id=${company_id}`;
-    }
-    fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body,
-    })
-      .then(res => res.json())
-      .then(data => {
+    const fetchBackendData = async () => {
+      setLoadingBackend(true);
+      setBackendError("");
+      const token = getCookie("token");
+      if (!token) {
+        setBackendError("Authentication token not found. Please log in again.");
+        setLoadingBackend(false);
+        return;
+      }
+      const company_id = getCookie("company_id");
+      let url = "http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/Routeaccess.php";
+      let body = `company_id=${company_id}`;
+      if (wasteType) {
+        body += `&waste_type=${wasteType}`;
+      }
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": "Bearer " + token
+          },
+          body,
+        });
+        const data = await res.json();
         if (data.success) {
           setBackendData({
             customerCount: data.customerCount,
@@ -96,12 +98,13 @@ const RouteActivation = () => {
         } else {
           setBackendError(data.message || "Failed to fetch route data.");
         }
-        setLoadingBackend(false);
-      })
-      .catch(err => {
+      } catch (err) {
         setBackendError("Network error. Please try again.");
+      } finally {
         setLoadingBackend(false);
-      });
+      }
+    };
+    fetchBackendData();
   }, [wasteType]);
 
   const handleMapLoad = (mapInstance) => {
@@ -200,9 +203,19 @@ const RouteActivation = () => {
       return;
     }
     try {
+      const token = getCookie("token");
+      if (!token) {
+        setPaymentMessage("Authentication token not found. Please log in again.");
+        setPaymentLoading(false);
+        return;
+      }
+      
       const res = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/payments.php", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: { 
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Authorization": "Bearer " + token
+        },
         body: `company_id=${company_id}&card_number=${cardNumber}&cardholder_name=${encodeURIComponent(cardName)}&expiry_date=${expiry}&pin_number=${cvv}&amount=${amount}&waste_type=${encodeURIComponent(wasteType || '')}`,
       });
       const data = await res.json();
@@ -604,8 +617,6 @@ const RouteActivation = () => {
                   <option value="">Select Card Type</option>
                   <option value="Visa">Visa</option>
                   <option value="MasterCard">MasterCard</option>
-                  <option value="Amex">Amex</option>
-                  <option value="Rupay">Rupay</option>
                 </select>
               </div>
               <div>
