@@ -73,9 +73,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    console.log("Logout function called");
     try {
       // Call backend logout endpoint to clear server-side sessions
       const token = getCookie('token');
+      console.log("Token found:", !!token);
       if (token) {
         await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/auth/logout.php", {
           method: "POST",
@@ -89,6 +91,7 @@ export const AuthProvider = ({ children }) => {
       console.log("Backend logout failed, continuing with frontend cleanup");
     }
     
+    console.log("Clearing cookies and state");
     // Clear all cookies
     deleteCookie('token');
     deleteCookie('user');
@@ -100,6 +103,7 @@ export const AuthProvider = ({ children }) => {
     // Clear user state
     setUser(null);
     
+    console.log("Clearing browser storage and redirecting");
     // Clear browser cache and storage
     if (typeof window !== 'undefined') {
       // Clear localStorage
@@ -118,6 +122,7 @@ export const AuthProvider = ({ children }) => {
       }
       
       // Force reload to clear any cached pages
+      console.log("Redirecting to home page");
       window.location.href = '/';
     } else {
       navigate('/');

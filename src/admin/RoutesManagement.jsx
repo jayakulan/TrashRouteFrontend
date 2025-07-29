@@ -155,35 +155,35 @@ const RoutesManagement = () => {
         <main className="p-4 sm:p-6 md:p-8 flex-1">
           {/* Page Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Routes Management</h1>
-            <p className="text-blue-600">
+            <h1 className="text-3xl font-bold text-[#2e4d3a] mb-2">Routes Management</h1>
+            <p className="text-[#3a5f46]">
               Manage and oversee all routes within the system. View details, edit assignments, and track performance.
             </p>
           </div>
           {/* Search Bar */}
-          <div className="mb-8">
+          <div className="mb-4 sm:mb-6">
             <div className="relative max-w-2xl">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-[#3a5f46] w-4 h-4 sm:w-5 sm:h-5" />
               <input
                 type="text"
                 placeholder="Search by Company or Route ID"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-gray-100 border-0 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+                className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-4 bg-[#e6f4ea] border-0 rounded-lg text-[#2e4d3a] placeholder-[#618170] focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:bg-white transition-colors text-sm sm:text-base shadow"
               />
             </div>
           </div>
           {/* Filter Tabs */}
-          <div className="mb-8">
-            <div className="flex space-x-8 border-b border-gray-200">
+          <div className="mb-4 sm:mb-6 lg:mb-8">
+            <div className="flex space-x-8 border-b border-[#d0e9d6]">
               {["All", "Active", "Inactive"].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
                   className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                     activeTab === tab
-                      ? "border-blue-500 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      ? "border-[#3a5f46] text-[#3a5f46]"
+                      : "border-transparent text-[#618170] hover:text-[#3a5f46] hover:border-[#d0e9d6]"
                   }`}
                 >
                   {tab}
@@ -192,60 +192,58 @@ const RoutesManagement = () => {
             </div>
           </div>
           {/* Routes Table */}
-          <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+          <div className="bg-white rounded-lg shadow-lg border border-[#d0e9d6] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-[#e6f4ea] border-b border-[#d0e9d6]">
                   <tr>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-900">Route ID</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-900">Assigned Company</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-900"># Customers</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-900">Acceptance Status</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-900">Timestamp</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-900">Disabled Status</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-blue-600">Actions</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Route ID</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Assigned Company</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase"># Customers</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Acceptance Status</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Timestamp</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Disabled Status</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46]">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-[#e6f4ea]">
                   {filteredRoutes.map((route, index) => (
-                    <tr key={index} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{route.routeId}</td>
-                      <td className="px-6 py-4 text-sm text-blue-600">{route.assignedCompany}</td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{route.customers}</td>
-                      <td className="px-6 py-4">
+                    <tr key={index} className="hover:bg-[#f7f9fb]">
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-[#2e4d3a]">{route.routeId}</td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#3a5f46] font-semibold">{route.assignedCompany}</td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170]">{route.customers}</td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4">
                         <span
-                          className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getAcceptanceStatusColor(route.acceptanceStatus)}`}
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getAcceptanceStatusColor(route.acceptanceStatus)}`}
                         >
                           {route.acceptanceStatus}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-blue-600">{route.timestamp}</td>
-                      <td className="px-6 py-4">
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170]">{route.timestamp}</td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4">
                         <span
-                          className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getDisabledStatusColor(route.disabledStatus)}`}
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getDisabledStatusColor(route.disabledStatus)}`}
                         >
                           {route.disabledStatus}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex space-x-2 text-sm">
+                      <td className="px-3 sm:px-6 py-3 sm:py-4">
+                        <div className="flex space-x-2">
                           <button
                             onClick={() => handleViewEditDelete(route.routeId, "View")}
-                            className="text-blue-600 hover:text-blue-700"
+                            className="bg-[#3a5f46] hover:bg-[#2e4d3a] text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
                           >
                             View
                           </button>
-                          <span className="text-gray-400">/</span>
                           <button
                             onClick={() => handleViewEditDelete(route.routeId, "Edit")}
-                            className="text-blue-600 hover:text-blue-700"
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
                           >
                             Edit
                           </button>
-                          <span className="text-gray-400">/</span>
                           <button
                             onClick={() => handleViewEditDelete(route.routeId, "Delete")}
-                            className="text-blue-600 hover:text-blue-700"
+                            className="bg-red-600 hover:bg-red-700 text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
                           >
                             Delete
                           </button>
@@ -258,13 +256,13 @@ const RoutesManagement = () => {
             </div>
             {/* Empty State */}
             {filteredRoutes.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-gray-500">No routes found matching your criteria.</p>
+              <div className="text-center py-8 sm:py-12">
+                <p className="text-[#618170] text-sm sm:text-base">No routes found matching your criteria.</p>
               </div>
             )}
           </div>
           {/* Results Count */}
-          <div className="mt-4 text-sm text-gray-600">
+          <div className="mt-4 text-xs sm:text-sm text-[#618170]">
             Showing {filteredRoutes.length} of {routesData.length} routes
           </div>
         </main>

@@ -236,6 +236,13 @@ function App() {
               </ProtectedRoute>
             </URLProtection>
           } />
+          <Route path="/admin/contactus" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="admin">
+                <ContactUsManagement />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
           <Route path="/admin/notifications" element={
             <URLProtection>
               <ProtectedRoute requiredRole="admin">
