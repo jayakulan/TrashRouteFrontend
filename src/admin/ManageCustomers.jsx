@@ -6,6 +6,7 @@ import { Search, ChevronDown, Users, Diamond, Menu, X, Building, Truck, MessageS
 import AdminProfileDropdown from "./AdminProfileDropdown"
 import SidebarLinks from "./SidebarLinks";
 import Footer from "../footer";
+import { getCookie } from "../utils/cookieUtils";
 
 const ManageCustomers = () => {
   const [searchQuery, setSearchQuery] = useState("")
@@ -25,7 +26,7 @@ const ManageCustomers = () => {
     const fetchCustomers = async () => {
       try {
         setLoading(true)
-        const token = localStorage.getItem('adminToken');
+        const token = getCookie('token');
         const headers = {
           'Content-Type': 'application/json'
         };
@@ -97,7 +98,7 @@ const ManageCustomers = () => {
     try {
       setDeletingCustomer(customerId);
       
-      const token = localStorage.getItem('adminToken');
+      const token = getCookie('token');
       const headers = {
         'Content-Type': 'application/json'
       };

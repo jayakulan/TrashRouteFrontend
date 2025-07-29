@@ -51,11 +51,18 @@ const AdminProfileDropdown = () => {
     console.log("Submitting edit data:", editData);
     
     try {
+      const token = getCookie('token');
+      const headers = { 
+        "Content-Type": "application/json",
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/editprofileadmin.php", {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify(editData),
         credentials: "include",
       });
@@ -133,7 +140,13 @@ const AdminProfileDropdown = () => {
       {/* Admin Profile Modal */}
       {showProfile && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 flex flex-col items-center">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 flex flex-col items-center relative">
+            <button 
+              onClick={() => setShowProfile(false)} 
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl transition-colors"
+            >
+              &times;
+            </button>
             <img src={adminUser?.profileImage || "https://randomuser.me/api/portraits/men/44.jpg"} alt="Admin" className="w-20 h-20 rounded-full object-cover mb-4" />
             <div className="font-semibold text-gray-900 text-xl mb-1">{adminUser?.name || "Admin User"}</div>
             <div className="text-sm text-gray-500 mb-6">{adminUser?.email || "admin@email.com"}</div>

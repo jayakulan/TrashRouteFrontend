@@ -90,7 +90,11 @@ const CustomerTrashType = () => {
     try {
       // Prepare data for backend
       const wasteTypesData = Object.entries(wasteTypes).map(([type, data]) => ({
-        type: type.charAt(0).toUpperCase() + type.slice(1), // Capitalize first letter
+        type: type === "plastics" ? "Plastic"
+             : type === "paper" ? "Paper"
+             : type === "glass" ? "Glass"
+             : type === "metals" || type === "metal" ? "Metal"
+             : type.charAt(0).toUpperCase() + type.slice(1),
         quantity: data.quantity,
         selected: data.selected
       }));
