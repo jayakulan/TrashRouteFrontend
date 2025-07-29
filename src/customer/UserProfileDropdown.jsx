@@ -64,7 +64,10 @@ const UserProfileDropdown = ({ mode = "default" }) => {
       const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/editprofilecus.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editData),
+        body: JSON.stringify({
+          ...editData,
+          user_id: user?.id || user?.user_id || user?.customer_id
+        }),
         credentials: "include",
       });
       
