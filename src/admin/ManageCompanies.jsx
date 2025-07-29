@@ -6,6 +6,7 @@ import { Search, ChevronDown, Building, Diamond, Menu, X, Users, Truck, MessageS
 import SidebarLinks from "./SidebarLinks"
 import AdminProfileDropdown from "./AdminProfileDropdown"
 import Footer from "../footer";
+import { getCookie } from "../utils/cookieUtils";
 
 const ManageCompanies = () => {
   const [searchQuery, setSearchQuery] = useState("")
@@ -103,7 +104,19 @@ const ManageCompanies = () => {
   const handleAutoRevert = async () => {
     setAutoRevertMsg("Running auto-revert...");
     try {
-      const res = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/auto_revert_pickup_status.php");
+      const token = getCookie('token');
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const res = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/auto_revert_pickup_status.php", {
+        headers,
+        credentials: 'include'
+      });
       const data = await res.json();
       setAutoRevertMsg(data.message || "Done.");
     } catch (err) {
