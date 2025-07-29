@@ -61,7 +61,29 @@ const UserProfileDropdown = ({ mode = "default" }) => {
     setEditSuccess("");
     
     try {
-      const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/editprofilecus.php", {
+      // Use different endpoints based on user role
+      let endpoint = "";
+      if (mode === "admin" || user?.role === "admin") {
+        // For admin users, we'll update locally since there's no admin edit endpoint
+        setEditSuccess("Profile updated successfully!");
+        
+        // Update local user data
+        const updatedUser = { ...user, ...editData };
+        updateUser(updatedUser);
+        
+        setTimeout(() => {
+          setShowEditModal(false);
+          setShowProfile(false);
+        }, 1500);
+        setLoading(false);
+        return;
+      } else if (user?.role === "company") {
+        endpoint = "http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/editprofilecom.php";
+      } else {
+        endpoint = "http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/editprofilecus.php";
+      }
+      
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editData),
@@ -93,9 +115,15 @@ const UserProfileDropdown = ({ mode = "default" }) => {
 
   const handleLogout = () => {
     setShowProfile(false);
+    setShowEditModal(false);
     logout();
     // Redirect to home page after logout
     navigate("/");
+  };
+
+  const handleEditProfile = () => {
+    setShowEditModal(true);
+    setShowProfile(false); // Close the profile modal when opening edit modal
   };
 
   return (
@@ -118,7 +146,7 @@ const UserProfileDropdown = ({ mode = "default" }) => {
             <div className="font-semibold text-gray-900 text-lg mb-1">{user?.name || "User"}</div>
             <div className="text-sm text-gray-500 mb-4">{user?.email || "user@email.com"}</div>
             <button 
-              onClick={() => setShowEditModal(true)}
+              onClick={handleEditProfile}
               className="w-full text-center px-4 py-2 bg-[#3a5f46] text-white rounded-lg hover:bg-[#2e4d3a] transition-colors mb-2 font-medium"
             >
               Edit Profile
@@ -132,10 +160,14 @@ const UserProfileDropdown = ({ mode = "default" }) => {
           </div>
         )}
       </div>
-      {/* Modal is now outside the avatar container */}
+
+      {/* Edit Profile Modal */}
       {showEditModal && ReactDOM.createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-4 md:p-8 relative overflow-y-auto max-h-[90vh]">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-40">
+          <div 
+            ref={modalRef}
+            className="bg-white rounded-2xl shadow-xl w-full max-w-md p-4 md:p-8 relative overflow-y-auto max-h-[90vh]"
+          >
             <button 
               onClick={() => setShowEditModal(false)} 
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl transition-colors"
@@ -157,8 +189,6 @@ const UserProfileDropdown = ({ mode = "default" }) => {
                   placeholder="Enter your full name"
                 />
               </div>
-              
-
               
               <div>
                 <label className="block text-gray-700 font-medium mb-2">Phone Number</label>
@@ -218,7 +248,7 @@ const UserProfileDropdown = ({ mode = "default" }) => {
       
       {/* Admin Profile Modal */}
       {showProfile && mode === "admin" && ReactDOM.createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black bg-opacity-40">
           <div 
             ref={modalRef}
             className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 flex flex-col items-center"
@@ -227,7 +257,7 @@ const UserProfileDropdown = ({ mode = "default" }) => {
             <div className="font-semibold text-gray-900 text-xl mb-1">{user?.name || "Admin User"}</div>
             <div className="text-sm text-gray-500 mb-6">{user?.email || "admin@email.com"}</div>
             <button 
-              onClick={() => setShowEditModal(true)}
+              onClick={handleEditProfile}
               className="w-full text-center px-4 py-3 bg-[#3a5f46] text-white rounded-lg hover:bg-[#2e4d3a] transition-colors mb-3 font-medium"
             >
               Edit Profile
