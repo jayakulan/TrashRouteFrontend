@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import ContactModal from './ContactForm'
+import Footer from './footer.jsx'
 
 function ScrollToTopButton() {
   const [visible, setVisible] = useState(false);
@@ -688,6 +689,7 @@ function LandingPage() {
 
       {/* Render ContactModal if open */}
       {showContactModal && <ContactModal onClose={() => setShowContactModal(false)} />}
+      <Footer />
     </div>
   )
 }

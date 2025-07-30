@@ -7,12 +7,12 @@ export class CompanyValidator {
       required: true,
       minLength: 2,
       maxLength: 100,
-      pattern: /^[a-zA-Z0-9\s&.,()-]+$/,
+      pattern: /^[a-zA-Z\s&.,()-]+$/,
       messages: {
         required: 'Company name is required',
         minLength: 'Company name must be at least 2 characters long',
         maxLength: 'Company name cannot exceed 100 characters',
-        pattern: 'Company name can only contain letters, numbers, spaces, and basic punctuation'
+        pattern: 'Company name can only contain letters, spaces, and basic punctuation (no numbers allowed)'
       }
     },
     email: {

@@ -6,6 +6,7 @@ import { Search, ChevronDown, Building, Diamond, Menu, X, Users, Truck, MessageS
 import SidebarLinks from "./SidebarLinks"
 import AdminProfileDropdown from "./AdminProfileDropdown"
 import Footer from "../footer";
+import { getCookie } from "../utils/cookieUtils";
 
 const ManageCompanies = () => {
   const [searchQuery, setSearchQuery] = useState("")
@@ -103,7 +104,19 @@ const ManageCompanies = () => {
   const handleAutoRevert = async () => {
     setAutoRevertMsg("Running auto-revert...");
     try {
-      const res = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/auto_revert_pickup_status.php");
+      const token = getCookie('token');
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const res = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/auto_revert_pickup_status.php", {
+        headers,
+        credentials: 'include'
+      });
       const data = await res.json();
       setAutoRevertMsg(data.message || "Done.");
     } catch (err) {
@@ -140,8 +153,8 @@ const ManageCompanies = () => {
         </div>
       </div>
       {/* Main Content Area */}
-      <div className={`flex-1 min-w-0 ml-20 transition-all duration-300 ${sidebarHovered ? 'lg:ml-64' : 'lg:ml-20'}`}>
-        <main>
+      <div className={`flex-1 min-w-0 ml-0 sm:ml-20 transition-all duration-300 ${sidebarHovered ? 'lg:ml-64' : 'lg:ml-20'}`}>
+        <main className="p-4 sm:p-6 md:p-8">
           {/* Page Header */}
           <div className="mb-4 sm:mb-6">
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#3a5f46] mb-2">Manage Companies</h1>

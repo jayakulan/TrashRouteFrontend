@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import AdminProfileDropdown from "./AdminProfileDropdown"
 import { Link } from "react-router-dom"
-import { Diamond, Users, Building, Truck, MessageSquare, BarChart3, Menu, X } from "lucide-react"
+import { Diamond, Users, Building, Truck, MessageSquare, BarChart3, Menu, X, Bell, Mail, Map, MapPin } from "lucide-react"
 import SidebarLinks from "./SidebarLinks";
 import Footer from "../footer";
 
@@ -123,6 +123,34 @@ const AdminDashboard = () => {
       href: "/admin/reports",
       bgColor: "bg-red-50",
       iconColor: "text-red-600",
+    },
+    {
+      title: "Notifications",
+      icon: Bell,
+      href: "/admin/notifications",
+      bgColor: "bg-indigo-50",
+      iconColor: "text-indigo-600",
+    },
+    {
+      title: "Contact Us",
+      icon: Mail,
+      href: "/admin/contactus",
+      bgColor: "bg-teal-50",
+      iconColor: "text-teal-600",
+    },
+    {
+      title: "Routes",
+      icon: Map,
+      href: "/admin/routes",
+      bgColor: "bg-cyan-50",
+      iconColor: "text-cyan-600",
+    },
+    {
+      title: "Route Mapping",
+      icon: MapPin,
+      href: "/admin/route-mapping",
+      bgColor: "bg-pink-50",
+      iconColor: "text-pink-600",
     },
   ]
 
