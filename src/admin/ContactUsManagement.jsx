@@ -1,90 +1,69 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { Search, Bell, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
 import SidebarLinks from "./SidebarLinks";
 import AdminProfileDropdown from "./AdminProfileDropdown";
 import Footer from "../footer";
+import { getCookie } from "../utils/cookieUtils";
 
 const ContactUsManagement = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [activeFilter, setActiveFilter] = useState("All")
   const [currentPage, setCurrentPage] = useState(1)
   const [sidebarHovered, setSidebarHovered] = useState(false);
+  const [contactData, setContactData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const contactData = [
-    {
-      sender: "Sophia Clark",
-      email: "sophia.clark@email.com",
-      subject: "Inquiry about recycling program",
-      status: "New",
-      receivedDate: "2024-03-15",
-    },
-    {
-      sender: "Ethan Bennett",
-      email: "ethan.bennett@email.com",
-      subject: "Partnership opportunity",
-      status: "Read",
-      receivedDate: "2024-03-14",
-    },
-    {
-      sender: "Olivia Carter",
-      email: "olivia.carter@email.com",
-      subject: "Feedback on service",
-      status: "Responded",
-      receivedDate: "2024-03-13",
-    },
-    {
-      sender: "Liam Davis",
-      email: "liam.davis@email.com",
-      subject: "Question about waste disposal",
-      status: "New",
-      receivedDate: "2024-03-12",
-    },
-    {
-      sender: "Ava Evans",
-      email: "ava.evans@email.com",
-      subject: "Complaint about pickup",
-      status: "Read",
-      receivedDate: "2024-03-11",
-    },
-    {
-      sender: "Noah Foster",
-      email: "noah.foster@email.com",
-      subject: "Suggestion for improvement",
-      status: "Responded",
-      receivedDate: "2024-03-10",
-    },
-    {
-      sender: "Isabella Green",
-      email: "isabella.green@email.com",
-      subject: "General inquiry",
-      status: "New",
-      receivedDate: "2024-03-09",
-    },
-    {
-      sender: "Jackson Hayes",
-      email: "jackson.hayes@email.com",
-      subject: "Request for information",
-      status: "Read",
-      receivedDate: "2024-03-08",
-    },
-    {
-      sender: "Mia Ingram",
-      email: "mia.ingram@email.com",
-      subject: "Issue with account",
-      status: "Responded",
-      receivedDate: "2024-03-07",
-    },
-    {
-      sender: "Lucas Johnson",
-      email: "lucas.johnson@email.com",
-      subject: "Support request",
-      status: "New",
-      receivedDate: "2024-03-06",
-    },
-  ]
+  // Fetch contact data from backend
+  useEffect(() => {
+    const fetchContactData = async () => {
+      try {
+        setLoading(true);
+        const token = getCookie("token");
+        if (!token) {
+          setError("Authentication token not found. Please log in again.");
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/managecontactus.php', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Transform the data to match the expected format
+          const transformedData = data.data.map(contact => ({
+            id: contact.id,
+            sender: contact.name,
+            email: contact.email,
+            subject: contact.subject,
+            message: contact.message,
+            status: contact.status,
+            receivedDate: contact.created_at.split(' ')[0], // Extract date part
+            admin_id: contact.admin_id
+          }));
+          setContactData(transformedData);
+        } else {
+          setError(data.error || "Failed to fetch contact data");
+        }
+      } catch (err) {
+        setError("Network error. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContactData();
+  }, []);
 
   const filters = ["All", "New", "Read", "Responded"]
 
@@ -184,55 +163,77 @@ const ContactUsManagement = () => {
             ))}
           </div>
 
-          {/* Contact Table */}
-          <div className="bg-white rounded-lg shadow-lg border border-[#d0e9d6] overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-[#e6f4ea] border-b border-[#d0e9d6]">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">Sender</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">Email</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">Subject</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">Status</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">Received Date</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#e6f4ea]">
-                  {filteredData.map((contact, index) => (
-                    <tr key={index} className="hover:bg-[#f7f9fb]">
-                      <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">{contact.sender}</td>
-                      <td className="px-6 py-4 text-sm text-[#618170]">{contact.email}</td>
-                      <td className="px-6 py-4 text-sm text-[#3a5f46]">{contact.subject}</td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(contact.status)}`}
-                        >
-                          {contact.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-[#618170]">{contact.receivedDate}</td>
-                      <td className="px-6 py-4">
-                        <button
-                          onClick={() => handleView(index)}
-                          className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                        >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {/* Loading State */}
+          {loading && (
+            <div className="bg-white rounded-lg shadow-lg border border-[#d0e9d6] p-8 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3a5f46] mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading contact submissions...</p>
             </div>
+          )}
 
-            {/* Empty State */}
-            {filteredData.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-[#618170]">No contact inquiries found matching your criteria.</p>
+          {/* Error State */}
+          {error && !loading && (
+            <div className="bg-red-50 border-l-4 border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+              <p className="font-semibold">Error loading contact data:</p>
+              <p>{error}</p>
+            </div>
+          )}
+
+          {/* Contact Table */}
+          {!loading && !error && (
+            <div className="bg-white rounded-lg shadow-lg border border-[#d0e9d6] overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                                     <thead className="bg-[#e6f4ea] border-b border-[#d0e9d6]">
+                     <tr>
+                       <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">Sender</th>
+                       <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">Email</th>
+                       <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">Subject</th>
+                       <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">Message</th>
+                       <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">Status</th>
+                       <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">Received Date</th>
+                       <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">Actions</th>
+                     </tr>
+                   </thead>
+                  <tbody className="divide-y divide-[#e6f4ea]">
+                                         {filteredData.map((contact, index) => (
+                       <tr key={index} className="hover:bg-[#f7f9fb]">
+                         <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">{contact.sender}</td>
+                         <td className="px-6 py-4 text-sm text-[#618170]">{contact.email}</td>
+                         <td className="px-6 py-4 text-sm text-[#3a5f46]">{contact.subject}</td>
+                         <td className="px-6 py-4 text-sm text-[#618170] max-w-xs truncate" title={contact.message}>
+                           {contact.message}
+                         </td>
+                         <td className="px-6 py-4">
+                           <span
+                             className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(contact.status)}`}
+                           >
+                             {contact.status}
+                           </span>
+                         </td>
+                         <td className="px-6 py-4 text-sm text-[#618170]">{contact.receivedDate}</td>
+                         <td className="px-6 py-4">
+                           <button
+                             onClick={() => handleView(index)}
+                             className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                           >
+                             View
+                           </button>
+                         </td>
+                       </tr>
+                     ))}
+                  </tbody>
+                </table>
               </div>
-            )}
-          </div>
+
+              {/* Empty State */}
+              {filteredData.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-[#618170]">No contact inquiries found matching your criteria.</p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Pagination */}
           <div className="mt-6 flex justify-center items-center space-x-2">

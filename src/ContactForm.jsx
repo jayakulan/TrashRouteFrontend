@@ -1,6 +1,16 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 
 function ContactModal({ onClose }) {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState('');
+  const [submitError, setSubmitError] = useState('');
+
   // Close modal when clicking outside the content
   const modalRef = useRef();
   useEffect(() => {
@@ -12,6 +22,59 @@ function ContactModal({ onClose }) {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [onClose]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitMessage('');
+    setSubmitError('');
+
+    try {
+      console.log('Submitting contact form with data:', formData);
+      
+      const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/contactus.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      console.log('Response status:', response.status);
+      const data = await response.json();
+      console.log('Response data:', data);
+
+      if (data.success) {
+        setSubmitMessage(data.message);
+        // Clear form on success
+        setFormData({
+          name: '',
+          email: '',
+          subject: '',
+          message: ''
+        });
+        // Close modal after 2 seconds
+        setTimeout(() => {
+          onClose();
+        }, 2000);
+      } else {
+        setSubmitError(data.message || 'Failed to send message. Please try again.');
+      }
+    } catch (error) {
+      console.error('Contact form submission error:', error);
+      setSubmitError('Network error. Please check your connection and try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -27,12 +90,66 @@ function ContactModal({ onClose }) {
         {/* Left: Form */}
         <div className="flex-1 bg-gray-50 rounded-lg p-6 flex flex-col">
           <div className="font-semibold text-xl mb-4">Send us a Message</div>
-          <form className="flex flex-col gap-4">
-            <input type="text" placeholder="Name *" className="border rounded px-4 py-2 bg-white" required />
-            <input type="email" placeholder="Email *" className="border rounded px-4 py-2 bg-white" required />
-            <input type="text" placeholder="Subject *" className="border rounded px-4 py-2 bg-white" required />
-            <textarea placeholder="Message *" className="border rounded px-4 py-2 bg-white min-h-[80px]" required />
-            <button type="submit" className="mt-2 bg-[#3a5f46] text-white font-semibold py-2 rounded shadow hover:bg-[#2e4d3a] transition">Send Message</button>
+          
+          {/* Success/Error Messages */}
+          {submitMessage && (
+            <div className="mb-4 p-3 rounded bg-green-100 text-green-800 font-semibold text-center">
+              {submitMessage}
+            </div>
+          )}
+          {submitError && (
+            <div className="mb-4 p-3 rounded bg-red-100 text-red-800 font-semibold text-center">
+              {submitError}
+            </div>
+          )}
+
+          <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+            <input 
+              type="text" 
+              name="name"
+              placeholder="Name *" 
+              className="border rounded px-4 py-2 bg-white" 
+              required 
+              value={formData.name}
+              onChange={handleInputChange}
+            />
+            <input 
+              type="email" 
+              name="email"
+              placeholder="Email *" 
+              className="border rounded px-4 py-2 bg-white" 
+              required 
+              value={formData.email}
+              onChange={handleInputChange}
+            />
+            <input 
+              type="text" 
+              name="subject"
+              placeholder="Subject *" 
+              className="border rounded px-4 py-2 bg-white" 
+              required 
+              value={formData.subject}
+              onChange={handleInputChange}
+            />
+            <textarea 
+              name="message"
+              placeholder="Message *" 
+              className="border rounded px-4 py-2 bg-white min-h-[80px]" 
+              required 
+              value={formData.message}
+              onChange={handleInputChange}
+            />
+            <button 
+              type="submit" 
+              disabled={isSubmitting}
+              className={`mt-2 font-semibold py-2 rounded shadow transition ${
+                isSubmitting 
+                  ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
+                  : 'bg-[#3a5f46] text-white hover:bg-[#2e4d3a]'
+              }`}
+            >
+              {isSubmitting ? 'Sending...' : 'Send Message'}
+            </button>
           </form>
         </div>
         {/* Right: Contact Info */}

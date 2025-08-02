@@ -607,7 +607,7 @@ const RouteMap = () => {
                 <span className="font-bold text-[#3a5f46]">{collectedCount} of {totalCount} customers collected</span>
             </div>
             <button
-              onClick={() => alert("Route completed!")}
+              onClick={() => navigate("/company-waste-prefer")}
               disabled={collectedCount !== totalCount}
               className={`px-8 py-3 rounded-full font-bold text-lg flex items-center gap-2 shadow transition-colors duration-200
                 ${collectedCount === totalCount
@@ -660,6 +660,14 @@ const RouteMap = () => {
                 setFeedbackMessage('');
                 setFeedbackError('');
                 try {
+                  // Get token first
+                  const token = getCookie("token");
+                  if (!token) {
+                    setFeedbackError("Authentication token not found. Please log in again.");
+                    setFeedbackSubmitting(false);
+                    return;
+                  }
+                  
                   // OTP verification if pickup is completed
                   if (feedback.pickup_completed) {
                     if (!feedback.entered_otp) {
@@ -669,7 +677,10 @@ const RouteMap = () => {
                     }
                     const otpResponse = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/verifyotpcus.php", {
                       method: "POST",
-                      headers: { "Content-Type": "application/json" },
+                      headers: { 
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + token
+                      },
                       body: JSON.stringify({
                         request_id: feedbackHousehold.request_id,
                         entered_otp: feedback.entered_otp
@@ -697,9 +708,13 @@ const RouteMap = () => {
                     comment: feedback.comment,
                     entered_otp: feedback.entered_otp
                   };
+                  
                   const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/company_feedback.php", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: { 
+                      "Content-Type": "application/json",
+                      "Authorization": "Bearer " + token
+                    },
                     body: JSON.stringify(payload)
                   });
                   const data = await response.json();

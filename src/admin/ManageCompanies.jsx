@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { Search, ChevronDown, Building, Diamond, Menu, X, Users, Truck, MessageSquare, BarChart3 } from "lucide-react"
 import SidebarLinks from "./SidebarLinks"
@@ -11,65 +11,55 @@ import { getCookie } from "../utils/cookieUtils";
 const ManageCompanies = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [sidebarHovered, setSidebarHovered] = useState(false);
+  const [companiesData, setCompaniesData] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [deletingCompany, setDeletingCompany] = useState(null)
   const [filters, setFilters] = useState({
     status: "All Status",
-    type: "All Types",
-    location: "All Locations",
   })
   const [autoRevertMsg, setAutoRevertMsg] = useState("");
 
-  const companiesData = [
-    {
-      id: "#001",
-      name: "Green Solutions Inc.",
-      email: "contact@greensolutions.com",
-      phone: "0768304047",
-      location: "New York, NY",
-      status: "Active",
-      type: "Waste Management",
-      rating: 4.5,
-    },
-    {
-      id: "#002",
-      name: "EcoWaste Management",
-      email: "info@ecowaste.com",
-      phone: "0768304047",
-      location: "Los Angeles, CA",
-      status: "Active",
-      type: "Recycling",
-      rating: 4.2,
-    },
-    {
-      id: "#003",
-      name: "RecyclePro",
-      email: "hello@recyclepro.com",
-      phone: "0768304047",
-      location: "Chicago, IL",
-      status: "Pending",
-      type: "Waste Management",
-      rating: 3.8,
-    },
-    {
-      id: "#004",
-      name: "WasteAway Ltd.",
-      email: "contact@wasteaway.com",
-      phone: "0768304047",
-      location: "Houston, TX",
-      status: "Suspended",
-      type: "Recycling",
-      rating: 2.1,
-    },
-    {
-      id: "#005",
-      name: "CleanEarth Services",
-      email: "info@cleanearth.com",
-      phone: "0768304047",
-      location: "Phoenix, AZ",
-      status: "Active",
-      type: "Waste Management",
-      rating: 4.7,
-    },
-  ]
+  // Fetch companies data from API
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        setLoading(true)
+        const token = getCookie('token');
+        const headers = {
+          'Content-Type': 'application/json'
+        };
+        
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/managecompanies.php', {
+          headers,
+          credentials: 'include'
+        })
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
+        const result = await response.json()
+        
+        if (result.success) {
+          setCompaniesData(result.data)
+        } else {
+          throw new Error(result.error || 'Failed to fetch companies')
+        }
+      } catch (err) {
+        console.error('Error fetching companies:', err)
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCompanies()
+  }, [])
 
   const filteredCompanies = companiesData.filter(
     (company) =>
@@ -96,9 +86,52 @@ const ManageCompanies = () => {
     // Handle edit company logic
   }
 
-  const handleDeleteCompany = (companyId) => {
-    console.log("Delete company:", companyId)
-    // Handle delete company logic
+  const handleDeleteCompany = async (companyId) => {
+    try {
+      setDeletingCompany(companyId);
+      
+      const token = getCookie('token');
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch(`http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/deletecompanies.php?action=delete`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          companyId: companyId
+        }),
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Update the company status to 'Disabled' in the local state
+        setCompaniesData(prevCompanies => 
+          prevCompanies.map(company => 
+            company.id === companyId 
+              ? { ...company, status: 'Disabled' }
+              : company
+          )
+        );
+      } else {
+        throw new Error(result.error || 'Failed to disable company');
+      }
+    } catch (err) {
+      console.error('Error disabling company:', err);
+    } finally {
+      setDeletingCompany(null);
+    }
   }
 
   const handleAutoRevert = async () => {
@@ -161,6 +194,30 @@ const ManageCompanies = () => {
             <p className="text-gray-600 text-sm sm:text-base">View and manage registered waste management companies</p>
           </div>
 
+            {/* Loading State */}
+            {loading && (
+              <div className="text-center py-8 sm:py-12">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#3a5f46]"></div>
+                <p className="mt-2 text-[#618170] text-sm sm:text-base">Loading companies...</p>
+              </div>
+            )}
+
+            {/* Error State */}
+            {error && (
+              <div className="text-center py-8 sm:py-12">
+                <p className="text-red-600 text-sm sm:text-base">Error: {error}</p>
+                <button 
+                  onClick={() => window.location.reload()} 
+                  className="mt-2 bg-[#3a5f46] hover:bg-[#2e4d3a] text-white font-semibold px-4 py-2 rounded-lg shadow transition"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+
+            {/* Content when data is loaded */}
+            {!loading && !error && (
+              <>
             {/* Search Bar */}
             <div className="mb-4 sm:mb-6">
               <div className="relative max-w-2xl">
@@ -178,41 +235,19 @@ const ManageCompanies = () => {
             {/* Filters */}
             <div className="mb-4 sm:mb-6 lg:mb-8">
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                {Object.entries(filters).map(([key, value]) => (
-                  <div key={key} className="relative flex-1">
-                    <select
-                      value={value}
-                      onChange={(e) => handleFilterChange(key, e.target.value)}
-                      className="w-full px-3 sm:px-4 py-2 sm:py-2 bg-white border border-[#d0e9d6] rounded-lg text-[#3a5f46] font-semibold focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] appearance-none pr-8 sm:pr-10 text-sm shadow"
-                    >
-                      <option value={value}>{value}</option>
-                      {key === "status" && (
-                        <>
-                          <option value="Active">Active</option>
-                          <option value="Pending">Pending</option>
-                          <option value="Suspended">Suspended</option>
-                        </>
-                      )}
-                      {key === "type" && (
-                        <>
-                          <option value="Waste Management">Waste Management</option>
-                          <option value="Recycling">Recycling</option>
-                          <option value="Composting">Composting</option>
-                        </>
-                      )}
-                      {key === "location" && (
-                        <>
-                          <option value="New York, NY">New York, NY</option>
-                          <option value="Los Angeles, CA">Los Angeles, CA</option>
-                          <option value="Chicago, IL">Chicago, IL</option>
-                          <option value="Houston, TX">Houston, TX</option>
-                          <option value="Phoenix, AZ">Phoenix, AZ</option>
-                        </>
-                      )}
-                    </select>
-                    <ChevronDown className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-[#3a5f46] pointer-events-none" />
-                  </div>
-                ))}
+                <div className="relative flex-1">
+                  <select
+                    value={filters.status}
+                    onChange={(e) => handleFilterChange("status", e.target.value)}
+                    className="w-full px-3 sm:px-4 py-2 sm:py-2 bg-white border border-[#d0e9d6] rounded-lg text-[#3a5f46] font-semibold focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] appearance-none pr-8 sm:pr-10 text-sm shadow"
+                  >
+                    <option value="All Status">All Status</option>
+                    <option value="Active">Active</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Suspended">Suspended</option>
+                  </select>
+                  <ChevronDown className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-[#3a5f46] pointer-events-none" />
+                </div>
               </div>
             </div>
 
@@ -228,7 +263,7 @@ const ManageCompanies = () => {
                       <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Phone</th>
                       <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Location</th>
                       <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Status</th>
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Rating</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">ComRegno</th>
                       <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46]">Actions</th>
                     </tr>
                   </thead>
@@ -245,26 +280,19 @@ const ManageCompanies = () => {
                             {company.status}
                           </span>
                         </td>
-                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#3a5f46] font-semibold">{company.rating}/5.0</td>
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#3a5f46] font-semibold">{company.comRegno}</td>
                         <td className="px-3 sm:px-6 py-3 sm:py-4">
                           <div className="flex space-x-2">
                             <button
-                              onClick={() => handleViewCompany(company.id)}
-                              className="bg-[#3a5f46] hover:bg-[#2e4d3a] text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
-                            >
-                              View
-                            </button>
-                            <button
-                              onClick={() => handleEditCompany(company.id)}
-                              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
-                            >
-                              Edit
-                            </button>
-                            <button
                               onClick={() => handleDeleteCompany(company.id)}
-                              className="bg-red-600 hover:bg-red-700 text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
+                              disabled={deletingCompany === company.id}
+                              className={`font-semibold px-3 py-1 rounded-full shadow transition text-xs ${
+                                deletingCompany === company.id
+                                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                  : 'bg-red-600 hover:bg-red-700 text-white'
+                              }`}
                             >
-                              Delete
+                              {deletingCompany === company.id ? 'Disabling...' : 'Disable'}
                             </button>
                           </div>
                         </td>
@@ -294,6 +322,8 @@ const ManageCompanies = () => {
             </button>
             {autoRevertMsg && (
               <div className="mt-2 text-sm text-green-700">{autoRevertMsg}</div>
+            )}
+              </>
             )}
           </main>
           <Footer admin={true} />
