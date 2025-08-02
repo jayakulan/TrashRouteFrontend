@@ -58,7 +58,7 @@ const WastePreferences = () => {
     setResult(null)
     try {
       const token = getCookie("token"); // or localStorage.getItem("token")
-      console.log("JWT token:", token); // Debug: check the value
+      console.log("JWT token exists:", !!token); // Debug: check if token exists (not the actual token)
 
       const res = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/Companywasteprefer.php", {
         method: "POST",

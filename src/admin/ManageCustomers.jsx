@@ -17,7 +17,6 @@ const ManageCustomers = () => {
   const [deletingCustomer, setDeletingCustomer] = useState(null)
   const [filters, setFilters] = useState({
     status: "All Status",
-    location: "All Locations",
   })
   const [sidebarHovered, setSidebarHovered] = useState(false);
 
@@ -88,13 +87,6 @@ const ManageCustomers = () => {
   }
 
   const handleDeleteCustomer = async (customerId) => {
-    // Show confirmation dialog
-    const isConfirmed = window.confirm(`Are you sure you want to delete customer ${customerId}? This action cannot be undone.`);
-    
-    if (!isConfirmed) {
-      return;
-    }
-
     try {
       setDeletingCustomer(customerId);
       
@@ -124,19 +116,19 @@ const ManageCustomers = () => {
       const result = await response.json();
       
       if (result.success) {
-        // Remove the deleted customer from the local state
+        // Update the customer status to 'Disabled' in the local state
         setCustomersData(prevCustomers => 
-          prevCustomers.filter(customer => customer.id !== customerId)
+          prevCustomers.map(customer => 
+            customer.id === customerId 
+              ? { ...customer, status: 'Disabled' }
+              : customer
+          )
         );
-        
-        // Show success message
-        alert(`Customer ${customerId} has been deleted successfully.`);
       } else {
-        throw new Error(result.error || 'Failed to delete customer');
+        throw new Error(result.error || 'Failed to disable customer');
       }
     } catch (err) {
-      console.error('Error deleting customer:', err);
-      alert(`Error deleting customer: ${err.message}`);
+      console.error('Error disabling customer:', err);
     } finally {
       setDeletingCustomer(null);
     }
@@ -146,6 +138,8 @@ const ManageCustomers = () => {
     switch (status) {
       case "Active":
         return "bg-green-100 text-green-800"
+      case "Pending":
+        return "bg-yellow-100 text-yellow-800"
       case "Inactive":
         return "bg-gray-100 text-gray-800"
       case "Suspended":
@@ -222,33 +216,19 @@ const ManageCustomers = () => {
             {/* Filters */}
             <div className="mb-4 sm:mb-6 lg:mb-8">
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                {Object.entries(filters).map(([key, value]) => (
-                  <div key={key} className="relative flex-1">
-                    <select
-                      value={value}
-                      onChange={(e) => handleFilterChange(key, e.target.value)}
-                      className="w-full px-3 sm:px-4 py-2 sm:py-2 bg-white border border-[#d0e9d6] rounded-lg text-[#3a5f46] font-semibold focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] appearance-none pr-8 sm:pr-10 text-sm shadow"
-                    >
-                      <option value={value}>{value}</option>
-                      {key === "status" && (
-                        <>
-                          <option value="Active">Active</option>
-                              <option value="Disabled">Disabled</option>
-                        </>
-                      )}
-                      {key === "location" && (
-                        <>
-                          <option value="New York, NY">New York, NY</option>
-                          <option value="Los Angeles, CA">Los Angeles, CA</option>
-                          <option value="Chicago, IL">Chicago, IL</option>
-                          <option value="Houston, TX">Houston, TX</option>
-                          <option value="Phoenix, AZ">Phoenix, AZ</option>
-                        </>
-                      )}
-                    </select>
-                    <ChevronDown className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-[#3a5f46] pointer-events-none" />
-                  </div>
-                ))}
+                <div className="relative flex-1">
+                  <select
+                    value={filters.status}
+                    onChange={(e) => handleFilterChange("status", e.target.value)}
+                    className="w-full px-3 sm:px-4 py-2 sm:py-2 bg-white border border-[#d0e9d6] rounded-lg text-[#3a5f46] font-semibold focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] appearance-none pr-8 sm:pr-10 text-sm shadow"
+                  >
+                    <option value="All Status">All Status</option>
+                    <option value="Active">Active</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Disabled">Disabled</option>
+                  </select>
+                  <ChevronDown className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-[#3a5f46] pointer-events-none" />
+                </div>
               </div>
             </div>
 
@@ -285,18 +265,6 @@ const ManageCustomers = () => {
                         <td className="px-3 sm:px-6 py-3 sm:py-4">
                           <div className="flex space-x-2">
                             <button
-                              onClick={() => handleViewCustomer(customer.id)}
-                              className="bg-[#3a5f46] hover:bg-[#2e4d3a] text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
-                            >
-                              View
-                            </button>
-                            <button
-                              onClick={() => handleEditCustomer(customer.id)}
-                              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
-                            >
-                              Edit
-                            </button>
-                            <button
                               onClick={() => handleDeleteCustomer(customer.id)}
                                   disabled={deletingCustomer === customer.id}
                                   className={`font-semibold px-3 py-1 rounded-full shadow transition text-xs ${
@@ -305,7 +273,7 @@ const ManageCustomers = () => {
                                       : 'bg-red-600 hover:bg-red-700 text-white'
                                   }`}
                             >
-                                  {deletingCustomer === customer.id ? 'Deleting...' : 'Delete'}
+                                  {deletingCustomer === customer.id ? 'Disabling...' : 'Disable'}
                             </button>
                           </div>
                         </td>

@@ -1,99 +1,67 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { Search, Bell, Diamond } from "lucide-react"
 import SidebarLinks from "./SidebarLinks";
 import Footer from "../footer";
 import AdminProfileDropdown from "./AdminProfileDropdown";
+import { getCookie } from "../utils/cookieUtils";
 
 const RoutesManagement = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("All")
   const [sidebarHovered, setSidebarHovered] = useState(false);
+  const [routesData, setRoutesData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const routesData = [
-    {
-      routeId: "RT-2023-001",
-      assignedCompany: "GreenCycle Solutions",
-      customers: 150,
-      acceptanceStatus: "Accepted",
-      timestamp: "2023-08-15",
-      disabledStatus: "Enabled",
-    },
-    {
-      routeId: "RT-2023-002",
-      assignedCompany: "WasteAway Inc.",
-      customers: 200,
-      acceptanceStatus: "Pending",
-      timestamp: "2023-08-16",
-      disabledStatus: "Enabled",
-    },
-    {
-      routeId: "RT-2023-003",
-      assignedCompany: "EcoDisposal Ltd.",
-      customers: 120,
-      acceptanceStatus: "Rejected",
-      timestamp: "2023-08-17",
-      disabledStatus: "Disabled",
-    },
-    {
-      routeId: "RT-2023-004",
-      assignedCompany: "GreenCycle Solutions",
-      customers: 180,
-      acceptanceStatus: "Accepted",
-      timestamp: "2023-08-18",
-      disabledStatus: "Enabled",
-    },
-    {
-      routeId: "RT-2023-005",
-      assignedCompany: "WasteAway Inc.",
-      customers: 220,
-      acceptanceStatus: "Pending",
-      timestamp: "2023-08-19",
-      disabledStatus: "Enabled",
-    },
-    {
-      routeId: "RT-2023-006",
-      assignedCompany: "EcoDisposal Ltd.",
-      customers: 140,
-      acceptanceStatus: "Accepted",
-      timestamp: "2023-08-20",
-      disabledStatus: "Enabled",
-    },
-    {
-      routeId: "RT-2023-007",
-      assignedCompany: "GreenCycle Solutions",
-      customers: 160,
-      acceptanceStatus: "Rejected",
-      timestamp: "2023-08-21",
-      disabledStatus: "Disabled",
-    },
-    {
-      routeId: "RT-2023-008",
-      assignedCompany: "WasteAway Inc.",
-      customers: 210,
-      acceptanceStatus: "Accepted",
-      timestamp: "2023-08-22",
-      disabledStatus: "Enabled",
-    },
-    {
-      routeId: "RT-2023-009",
-      assignedCompany: "EcoDisposal Ltd.",
-      customers: 130,
-      acceptanceStatus: "Pending",
-      timestamp: "2023-08-23",
-      disabledStatus: "Enabled",
-    },
-    {
-      routeId: "RT-2023-010",
-      assignedCompany: "GreenCycle Solutions",
-      customers: 170,
-      acceptanceStatus: "Accepted",
-      timestamp: "2023-08-24",
-      disabledStatus: "Enabled",
-    },
-  ]
+  // Fetch routes data from backend
+  useEffect(() => {
+    const fetchRoutesData = async () => {
+      try {
+        setLoading(true);
+        const token = getCookie("token");
+        if (!token) {
+          setError("Authentication token not found. Please log in again.");
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/manageRoute.php', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Transform the data to match the expected format
+          const transformedData = data.data.map(route => ({
+            routeId: String(route.route_id), // Ensure routeId is a string
+            assignedCompany: route.company_name || 'Unknown Company',
+            customers: route.no_of_customers || 0,
+            acceptanceStatus: route.is_accepted || 'Pending',
+            timestamp: route.generated_at || '',
+            disabledStatus: route.is_disabled || 'Enabled',
+            routeDetails: route.route_details || ''
+          }));
+          setRoutesData(transformedData);
+        } else {
+          setError(data.error || "Failed to fetch routes data");
+        }
+      } catch (err) {
+        setError("Network error. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRoutesData();
+  }, []);
 
   const filteredRoutes = routesData.filter((route) => {
     const matchesSearch =
@@ -191,76 +159,94 @@ const RoutesManagement = () => {
               ))}
             </div>
           </div>
-          {/* Routes Table */}
-          <div className="bg-white rounded-lg shadow-lg border border-[#d0e9d6] overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-[#e6f4ea] border-b border-[#d0e9d6]">
-                  <tr>
-                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Route ID</th>
-                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Assigned Company</th>
-                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase"># Customers</th>
-                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Acceptance Status</th>
-                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Timestamp</th>
-                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Disabled Status</th>
-                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46]">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#e6f4ea]">
-                  {filteredRoutes.map((route, index) => (
-                    <tr key={index} className="hover:bg-[#f7f9fb]">
-                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-[#2e4d3a]">{route.routeId}</td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#3a5f46] font-semibold">{route.assignedCompany}</td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170]">{route.customers}</td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getAcceptanceStatusColor(route.acceptanceStatus)}`}
-                        >
-                          {route.acceptanceStatus}
-                        </span>
-                      </td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170]">{route.timestamp}</td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getDisabledStatusColor(route.disabledStatus)}`}
-                        >
-                          {route.disabledStatus}
-                        </span>
-                      </td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4">
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleViewEditDelete(route.routeId, "View")}
-                            className="bg-[#3a5f46] hover:bg-[#2e4d3a] text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
-                          >
-                            View
-                          </button>
-                          <button
-                            onClick={() => handleViewEditDelete(route.routeId, "Edit")}
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleViewEditDelete(route.routeId, "Delete")}
-                            className="bg-red-600 hover:bg-red-700 text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {/* Loading State */}
+          {loading && (
+            <div className="bg-white rounded-lg shadow-lg border border-[#d0e9d6] p-8 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3a5f46] mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading routes...</p>
             </div>
-            {/* Empty State */}
-            {filteredRoutes.length === 0 && (
-              <div className="text-center py-8 sm:py-12">
-                <p className="text-[#618170] text-sm sm:text-base">No routes found matching your criteria.</p>
+          )}
+
+          {/* Error State */}
+          {error && !loading && (
+            <div className="bg-red-50 border-l-4 border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+              <p className="font-semibold">Error loading routes data:</p>
+              <p>{error}</p>
+            </div>
+          )}
+
+          {/* Routes Table */}
+          {!loading && !error && (
+            <div className="bg-white rounded-lg shadow-lg border border-[#d0e9d6] overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-[#e6f4ea] border-b border-[#d0e9d6]">
+                    <tr>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Route ID</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Assigned Company</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase"># Customers</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Acceptance Status</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Timestamp</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Disabled Status</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46]">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#e6f4ea]">
+                    {filteredRoutes.map((route, index) => (
+                      <tr key={index} className="hover:bg-[#f7f9fb]">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-[#2e4d3a]">{route.routeId}</td>
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#3a5f46] font-semibold">{route.assignedCompany}</td>
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170]">{route.customers}</td>
+                        <td className="px-3 sm:px-6 py-3 sm:py-4">
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getAcceptanceStatusColor(route.acceptanceStatus)}`}
+                          >
+                            {route.acceptanceStatus}
+                          </span>
+                        </td>
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170]">{route.timestamp}</td>
+                        <td className="px-3 sm:px-6 py-3 sm:py-4">
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getDisabledStatusColor(route.disabledStatus)}`}
+                          >
+                            {route.disabledStatus}
+                          </span>
+                        </td>
+                        <td className="px-3 sm:px-6 py-3 sm:py-4">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handleViewEditDelete(route.routeId, "View")}
+                              className="bg-[#3a5f46] hover:bg-[#2e4d3a] text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
+                            >
+                              View
+                            </button>
+                            <button
+                              onClick={() => handleViewEditDelete(route.routeId, "Edit")}
+                              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleViewEditDelete(route.routeId, "Delete")}
+                              className="bg-red-600 hover:bg-red-700 text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            )}
-          </div>
+              {/* Empty State */}
+              {filteredRoutes.length === 0 && (
+                <div className="text-center py-8 sm:py-12">
+                  <p className="text-[#618170] text-sm sm:text-base">No routes found matching your criteria.</p>
+                </div>
+              )}
+            </div>
+          )}
           {/* Results Count */}
           <div className="mt-4 text-xs sm:text-sm text-[#618170]">
             Showing {filteredRoutes.length} of {routesData.length} routes
