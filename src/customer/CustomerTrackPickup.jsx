@@ -7,6 +7,7 @@ import UserProfileDropdown from "./UserProfileDropdown";
 import CustomerNotification from "./CustomerNotification";
 import Footer from "../footer.jsx";
 import CustomerHeader from "./CustomerHeader";
+import { getCookie } from "../utils/cookieUtils";
 
 const wasteTypes = [
   { key: "plastics", label: "Plastics" },
@@ -25,15 +26,7 @@ const steps = [
 const statusLabels = ["Completed", "Completed", "In Progress", "Upcoming"];
 const statusColors = ["text-blue-500", "text-blue-500", "text-blue-500", "text-blue-400"];
 
-// Simulate progress for each waste type
-const progressByType = {
-  plastics: 2, // 0-based index: 0=first step, 1=second, etc.
-  paper: 1,
-  glass: 3,
-  metal: 0,
-};
-
-function ZigzagTimeline({ steps, currentStep }) {
+function ZigzagTimeline({ steps, currentStep, isBlinking = false }) {
   return (
     <div className="relative flex flex-col items-center w-full max-w-xl mx-auto">
       {/* Center vertical line */}
@@ -43,14 +36,18 @@ function ZigzagTimeline({ steps, currentStep }) {
           const isLeft = idx % 2 === 0;
           const isCompleted = idx < currentStep;
           const isCurrent = idx === currentStep;
+          const shouldBlink = isBlinking && (idx === 1 || idx === 2); // Blink for Scheduled and Ongoing
+          
           // Animation classes
           const slideClass = isLeft ? `animate-slide-in-left` : `animate-slide-in-right`;
+          const blinkClass = shouldBlink ? 'animate-pulse' : '';
           const delayStyle = { animationDelay: `${0.15 * idx}s` };
+          
           return (
             <div key={idx} className={`relative flex w-full items-center justify-${isLeft ? "start" : "end"}`}> 
               {/* Step card */}
               <div
-                className={`w-[80%] sm:w-[340px] rounded-xl shadow p-5 border flex flex-col items-${isLeft ? "end" : "start"} ${slideClass} ${isCurrent ? 'glow-current bg-[#e6f4ea] border-l-8 border-[#3a5f46] relative' : 'bg-white'}`}
+                className={`w-[80%] sm:w-[340px] rounded-xl shadow p-5 border flex flex-col items-${isLeft ? "end" : "start"} ${slideClass} ${isCurrent ? 'glow-current bg-[#e6f4ea] border-l-8 border-[#3a5f46] relative' : 'bg-white'} ${blinkClass}`}
                 style={{
                   marginLeft: isLeft ? 0 : "auto",
                   marginRight: isLeft ? "auto" : 0,
@@ -76,110 +73,221 @@ function ZigzagTimeline({ steps, currentStep }) {
   );
 }
 
-// Animations (add to global CSS if not present)
-// .animate-slide-in-left { animation: slide-in-left 0.7s cubic-bezier(.68,-0.55,.27,1.55); }
-// .animate-slide-in-right { animation: slide-in-right 0.7s cubic-bezier(.68,-0.55,.27,1.55); }
-// @keyframes slide-in-left { 0% { opacity: 0; transform: translateX(-40px); } 100% { opacity: 1; transform: translateX(0); } }
-// @keyframes slide-in-right { 0% { opacity: 0; transform: translateX(40px); } 100% { opacity: 1; transform: translateX(0); } }
-
 export default function CustomerTrackPickup() {
   const [selectedWaste, setSelectedWaste] = useState("plastics");
   const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [trackingData, setTrackingData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
-  // Determine notification status and progress based on progressByType
-  const currentStep = progressByType[selectedWaste];
+
+  // Fetch tracking data from backend
+  useEffect(() => {
+    const fetchTrackingData = async () => {
+      try {
+        setLoading(true);
+        
+        // Get the JWT token from cookies
+        const token = getCookie('token');
+        console.log('Token found:', !!token); // Debug log
+        
+        const headers = {
+          'Content-Type': 'application/json',
+        };
+        
+        // Add Authorization header if token exists
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+          console.log('Authorization header added'); // Debug log
+        } else {
+          console.log('No token found, proceeding without Authorization header'); // Debug log
+        }
+        
+        const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Customer/trackPickup.php', {
+          method: 'GET',
+          credentials: 'include',
+          headers: headers,
+        });
+
+        console.log('Response status:', response.status); // Debug log
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            // Handle unauthorized - redirect to login
+            console.log('Unauthorized access, redirecting to login');
+            navigate('/login');
+            return;
+          }
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+          console.log('Tracking data received:', result.data);
+          setTrackingData(result.data);
+          // Set the first available waste type as selected
+          if (result.data.waste_types && Object.keys(result.data.waste_types).length > 0) {
+            const firstWasteType = Object.keys(result.data.waste_types)[0];
+            // Map the backend waste type to frontend key
+            const frontendKey = wasteTypes.find(wt => wt.key.toLowerCase() === firstWasteType.toLowerCase())?.key || firstWasteType.toLowerCase();
+            setSelectedWaste(frontendKey);
+          }
+        } else {
+          throw new Error(result.error || 'Failed to fetch tracking data');
+        }
+      } catch (err) {
+        console.error('Error fetching tracking data:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTrackingData();
+  }, [navigate]);
+
+  // Get current step based on selected waste type and tracking data
+  const getCurrentStep = () => {
+    if (!trackingData || !trackingData.waste_types) {
+      return 0;
+    }
+    
+    // Handle case-insensitive waste type mapping
+    const wasteTypeKey = Object.keys(trackingData.waste_types).find(
+      key => key.toLowerCase() === selectedWaste.toLowerCase()
+    );
+    
+    if (!wasteTypeKey) {
+      return 0;
+    }
+    
+    return trackingData.waste_types[wasteTypeKey].current_step || 0;
+  };
+
+  const currentStep = getCurrentStep();
   const isCompleted = currentStep === 3;
+  
+  // Only blink for Scheduled and Ongoing when status is "Accepted"
+  const wasteTypeKey = trackingData?.waste_types ? Object.keys(trackingData.waste_types).find(
+    key => key.toLowerCase() === selectedWaste.toLowerCase()
+  ) : null;
+  const currentWasteData = wasteTypeKey ? trackingData.waste_types[wasteTypeKey] : null;
+  const isBlinking = (currentStep === 1 || currentStep === 2) && currentWasteData?.status === 'Accepted';
+
   // Map step to progress percent
   const progressPercents = [25, 50, 75, 100];
 
-  // Notification content for each step
-  const stepNotifications = [
-    {
-      icon: "📝",
-      title: "Request Received",
-      message: (
-        <>
-          Thank you! Your request has been successfully submitted.<br/>
-          We’ll notify you once it’s reviewed or accepted by a company.
-        </>
-      ),
-      progress: 25,
-      stepLabel: "Step 1 of 4 — Request Received",
-      extra: null,
-    },
-    {
-      icon: "📅",
-      title: "Pickup Scheduled",
-      message: (
-        <>
-          Your waste pickup has been scheduled.<br/>
-          <b>Pickup Date:</b> [Date]<br/>
-          <b>Time Slot:</b> [Time Range]<br/>
-          <b>Company:</b> [Company Name]<br/>
-          Next Step: You’ll be notified when the pickup is on the way.
-        </>
-      ),
-      progress: 50,
-      stepLabel: "Step 2 of 4 — Scheduled",
-      extra: null,
-    },
-    {
-      icon: "🚛",
-      title: "Pickup In Progress",
-      message: (
-        <>
-          Your pickup is now on the way!<br/>
-          <b>Company Agent:</b> [Agent Name]<br/>
-          <b>Live Location:</b> [Map or "Tracking Enabled"]<br/>
-          <b>Estimated Arrival:</b> [Time]
-        </>
-      ),
-      progress: 75,
-      stepLabel: "Step 3 of 4 — Ongoing",
-      extra: null,
-    },
-    {
-      icon: "✅",
-      title: "Pickup Completed",
-      message: (
-        <>
-          Your waste was successfully collected.<br/>
-          <b>Collected By:</b> [Company Name / Agent Name]<br/>
-          <b>Date & Time:</b> [Completion Date & Time]<br/>
-          <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center' }}>
-            <button
-              style={{
-                background: '#3a5f46',
-                color: 'white',
-                border: 'none',
-                padding: '0.5rem 1.5rem',
-                borderRadius: '0.5rem',
-                fontWeight: 600,
-                fontSize: '1rem',
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px 0 rgba(58, 95, 70, 0.10)',
-                transition: 'background 0.2s',
-              }}
-              onMouseDown={e => {
-                e.stopPropagation();
-                console.log("Give Feedback clicked");
-                setShowFeedbackPopup(true);
-              }}
-              onMouseOver={e => e.currentTarget.style.background = '#24402e'}
-              onMouseOut={e => e.currentTarget.style.background = '#3a5f46'}
-            >
-              Give Feedback
-            </button>
-          </div>
-        </>
-      ),
-      progress: 100,
-      stepLabel: "Step 4 of 4 — Completed",
-      extra: <span className="text-gray-500 text-sm">Thank you for using our service. You may now rate the experience.</span>,
-    },
-  ];
-  const notification = stepNotifications[currentStep];
+  // Get notification content based on current step
+  const getNotificationContent = () => {
+    // Handle case-insensitive waste type mapping
+    const wasteTypeKey = trackingData?.waste_types ? Object.keys(trackingData.waste_types).find(
+      key => key.toLowerCase() === selectedWaste.toLowerCase()
+    ) : null;
+    
+    const currentWasteData = wasteTypeKey ? trackingData.waste_types[wasteTypeKey] : null;
+    
+    const stepNotifications = [
+      {
+        icon: "📝",
+        title: "Request Received",
+        message: (
+          <>
+            Thank you! Your request has been successfully submitted.<br/>
+            <b>Waste Type:</b> {currentWasteData?.waste_type || 'N/A'}<br/>
+            <b>Quantity:</b> {currentWasteData?.quantity || 'N/A'} kg<br/>
+            <b>Date:</b> {currentWasteData?.timestamp ? new Date(currentWasteData.timestamp).toLocaleDateString() : 'N/A'}<br/>
+            We'll notify you once it's reviewed or accepted by a company.
+          </>
+        ),
+        progress: 25,
+        stepLabel: "Step 1 of 4 — Request Received",
+        extra: null,
+      },
+      {
+        icon: "📅",
+        title: "Pickup Scheduled",
+        message: (
+          <>
+            Your waste pickup has been scheduled.<br/>
+            <b>Waste Type:</b> {currentWasteData?.waste_type || 'N/A'}<br/>
+            <b>Quantity:</b> {currentWasteData?.quantity || 'N/A'} kg<br/>
+            <b>Scheduled Date:</b> {currentWasteData?.timestamp ? new Date(currentWasteData.timestamp).toLocaleDateString() : 'TBD'}<br/>
+            <b>Time Slot:</b> [Time Range]<br/>
+            <b>Company:</b> [Company Name]<br/>
+            Next Step: You'll be notified when the pickup is on the way.
+          </>
+        ),
+        progress: 50,
+        stepLabel: "Step 2 of 4 — Scheduled",
+        extra: null,
+      },
+      {
+        icon: "🚛",
+        title: "Pickup In Progress",
+        message: (
+          <>
+            Your pickup is now on the way!<br/>
+            <b>Waste Type:</b> {currentWasteData?.waste_type || 'N/A'}<br/>
+            <b>Quantity:</b> {currentWasteData?.quantity || 'N/A'} kg<br/>
+            <b>OTP:</b> {currentWasteData?.otp || 'Not generated yet'}<br/>
+            <b>Company Agent:</b> [Agent Name]<br/>
+            <b>Live Location:</b> [Map or "Tracking Enabled"]<br/>
+            <b>Estimated Arrival:</b> [Time]
+          </>
+        ),
+        progress: 75,
+        stepLabel: "Step 3 of 4 — Ongoing",
+        extra: null,
+      },
+      {
+        icon: "✅",
+        title: "Pickup Completed",
+        message: (
+          <>
+            Your waste was successfully collected.<br/>
+            <b>Waste Type:</b> {currentWasteData?.waste_type || 'N/A'}<br/>
+            <b>Quantity:</b> {currentWasteData?.quantity || 'N/A'} kg<br/>
+            <b>Collected By:</b> [Company Name / Agent Name]<br/>
+            <b>Date & Time:</b> {currentWasteData?.timestamp ? new Date(currentWasteData.timestamp).toLocaleString() : 'TBD'}<br/>
+            <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center' }}>
+              <button
+                style={{
+                  background: '#3a5f46',
+                  color: 'white',
+                  border: 'none',
+                  padding: '0.5rem 1.5rem',
+                  borderRadius: '0.5rem',
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px 0 rgba(58, 95, 70, 0.10)',
+                  transition: 'background 0.2s',
+                }}
+                onMouseDown={e => {
+                  e.stopPropagation();
+                  console.log("Give Feedback clicked");
+                  setShowFeedbackPopup(true);
+                }}
+                onMouseOver={e => e.currentTarget.style.background = '#24402e'}
+                onMouseOut={e => e.currentTarget.style.background = '#3a5f46'}
+              >
+                Give Feedback
+              </button>
+            </div>
+          </>
+        ),
+        progress: 100,
+        stepLabel: "Step 4 of 4 — Completed",
+        extra: <span className="text-gray-500 text-sm">Thank you for using our service. You may now rate the experience.</span>,
+      },
+    ];
+
+    return stepNotifications[currentStep] || stepNotifications[0];
+  };
+
+  const notification = getNotificationContent();
 
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
   const bellRef = useRef(null);
@@ -207,7 +315,7 @@ export default function CustomerTrackPickup() {
     };
   }, [showNotificationDropdown]);
 
-  // Remove feedback check: always show red dot if step is completed
+  // Show red dot if step is completed
   const showRedDot = currentStep === 3;
 
   // Custom header with bell button and full nav links
@@ -291,6 +399,85 @@ export default function CustomerTrackPickup() {
 
   const [showThankYouPopup, setShowThankYouPopup] = useState(false);
 
+  // Handle loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#f7f9fb] flex flex-col">
+        <CustomHeaderWithBell
+          onBellClick={() => setShowNotificationDropdown((v) => !v)}
+          showDropdown={showNotificationDropdown}
+          dropdownContent={notificationDropdownContent}
+          bellRef={bellRef}
+          dropdownRef={dropdownRef}
+          showRedDot={showRedDot}
+        />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#3a5f46] mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading pickup tracking data...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Handle error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#f7f9fb] flex flex-col">
+        <CustomHeaderWithBell
+          onBellClick={() => setShowNotificationDropdown((v) => !v)}
+          showDropdown={showNotificationDropdown}
+          dropdownContent={notificationDropdownContent}
+          bellRef={bellRef}
+          dropdownRef={dropdownRef}
+          showRedDot={showRedDot}
+        />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">Error loading tracking data: {error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="bg-[#3a5f46] text-white px-4 py-2 rounded-lg hover:bg-[#2e4d3a] transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Handle no requests state
+  if (!trackingData || !trackingData.has_requests || Object.keys(trackingData.waste_types || {}).length === 0) {
+    return (
+      <div className="min-h-screen bg-[#f7f9fb] flex flex-col">
+        <CustomHeaderWithBell
+          onBellClick={() => setShowNotificationDropdown((v) => !v)}
+          showDropdown={showNotificationDropdown}
+          dropdownContent={notificationDropdownContent}
+          bellRef={bellRef}
+          dropdownRef={dropdownRef}
+          showRedDot={showRedDot}
+        />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-gray-600 mb-4">No pickup requests found.</p>
+            <Link 
+              to="/customer/trash-type" 
+              className="bg-[#3a5f46] text-white px-4 py-2 rounded-lg hover:bg-[#2e4d3a] transition-colors"
+            >
+              Request Pickup
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f7f9fb] flex flex-col">
       {/* Custom header with bell and dropdown */}
@@ -305,19 +492,42 @@ export default function CustomerTrackPickup() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center py-10">
         <div className="flex gap-4 mb-8">
-          {wasteTypes.map((wt) => (
-            <button
-              key={wt.key}
-              className={`px-4 py-2 rounded-lg font-bold transition-colors duration-200 ${selectedWaste === wt.key ? 'bg-[#3a5f46] text-white' : 'bg-[#e5e7eb] text-[#3a5f46]'}`}
-              onClick={() => setSelectedWaste(wt.key)}
-            >
-              {wt.label}
-            </button>
-          ))}
+          {wasteTypes.map((wt) => {
+            // Handle case-insensitive waste type mapping
+            const wasteTypeKey = trackingData?.waste_types ? Object.keys(trackingData.waste_types).find(
+              key => key.toLowerCase() === wt.key.toLowerCase()
+            ) : null;
+            
+            const hasData = wasteTypeKey ? trackingData.waste_types[wasteTypeKey] : null;
+            const isSelected = selectedWaste === wt.key;
+            
+            return (
+              <button
+                key={wt.key}
+                className={`px-4 py-2 rounded-lg font-bold transition-colors duration-200 ${
+                  isSelected 
+                    ? 'bg-[#3a5f46] text-white' 
+                    : hasData 
+                      ? 'bg-[#e5e7eb] text-[#3a5f46] hover:bg-[#d1d5db]' 
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+                onClick={() => hasData && setSelectedWaste(wt.key)}
+                disabled={!hasData}
+              >
+                {wt.label} {hasData && `(${hasData.quantity}kg)`}
+              </button>
+            );
+          })}
         </div>
         <div className="w-full max-w-2xl">
-          <h2 className="text-lg font-bold mb-6 text-center">{wasteTypes.find(wt => wt.key === selectedWaste).label} Pickup Timeline</h2>
-          <ZigzagTimeline steps={steps} currentStep={progressByType[selectedWaste]} />
+          <h2 className="text-lg font-bold mb-6 text-center">
+            {wasteTypes.find(wt => wt.key === selectedWaste)?.label} Pickup Timeline
+          </h2>
+          <ZigzagTimeline 
+            steps={steps} 
+            currentStep={currentStep} 
+            isBlinking={isBlinking}
+          />
         </div>
       </main>
       {/* Feedback Popup Modal */}
@@ -331,7 +541,17 @@ export default function CustomerTrackPickup() {
           alignItems: 'center',
           justifyContent: 'center',
         }}>
-          <FeedbackFormModal onClose={() => setShowFeedbackPopup(false)} onThankYou={() => { setShowFeedbackPopup(false); setShowThankYouPopup(true); }} />
+          <FeedbackFormModal 
+            onClose={() => setShowFeedbackPopup(false)} 
+            onThankYou={() => { setShowFeedbackPopup(false); setShowThankYouPopup(true); }}
+            requestId={(() => {
+              // Handle case-insensitive waste type mapping
+              const wasteTypeKey = trackingData?.waste_types ? Object.keys(trackingData.waste_types).find(
+                key => key.toLowerCase() === selectedWaste.toLowerCase()
+              ) : null;
+              return wasteTypeKey ? trackingData.waste_types[wasteTypeKey]?.request_id : null;
+            })()}
+          />
         </div>
       )}
       {/* Thank You Popup Modal */}
@@ -389,18 +609,66 @@ export default function CustomerTrackPickup() {
 }
 
 // FeedbackFormModal component
-function FeedbackFormModal({ onClose, onThankYou }) {
+function FeedbackFormModal({ onClose, onThankYou, requestId }) {
   const [feedback, setFeedback] = React.useState("");
   const [rating, setRating] = React.useState(5);
   const [submitted, setSubmitted] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Send feedback to backend here if needed
-    setSubmitted(true);
-    setTimeout(() => {
-      if (onThankYou) onThankYou();
-    }, 500);
+    setLoading(true);
+    
+    try {
+      // Get the JWT token from cookies
+      const token = getCookie('token');
+      
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Add Authorization header if token exists
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Customer/submitFeedback.php', {
+        method: 'POST',
+        credentials: 'include',
+        headers: headers,
+        body: JSON.stringify({
+          request_id: requestId,
+          rating: rating,
+          comment: feedback
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          // Handle unauthorized - redirect to login
+          console.log('Unauthorized access, redirecting to login');
+          window.location.href = '/login';
+          return;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setSubmitted(true);
+        setTimeout(() => {
+          if (onThankYou) onThankYou();
+        }, 500);
+      } else {
+        throw new Error(result.error || 'Failed to submit feedback');
+      }
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      alert('Failed to submit feedback. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (submitted) return null;
@@ -465,23 +733,24 @@ function FeedbackFormModal({ onClose, onThankYou }) {
           </div>
           <button
             type="submit"
+            disabled={loading}
             style={{
-              background: '#5E856D',
+              background: loading ? '#ccc' : '#5E856D',
               color: '#fff',
               fontWeight: 600,
               fontSize: '1.1rem',
               border: 'none',
               borderRadius: 8,
               padding: '0.7rem 2.2rem',
-              cursor: 'pointer',
+              cursor: loading ? 'not-allowed' : 'pointer',
               marginTop: 10,
               boxShadow: '0 2px 8px 0 rgba(58, 95, 70, 0.18)',
               transition: 'background 0.2s',
             }}
-            onMouseOver={e => e.currentTarget.style.background = '#466a54'}
-            onMouseOut={e => e.currentTarget.style.background = '#5E856D'}
+            onMouseOver={e => !loading && (e.currentTarget.style.background = '#466a54')}
+            onMouseOut={e => !loading && (e.currentTarget.style.background = '#5E856D')}
           >
-            Submit Feedback
+            {loading ? 'Submitting...' : 'Submit Feedback'}
           </button>
         </form>
     </div>
