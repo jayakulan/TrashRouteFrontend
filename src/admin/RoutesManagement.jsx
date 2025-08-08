@@ -47,7 +47,7 @@ const RoutesManagement = () => {
             acceptanceStatus: route.is_accepted || 'Pending',
             timestamp: route.generated_at || '',
             disabledStatus: route.is_disabled || 'Enabled',
-            routeDetails: route.route_details || ''
+            routeDetails: route.route_details || 'No details available'
           }));
           setRoutesData(transformedData);
         } else {
@@ -66,7 +66,8 @@ const RoutesManagement = () => {
   const filteredRoutes = routesData.filter((route) => {
     const matchesSearch =
       route.routeId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      route.assignedCompany.toLowerCase().includes(searchQuery.toLowerCase())
+      route.assignedCompany.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      route.routeDetails.toLowerCase().includes(searchQuery.toLowerCase())
 
     const matchesTab =
       activeTab === "All" ||
@@ -134,7 +135,7 @@ const RoutesManagement = () => {
               <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-[#3a5f46] w-4 h-4 sm:w-5 sm:h-5" />
               <input
                 type="text"
-                placeholder="Search by Company or Route ID"
+                placeholder="Search by Company, Route ID, or Route Details"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-4 bg-[#e6f4ea] border-0 rounded-lg text-[#2e4d3a] placeholder-[#618170] focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:bg-white transition-colors text-sm sm:text-base shadow"
@@ -188,6 +189,7 @@ const RoutesManagement = () => {
                       <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Acceptance Status</th>
                       <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Timestamp</th>
                       <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Disabled Status</th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Route Details</th>
                       <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46]">Actions</th>
                     </tr>
                   </thead>
@@ -211,6 +213,24 @@ const RoutesManagement = () => {
                           >
                             {route.disabledStatus}
                           </span>
+                        </td>
+                        <td className="px-3 sm:px-6 py-3 sm:py-4">
+                          <div className="max-w-xs">
+                            <p 
+                              className="text-xs sm:text-sm text-[#618170] truncate cursor-help" 
+                              title={route.routeDetails.length > 50 ? route.routeDetails : ''}
+                            >
+                              {route.routeDetails}
+                            </p>
+                            {route.routeDetails.length > 50 && (
+                              <button 
+                                className="text-xs text-[#3a5f46] hover:text-[#2e4d3a] underline mt-1"
+                                onClick={() => alert(route.routeDetails)}
+                              >
+                                View Full Details
+                              </button>
+                            )}
+                          </div>
                         </td>
                         <td className="px-3 sm:px-6 py-3 sm:py-4">
                           <div className="flex space-x-2">
