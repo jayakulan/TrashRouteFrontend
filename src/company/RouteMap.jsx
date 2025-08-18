@@ -1,16 +1,21 @@
+
 "use client"
 
 import { useEffect, useRef, useState } from "react"
 import { Link, useLocation, useParams, useNavigate } from "react-router-dom"
-import { Plus, Minus, Navigation, Check } from "lucide-react"
+import { Plus, Minus, Navigation, Check, Route } from "lucide-react"
 import { GoogleMap, Polyline } from "@react-google-maps/api"
 import UserProfileDropdowncom from "./UserProfileDropdowncom"
 import { useGoogleMaps } from "../components/GoogleMapsProvider"
+import { useMapbox } from "../components/MapboxProvider"
 import { getCookie } from "../utils/cookieUtils"
 import Footer from "../footer.jsx"
+import mapboxgl from 'mapbox-gl'
+import 'mapbox-gl/dist/mapbox-gl.css'
 
 const GOOGLE_MAPS_MAP_ID = "2d11b98e205d938c1f59291f" // Custom Map ID for TrashRoute
 
+// Simple nearest neighbor optimization
 function getOptimizedPath(points) {
   if (points.length === 0) return []
   const visited = Array(points.length).fill(false)
@@ -35,18 +40,60 @@ function getOptimizedPath(points) {
   return path.map(idx => points[idx])
 }
 
+// Mapbox Directions API optimization
+async function getMapboxOptimizedRoute(points) {
+  if (points.length < 2) return points
+  
+  try {
+    const coordinates = points.map(point => `${point.lng},${point.lat}`).join(';')
+    const response = await fetch(
+      `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinates}?geometries=geojson&overview=full&access_token=${mapboxgl.accessToken}`
+    )
+    
+    if (!response.ok) {
+      console.warn('Mapbox Directions API failed, using simple optimization')
+      return getOptimizedPath(points)
+    }
+    
+    const data = await response.json()
+    if (data.routes && data.routes[0]) {
+      return data.routes[0].geometry.coordinates.map(coord => ({
+        lng: coord[0],
+        lat: coord[1]
+      }))
+    }
+  } catch (error) {
+    console.warn('Mapbox optimization failed:', error)
+  }
+  
+  return getOptimizedPath(points)
+}
+
 const RouteMap = () => {
-  const { isLoaded: isGoogleMapsLoaded, loadError: googleMapsError, isLoading: isGoogleMapsLoading } = useGoogleMaps()
+  // Safely get Google Maps context with fallback
+  let googleMapsContext = { isLoaded: false, loadError: null, isLoading: false };
+  try {
+    googleMapsContext = useGoogleMaps();
+  } catch (error) {
+    console.warn('Google Maps provider not available, using Mapbox only');
+  }
+  
+  const { isLoaded: isGoogleMapsLoaded, loadError: googleMapsError, isLoading: isGoogleMapsLoading } = googleMapsContext;
+  const { isLoaded: isMapboxLoaded, loadError: mapboxError, isLoading: isMapboxLoading } = useMapbox();
   const mapRef = useRef(null)
+  const mapboxMapRef = useRef(null)
   const [map, setMap] = useState(null)
+  const [mapboxMap, setMapboxMap] = useState(null)
   const [currentLocation, setCurrentLocation] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [optimizedLocations, setOptimizedLocations] = useState([])
+  const [mapboxRoute, setMapboxRoute] = useState(null)
   const [markers, setMarkers] = useState([])
   const [apiError, setApiError] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [loadingCustomers, setLoadingCustomers] = useState(true)
   const [customersError, setCustomersError] = useState("")
+  const [useMapboxOptimization, setUseMapboxOptimization] = useState(true)
 
   const [households, setHouseholds] = useState([])
 
@@ -70,52 +117,123 @@ const RouteMap = () => {
 
   const navigate = useNavigate();
 
+  // Debug logging for parameters
+  useEffect(() => {
+    console.log('RouteMap component parameters:', {
+      company_id,
+      route_id,
+      waste_type,
+      locationState: location.state,
+      params
+    });
+  }, [company_id, route_id, waste_type, location.state, params]);
+
   // Fetch customer data for this route
   useEffect(() => {
-    // Only fetch if both company_id and route_id are present
-    if (!company_id || !route_id) return;
-    setLoadingCustomers(true);
-    setCustomersError("");
-    
-    const token = getCookie("token");
-    if (!token) {
-      setCustomersError("Authentication token not found. Please log in again.");
-      setLoadingCustomers(false);
-      return;
-    }
-    
-    fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/Routemap.php", {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Authorization": "Bearer " + token
-      },
-      body: `company_id=${company_id}&route_id=${route_id}`,
-    })
-      .then(res => res.json())
-      .then(result => {
+    const fetchCustomerData = async () => {
+      // Only fetch if company_id is present (route_id can be null, backend will find latest)
+      if (!company_id) {
+        console.log('Missing company_id:', { company_id, route_id });
+        setLoadingCustomers(false);
+        return;
+      }
+      
+      setLoadingCustomers(true);
+      setCustomersError("");
+      
+      const token = getCookie("token");
+      if (!token) {
+        setCustomersError("Authentication token not found. Please log in again.");
+        setLoadingCustomers(false);
+        return;
+      }
+      
+      try {
+        console.log('Fetching customer data for:', { company_id, route_id });
+        
+        // Prepare request body - include route_id only if it exists
+        let requestBody = `company_id=${company_id}`;
+        if (route_id) {
+          requestBody += `&route_id=${route_id}`;
+        }
+        
+        const res = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/Routemap.php", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": "Bearer " + token
+          },
+          body: requestBody,
+        });
+        
+        const result = await res.json();
+        console.log('API Response:', result);
+        
         if (result.success) {
           setHouseholds(result.households);
           setCustomersError(""); // Clear error on success
           
           // Create optimized path from customer locations
-          if (result.households.length > 0) {
+          if (result.households && result.households.length > 0) {
             const locations = result.households.map(customer => ({
-              lat: customer.latitude,
-              lng: customer.longitude
+              lat: parseFloat(customer.latitude),
+              lng: parseFloat(customer.longitude)
             }));
-            const optimized = getOptimizedPath(locations);
-            setOptimizedLocations(optimized);
+            
+            console.log('Customer locations:', locations);
+            
+            if (useMapboxOptimization && isMapboxLoaded) {
+              // Use Mapbox optimization
+              const mapboxOptimized = await getMapboxOptimizedRoute(locations);
+              setMapboxRoute(mapboxOptimized);
+              setOptimizedLocations(locations); // Keep original order for markers
+            } else {
+              // Use simple optimization
+              const optimized = getOptimizedPath(locations);
+              setOptimizedLocations(optimized);
+            }
+          } else {
+            console.log('No households found in response');
+            setOptimizedLocations([]);
           }
         } else {
           setCustomersError(result.message || "Failed to fetch customer data");
+          setOptimizedLocations([]);
         }
-      })
-      .catch(err => {
+      } catch (err) {
+        console.error('Error fetching customer data:', err);
         setCustomersError("Network error. Please try again.");
-      })
-      .finally(() => setLoadingCustomers(false));
-  }, [company_id, route_id]);
+        setOptimizedLocations([]);
+      } finally {
+        setLoadingCustomers(false);
+      }
+    };
+    
+    fetchCustomerData();
+  }, [company_id, route_id]); // Keep route_id in dependencies to refetch if it changes
+
+  // Separate useEffect for route optimization when optimization mode changes
+  useEffect(() => {
+    if (households.length > 0) {
+      const locations = households.map(customer => ({
+        lat: parseFloat(customer.latitude),
+        lng: parseFloat(customer.longitude)
+      }));
+      
+      if (useMapboxOptimization && isMapboxLoaded) {
+        // Use Mapbox optimization
+        getMapboxOptimizedRoute(locations).then(mapboxOptimized => {
+          setMapboxRoute(mapboxOptimized);
+          setOptimizedLocations(locations); // Keep original order for markers
+        });
+      } else {
+        // Use simple optimization
+        const optimized = getOptimizedPath(locations);
+        setOptimizedLocations(optimized);
+        setMapboxRoute(null);
+      }
+    }
+  }, [useMapboxOptimization, isMapboxLoaded, households]);
 
   const onLoad = (map) => {
     setMap(map)
@@ -151,6 +269,134 @@ const RouteMap = () => {
       map.fitBounds(bounds)
     }
   }
+
+  // Update loading state when data is loaded
+  useEffect(() => {
+    if (!loadingCustomers && households.length > 0) {
+      setIsLoading(false);
+    }
+  }, [loadingCustomers, households.length]);
+
+  // Initialize Mapbox map
+  useEffect(() => {
+    if (isMapboxLoaded && mapboxMapRef.current && !mapboxMap) {
+      console.log('Initializing Mapbox map');
+      const mapboxMapInstance = new mapboxgl.Map({
+        container: mapboxMapRef.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: [79.8612, 6.9271], // Colombo, Sri Lanka
+        zoom: 10
+      });
+
+      mapboxMapInstance.on('load', () => {
+        console.log('Mapbox map loaded');
+        setMapboxMap(mapboxMapInstance);
+        setIsLoading(false);
+      });
+
+      mapboxMapInstance.on('error', (error) => {
+        console.error('Mapbox map error:', error);
+        setApiError(true);
+        setIsLoading(false);
+      });
+    }
+  }, [isMapboxLoaded, mapboxMapRef.current]);
+
+  // Add markers and route to Mapbox map when data is available
+  useEffect(() => {
+    if (mapboxMap && optimizedLocations.length > 0) {
+      console.log('Adding markers to Mapbox map:', optimizedLocations.length);
+      
+      // Clear existing markers
+      const existingMarkers = document.querySelectorAll('.mapboxgl-marker');
+      existingMarkers.forEach(marker => marker.remove());
+      
+      // Add markers for customer locations
+      optimizedLocations.forEach((location, index) => {
+        // Create marker element
+        const markerEl = document.createElement('div');
+        markerEl.className = 'marker';
+        markerEl.style.width = '30px';
+        markerEl.style.height = '30px';
+        markerEl.style.borderRadius = '50%';
+        markerEl.style.backgroundColor = '#3a5f46';
+        markerEl.style.border = '3px solid white';
+        markerEl.style.display = 'flex';
+        markerEl.style.alignItems = 'center';
+        markerEl.style.justifyContent = 'center';
+        markerEl.style.color = 'white';
+        markerEl.style.fontWeight = 'bold';
+        markerEl.style.fontSize = '12px';
+        markerEl.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+        markerEl.textContent = index + 1;
+
+        // Add marker to map
+        new mapboxgl.Marker(markerEl)
+          .setLngLat([location.lng, location.lat])
+          .addTo(mapboxMap);
+      });
+      
+      // Add route if available
+      if (mapboxRoute && mapboxRoute.length > 1) {
+        // Remove existing route source and layer if they exist
+        if (mapboxMap.getSource('route')) {
+          mapboxMap.removeLayer('route');
+          mapboxMap.removeSource('route');
+        }
+        
+        mapboxMap.addSource('route', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString',
+              coordinates: mapboxRoute.map(point => [point.lng, point.lat])
+            }
+          }
+        });
+
+        mapboxMap.addLayer({
+          id: 'route',
+          type: 'line',
+          source: 'route',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#3a5f46',
+            'line-width': 4,
+            'line-opacity': 0.8
+          }
+        });
+      }
+      
+      // Fit bounds to show all markers
+      const bounds = new mapboxgl.LngLatBounds();
+      optimizedLocations.forEach(location => {
+        bounds.extend([location.lng, location.lat]);
+      });
+      mapboxMap.fitBounds(bounds, { padding: 50 });
+    }
+  }, [mapboxMap, optimizedLocations, mapboxRoute]);
+
+  // Update route when mapboxRoute changes
+  useEffect(() => {
+    if (mapboxMap && mapboxRoute && mapboxRoute.length > 1) {
+      const source = mapboxMap.getSource('route');
+      if (source) {
+        source.setData({
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: mapboxRoute.map(point => [point.lng, point.lat])
+          }
+        });
+      }
+    }
+  }, [mapboxMap, mapboxRoute]);
 
   const onError = (error) => {
     console.error("Google Maps API Error:", error)
@@ -196,32 +442,54 @@ const RouteMap = () => {
   }
 
   const handleLocateMe = () => {
-    if (navigator.geolocation && map) {
+    if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         ({ coords }) => {
           const userLoc = { lat: coords.latitude, lng: coords.longitude }
           setCurrentLocation(userLoc)
           
-          new window.google.maps.Marker({
-            position: userLoc,
-            map: map,
-            label: {
-              text: 'You',
-              color: 'white',
-              fontWeight: 'bold'
-            },
-            icon: {
-              path: window.google.maps.SymbolPath.CIRCLE,
-              scale: 10,
-              fillColor: '#34A853',
-              fillOpacity: 1,
-              strokeColor: '#ffffff',
-              strokeWeight: 2
-            }
-          })
-          
-          map.setCenter(userLoc)
-          map.setZoom(14)
+          if (map && window.google && window.google.maps) {
+            // Google Maps
+            new window.google.maps.Marker({
+              position: userLoc,
+              map: map,
+              label: {
+                text: 'You',
+                color: 'white',
+                fontWeight: 'bold'
+              },
+              icon: {
+                path: window.google.maps.SymbolPath.CIRCLE,
+                scale: 10,
+                fillColor: '#34A853',
+                fillOpacity: 1,
+                strokeColor: '#ffffff',
+                strokeWeight: 2
+              }
+            })
+            
+            map.setCenter(userLoc)
+            map.setZoom(14)
+          } else if (mapboxMap) {
+            // Mapbox fallback
+            const markerEl = document.createElement('div');
+            markerEl.className = 'user-marker';
+            markerEl.style.width = '20px';
+            markerEl.style.height = '20px';
+            markerEl.style.borderRadius = '50%';
+            markerEl.style.backgroundColor = '#34A853';
+            markerEl.style.border = '3px solid white';
+            markerEl.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+
+            new mapboxgl.Marker(markerEl)
+              .setLngLat([userLoc.lng, userLoc.lat])
+              .addTo(mapboxMap);
+
+            mapboxMap.flyTo({
+              center: [userLoc.lng, userLoc.lat],
+              zoom: 14
+            });
+          }
         },
         (err) => {
           console.error("Location error:", err)
@@ -254,13 +522,65 @@ const RouteMap = () => {
     }
   }
 
-  const handleZoomIn = () => map && map.setZoom(map.getZoom() + 1)
-  const handleZoomOut = () => map && map.setZoom(map.getZoom() - 1)
+  const handleZoomIn = () => {
+    if (useMapboxOptimization && mapboxMap) {
+      mapboxMap.zoomIn();
+    } else if (map && window.google && window.google.maps) {
+      map.setZoom(map.getZoom() + 1);
+    } else if (mapboxMap) {
+      // Fallback to Mapbox if Google Maps is not available
+      mapboxMap.zoomIn();
+    }
+  }
+  
+  const handleZoomOut = () => {
+    if (useMapboxOptimization && mapboxMap) {
+      mapboxMap.zoomOut();
+    } else if (map && window.google && window.google.maps) {
+      map.setZoom(map.getZoom() - 1);
+    } else if (mapboxMap) {
+      // Fallback to Mapbox if Google Maps is not available
+      mapboxMap.zoomOut();
+    }
+  }
+  
   const handleLocationCenter = () => {
-    if (map && optimizedLocations.length > 0) {
+    if (useMapboxOptimization && mapboxMap && optimizedLocations.length > 0) {
+      const bounds = new mapboxgl.LngLatBounds();
+      optimizedLocations.forEach(location => {
+        bounds.extend([location.lng, location.lat]);
+      });
+      mapboxMap.fitBounds(bounds, { padding: 50 });
+    } else if (map && window.google && window.google.maps && optimizedLocations.length > 0) {
       const bounds = new window.google.maps.LatLngBounds()
       optimizedLocations.forEach(loc => bounds.extend(loc))
       map.fitBounds(bounds)
+    } else if (mapboxMap && optimizedLocations.length > 0) {
+      // Fallback to Mapbox if Google Maps is not available
+      const bounds = new mapboxgl.LngLatBounds();
+      optimizedLocations.forEach(location => {
+        bounds.extend([location.lng, location.lat]);
+      });
+      mapboxMap.fitBounds(bounds, { padding: 50 });
+    }
+  }
+
+  const recalculateRoute = async () => {
+    if (households.length > 0) {
+      const locations = households.map(customer => ({
+        lat: customer.latitude,
+        lng: customer.longitude
+      }));
+      
+      if (useMapboxOptimization && isMapboxLoaded) {
+        const mapboxOptimized = await getMapboxOptimizedRoute(locations);
+        setMapboxRoute(mapboxOptimized);
+        setOptimizedLocations(locations); // Keep original order for markers
+      } else {
+        const optimized = getOptimizedPath(locations);
+        setOptimizedLocations(optimized);
+        setMapboxRoute(null);
+      }
     }
   }
 
@@ -443,8 +763,122 @@ const RouteMap = () => {
           <div className="bg-red-50 border-l-4 border-red-400 text-red-700 px-4 py-3 rounded mb-6">
             <p className="font-semibold">Error loading customers:</p>
             <p>{customersError}</p>
+            <div className="mt-2">
+              <p className="text-sm">Debug Info:</p>
+              <p className="text-xs">Company ID: {company_id || 'Not found'}</p>
+              <p className="text-xs">Route ID: {route_id || 'Not found'}</p>
+              <p className="text-xs">Waste Type: {waste_type || 'Not specified'}</p>
+            </div>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+            >
+              Retry
+            </button>
           </div>
         )}
+
+        {/* No Route ID Warning */}
+        {!route_id && !loadingCustomers && !customersError && (
+          <div className="bg-blue-50 border-l-4 border-blue-400 text-blue-700 px-4 py-3 rounded mb-6">
+            <p className="font-semibold">No Specific Route ID Provided</p>
+            <p>The system will automatically find and display your latest route.</p>
+            <div className="mt-2">
+              <p className="text-sm">Current parameters:</p>
+              <p className="text-xs">Company ID: {company_id || 'Not found'}</p>
+              <p className="text-xs">Route ID: {route_id || 'Will be auto-detected'}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Route Optimization Info */}
+        {optimizedLocations.length > 0 && (
+          <div className="bg-white border rounded-2xl shadow-sm p-6 mb-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-[#3a5f46] flex items-center gap-2">
+                <Route className="w-5 h-5" />
+                Route Optimization
+              </h3>
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-600">
+                  {useMapboxOptimization ? "Mapbox AI Optimization" : "Simple Nearest Neighbor"}
+                </span>
+                <button
+                  onClick={async () => {
+                    setUseMapboxOptimization(!useMapboxOptimization);
+                    setTimeout(() => recalculateRoute(), 100); // Small delay to ensure state update
+                  }}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                    useMapboxOptimization
+                      ? 'bg-[#3a5f46] text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  {useMapboxOptimization ? 'AI Optimized' : 'Simple Mode'}
+                </button>
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-[#f7faf9] p-4 rounded-lg">
+                <div className="text-2xl font-bold text-[#3a5f46]">{optimizedLocations.length}</div>
+                <div className="text-sm text-gray-600">Total Stops</div>
+              </div>
+              <div className="bg-[#f7faf9] p-4 rounded-lg">
+                <div className="text-2xl font-bold text-[#3a5f46]">
+                  {useMapboxOptimization && mapboxRoute ? 'AI Optimized' : 'Sequential'}
+                </div>
+                <div className="text-sm text-gray-600">Route Type</div>
+              </div>
+              <div className="bg-[#f7faf9] p-4 rounded-lg">
+                <div className="text-2xl font-bold text-[#3a5f46]">
+                  {useMapboxOptimization ? 'Real-time' : 'Static'}
+                </div>
+                <div className="text-sm text-gray-600">Traffic Consideration</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Debug Info Panel */}
+        <div className="bg-white border rounded-2xl shadow-sm p-6 mb-6">
+          <h3 className="text-lg font-bold text-[#3a5f46] mb-4">Debug Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p><strong>Company ID:</strong> {company_id || 'Not found'}</p>
+              <p><strong>Route ID:</strong> {route_id || 'Not found'}</p>
+              <p><strong>Waste Type:</strong> {waste_type || 'Not specified'}</p>
+            </div>
+            <div>
+              <p><strong>Loading Customers:</strong> {loadingCustomers ? 'Yes' : 'No'}</p>
+              <p><strong>Households Count:</strong> {households.length}</p>
+              <p><strong>Optimized Locations:</strong> {optimizedLocations.length}</p>
+              <p><strong>Map Loading:</strong> {isLoading ? 'Yes' : 'No'}</p>
+            </div>
+          </div>
+          <div className="mt-4 flex gap-2">
+            <button
+              onClick={() => {
+                console.log('Current state:', {
+                  company_id,
+                  route_id,
+                  households,
+                  optimizedLocations,
+                  loadingCustomers,
+                  isLoading
+                });
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Log State to Console
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
 
         {/* Map Card */}
         <div className="relative bg-white rounded-2xl shadow-xl border border-[#e6f4ea] overflow-hidden mb-10">
@@ -458,6 +892,20 @@ const RouteMap = () => {
             </button>
             <button onClick={handleLocationCenter} className="bg-[#f7faf9] p-3 rounded-full shadow hover:bg-[#e6f4ea] group transition" title="Center">
               <Navigation className="text-[#3a5f46] w-5 h-5 group-hover:scale-110 transition" />
+            </button>
+            <button 
+              onClick={async () => {
+                setUseMapboxOptimization(!useMapboxOptimization);
+                setTimeout(() => recalculateRoute(), 100);
+              }}
+              className={`p-3 rounded-full shadow group transition flex items-center justify-center ${
+                useMapboxOptimization 
+                  ? 'bg-[#3a5f46] text-white' 
+                  : 'bg-[#f7faf9] text-[#3a5f46] hover:bg-[#e6f4ea]'
+              }`}
+              title={useMapboxOptimization ? "Using Mapbox Optimization" : "Using Simple Optimization"}
+            >
+              <Route className="w-5 h-5 group-hover:scale-110 transition" />
             </button>
           </div>
           <button
@@ -479,7 +927,11 @@ const RouteMap = () => {
             </div>
           )}
 
-          {isGoogleMapsLoaded && window.google && window.google.maps && window.google.maps.Map ? (
+          {useMapboxOptimization && isMapboxLoaded ? (
+            // Mapbox Map
+            <div ref={mapboxMapRef} style={mapContainerStyle} />
+          ) : isGoogleMapsLoaded && window.google && window.google.maps && window.google.maps.Map ? (
+            // Google Maps
             <GoogleMap
               mapContainerStyle={mapContainerStyle}
               center={center}
@@ -503,12 +955,19 @@ const RouteMap = () => {
                 />
               )}
             </GoogleMap>
+          ) : isMapboxLoaded ? (
+            // Fallback to Mapbox if Google Maps is not available
+            <div ref={mapboxMapRef} style={mapContainerStyle} />
           ) : (
             <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-20">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3a5f46] mx-auto mb-4"></div>
                 <p className="text-gray-600">
-                  {isGoogleMapsLoading ? "Loading Google Maps..." : "Initializing map..."}
+                  {useMapboxOptimization 
+                    ? (isMapboxLoading ? "Loading Mapbox..." : "Initializing Mapbox map...")
+                    : (isGoogleMapsLoading ? "Loading Google Maps..." : "Initializing map...")
+                  }
+                  {!isMapboxLoaded && !isGoogleMapsLoaded && "Loading map services..."}
                 </p>
               </div>
             </div>
@@ -855,6 +1314,28 @@ const RouteMap = () => {
       )}
       
       <Footer />
+      
+      {/* Mapbox Styles */}
+      <style jsx>{`
+        .mapboxgl-map {
+          border-radius: 16px;
+        }
+        .mapboxgl-ctrl-top-right {
+          top: 20px;
+          right: 20px;
+        }
+        .mapboxgl-ctrl-group {
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .marker {
+          cursor: pointer;
+          transition: transform 0.2s ease;
+        }
+        .marker:hover {
+          transform: scale(1.1);
+        }
+      `}</style>
     </div>
   )
 }

@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom'
+import { MapboxProvider } from './components/MapboxProvider'
 import { GoogleMapsProvider } from './components/GoogleMapsProvider'
-import GoogleMapsErrorBoundary from './components/GoogleMapsErrorBoundary'
+import MapboxErrorBoundary from './components/MapboxErrorBoundary'
 import ProtectedRoute from './components/ProtectedRoute'
 import URLProtection from './components/URLProtection'
 import Login from './Login.jsx'
@@ -108,10 +109,11 @@ function ScrollToTop() {
 
 function App() {
   return (
-    <GoogleMapsErrorBoundary>
+    <MapboxErrorBoundary>
       <GoogleMapsProvider>
-        <ScrollToTop />
-        <Routes>
+        <MapboxProvider>
+          <ScrollToTop />
+          <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<CustomerSignUp />} />
@@ -270,8 +272,9 @@ function App() {
 
           <Route path="/otp-verification" element={<OtpVerification />} />
         </Routes>
+        </MapboxProvider>
       </GoogleMapsProvider>
-    </GoogleMapsErrorBoundary>
+    </MapboxErrorBoundary>
   )
 }
 
