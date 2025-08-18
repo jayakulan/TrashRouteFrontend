@@ -5,46 +5,100 @@ import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Recycle, Search, Plus, Minus, Navigation, Bell } from "lucide-react"
 import UserProfileDropdown from "./UserProfileDropdown"
-
-import { GoogleMap } from '@react-google-maps/api';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import CustomerNotification from "./CustomerNotification";
-import { useGoogleMaps } from "../components/GoogleMapsProvider";
+import { useMapbox } from "../components/MapboxProvider";
 import { getCookie } from "../utils/cookieUtils";
+import { reverseGeocode, geocodeAddress } from "../utils/mapboxUtils";
 import Footer from "../footer.jsx"
 import CustomerHeader from "./CustomerHeader";
 
+// Set Mapbox access token
+mapboxgl.accessToken = "pk.eyJ1IjoidmlzaG5udTA0IiwiYSI6ImNtZThtcnd0bDBiOGsya3FhbzI4cnVmcDUifQ.7-tKIyQsvzMkXIw3CeU0AA";
 
-// --- PlaceAutocompleteInput: Uses the new PlaceAutocompleteElement web component ---
+// --- PlaceAutocompleteInput: Uses Mapbox Geocoding API ---
 function PlaceAutocompleteInput({ onPlaceSelect }) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef(null);
-  useEffect(() => {
-    if (window.customElements && !window.customElements.get('gmpx-place-autocomplete')) {
-      // Optionally, dynamically load the web component if not present
-      const script = document.createElement('script');
-      script.src = 'https://unpkg.com/@googlemaps/places-autocomplete-element/dist/index.min.js';
-      script.async = true;
-      document.body.appendChild(script);
+
+  const searchPlaces = async (query) => {
+    if (query.length < 3) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
     }
-    if (window.google && window.google.maps && window.google.maps.places && inputRef.current) {
-      // Remove any previous autocomplete element
-      inputRef.current.innerHTML = '';
-      const autocompleteEl = document.createElement('gmpx-place-autocomplete');
-      autocompleteEl.setAttribute('style', 'width: 100%;');
-      autocompleteEl.addEventListener('gmpx-placeautocomplete-placechange', (event) => {
-        const place = event.detail;
-        if (onPlaceSelect) onPlaceSelect(place);
+
+    try {
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxgl.accessToken}&country=lk&types=address,poi`
+      );
+      const data = await response.json();
+      
+      if (data.features) {
+        setSuggestions(data.features.slice(0, 5));
+        setShowSuggestions(true);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    searchPlaces(query);
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    const [lng, lat] = suggestion.center;
+    setSearchQuery(suggestion.place_name);
+    setShowSuggestions(false);
+    if (onPlaceSelect) {
+      onPlaceSelect({
+        location: { lat, lng },
+        formatted_address: suggestion.place_name
       });
-      inputRef.current.appendChild(autocompleteEl);
     }
-  }, [onPlaceSelect]);
-  return <div ref={inputRef} style={{ width: '100%' }} />;
+  };
+
+  return (
+    <div className="relative w-full">
+      <div className="relative">
+        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
+        <input
+          ref={inputRef}
+          type="text"
+          value={searchQuery}
+          onChange={handleInputChange}
+          placeholder="Search for a location..."
+          className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3a5f46] focus:border-transparent"
+        />
+      </div>
+      
+      {showSuggestions && suggestions.length > 0 && (
+        <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-60 overflow-y-auto">
+          {suggestions.map((suggestion, index) => (
+            <button
+              key={index}
+              onClick={() => handleSuggestionClick(suggestion)}
+              className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+            >
+              <div className="font-medium text-gray-900">{suggestion.text}</div>
+              <div className="text-sm text-gray-500">{suggestion.place_name}</div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // --- Main Component ---
-const GOOGLE_MAPS_MAP_ID = '2d11b98e205d938c1f59291f'; // Custom Map ID for TrashRoute
-
 const PinLocation = () => {
-  const { isLoaded, loadError: googleMapsError, isLoading: isGoogleMapsLoading } = useGoogleMaps();
+  const { isLoaded, loadError: mapboxError, isLoading: isMapboxLoading } = useMapbox();
   const [coordinates, setCoordinates] = useState({
     latitude: 9.6615, // Jaffna, Sri Lanka
     longitude: 80.0255,
@@ -56,29 +110,38 @@ const PinLocation = () => {
   const [marker, setMarker] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [mapInitialized, setMapInitialized] = useState(false);
   const navigate = useNavigate();
-  const autocompleteInputRef = useRef(null);
-
-  const pickupDetails = {
-    wasteTypes: "Mixed Recyclables, Cardboard",
-    quantities: "2 bags, 3 boxes",
-    totalWeight: "15 kg",
-    location: "123 Elm Street, San Francisco",
-  }
+  const mapContainer = useRef(null);
 
   const handleMapClick = (event) => {
+    const { lng, lat } = event.lngLat;
     setCoordinates({
-      latitude: event.latLng.lat(),
-      longitude: event.latLng.lng(),
+      latitude: lat,
+      longitude: lng,
     });
   }
 
-  const handleZoomIn = () => setMapZoom((z) => Math.min(z + 1, 21));
-  const handleZoomOut = () => setMapZoom((z) => Math.max(z - 1, 2));
+  const handleZoomIn = () => {
+    if (map) {
+      map.zoomIn();
+      setMapZoom(map.getZoom());
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (map) {
+      map.zoomOut();
+      setMapZoom(map.getZoom());
+    }
+  };
+
   const handleLocationCenter = () => {
     if (map) {
-      map.setCenter({ lat: coordinates.latitude, lng: coordinates.longitude });
-      setMapZoom(17);
+      map.flyTo({
+        center: [coordinates.longitude, coordinates.latitude],
+        zoom: 17
+      });
     }
   }
 
@@ -92,8 +155,13 @@ const PinLocation = () => {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
           });
+          if (map) {
+            map.flyTo({
+              center: [position.coords.longitude, position.coords.latitude],
+              zoom: 18
+            });
+          }
           setLoading(false);
-          setMapZoom(18);
         },
         (error) => {
           setMessage({ type: "error", text: "Unable to get your location." });
@@ -144,73 +212,115 @@ const PinLocation = () => {
     }
   };
 
-  // --- AdvancedMarkerElement integration ---
+  // Initialize Mapbox map
   useEffect(() => {
-    if (isLoaded && map && window.google) {
-      // Remove old marker if any
-      if (marker) marker.setMap(null);
-      const newMarker = new window.google.maps.Marker({
-        position: { lat: coordinates.latitude, lng: coordinates.longitude },
-        map,
-        title: "Selected Location",
-        draggable: true,
-        icon: {
-          path: window.google.maps.SymbolPath.CIRCLE,
-          scale: 8,
-          fillColor: '#3a5f46',
-          fillOpacity: 1,
-          strokeColor: '#ffffff',
-          strokeWeight: 2
+    // Wait for the component to be fully mounted and the container to be available
+    const initializeMap = () => {
+      if (mapContainer.current && !mapInitialized && mapboxgl && mapboxgl.Map) {
+        console.log('Initializing Mapbox map...');
+        console.log('Map container:', mapContainer.current);
+        console.log('Mapbox GL available:', !!mapboxgl);
+        console.log('Mapbox Map constructor available:', !!mapboxgl.Map);
+        
+        try {
+          const newMap = new mapboxgl.Map({
+            container: mapContainer.current,
+            style: 'mapbox://styles/mapbox/streets-v12',
+            center: [coordinates.longitude, coordinates.latitude],
+            zoom: mapZoom,
+            attributionControl: false
+          });
+
+          console.log('Map instance created:', newMap);
+
+          // Add navigation controls
+          newMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+          // Add click event
+          newMap.on('click', handleMapClick);
+
+          // Add zoom change event
+          newMap.on('zoom', () => {
+            setMapZoom(newMap.getZoom());
+          });
+
+          // Add load event
+          newMap.on('load', () => {
+            console.log('Map loaded successfully');
+            setMap(newMap);
+            setMapInitialized(true);
+          });
+
+          // Add error event
+          newMap.on('error', (e) => {
+            console.error('Map error:', e);
+          });
+
+          return () => {
+            if (newMap) {
+              newMap.remove();
+            }
+          };
+        } catch (error) {
+          console.error('Error creating map:', error);
+          setMapInitialized(true); // Prevent infinite retries
         }
-      });
-      newMarker.addListener("dragend", (e) => {
+      }
+    };
+
+    // Use a small delay to ensure the DOM is ready
+    const timer = setTimeout(initializeMap, 100);
+    
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [coordinates.longitude, coordinates.latitude, mapZoom, mapInitialized]);
+
+  // Update marker when coordinates change
+  useEffect(() => {
+    if (map && coordinates.latitude && coordinates.longitude) {
+      // Remove old marker
+      if (marker) {
+        marker.remove();
+      }
+
+      // Add new marker
+      const newMarker = new mapboxgl.Marker({
+        color: '#3a5f46',
+        draggable: true
+      })
+        .setLngLat([coordinates.longitude, coordinates.latitude])
+        .addTo(map);
+
+      // Add drag end event
+      newMarker.on('dragend', () => {
+        const lngLat = newMarker.getLngLat();
         setCoordinates({
-          latitude: e.latLng.lat(),
-          longitude: e.latLng.lng(),
+          latitude: lngLat.lat,
+          longitude: lngLat.lng,
         });
       });
+
       setMarker(newMarker);
     }
-    // eslint-disable-next-line
-  }, [isLoaded, map, coordinates]);
+  }, [map, coordinates.latitude, coordinates.longitude]);
 
   // Reverse geocoding to get address from coordinates
   useEffect(() => {
-    if (
-      isLoaded &&
-      window.google &&
-      window.google.maps &&
-      typeof window.google.maps.Geocoder === "function" &&
-      coordinates.latitude &&
-      coordinates.longitude
-    ) {
-      const geocoder = new window.google.maps.Geocoder();
-      geocoder.geocode(
-        { location: { lat: coordinates.latitude, lng: coordinates.longitude } },
-        (results, status) => {
-          if (status === "OK" && results[0]) {
-            setAddress(results[0].formatted_address);
-          } else {
-            setAddress("Address not found");
-          }
-        }
-      );
+    if (coordinates.latitude && coordinates.longitude) {
+      reverseGeocode(coordinates.latitude, coordinates.longitude)
+        .then(address => {
+          setAddress(address);
+        })
+        .catch(error => {
+          console.error('Reverse geocoding error:', error);
+          setAddress("Address not found");
+        });
     }
-  }, [isLoaded, coordinates]);
+  }, [coordinates]);
 
-  const mapContainerStyle = {
-    width: '100%',
-    height: '380px',
-    borderRadius: '1rem',
-  };
-
-  const center = {
-    lat: coordinates.latitude,
-    lng: coordinates.longitude,
-  };
-
-  // Show error if Google Maps failed to load
-  if (googleMapsError) {
+  // Show error if Mapbox failed to load
+  if (mapboxError) {
     return (
       <div className="min-h-screen bg-gray-50">
         <header className="bg-white border-b">
@@ -232,9 +342,9 @@ const PinLocation = () => {
         <main className="container mx-auto px-8 py-8">
           <div className="bg-white border rounded-2xl shadow-sm p-8 text-center">
             <div className="text-6xl mb-4">🗺️</div>
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">Google Maps API Error</h3>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">Mapbox API Error</h3>
             <p className="text-gray-500 mb-4">
-              Failed to load Google Maps API. Please refresh the page.
+              Failed to load Mapbox API. Please refresh the page.
             </p>
             <button 
               onClick={() => window.location.reload()} 
@@ -290,24 +400,25 @@ const PinLocation = () => {
           )}
           {/* Map Card */}
           <div className="relative bg-white rounded-2xl shadow border overflow-hidden" style={{ minHeight: 380 }}>
-            {/* Floating Search Bar with PlaceAutocompleteElement */}
+            {/* Floating Search Bar */}
             <div className="absolute top-6 left-6 right-32 z-10">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                {isLoaded && (
-                  <PlaceAutocompleteInput
-                    onPlaceSelect={place => {
-                      if (place && place.location) {
-                        setCoordinates({
-                          latitude: place.location.lat,
-                          longitude: place.location.lng,
-                        });
-                        setSearchQuery(place.formatted_address || "");
-                      }
-                    }}
-                  />
-                )}
-              </div>
+              <PlaceAutocompleteInput
+                onPlaceSelect={place => {
+                  if (place && place.location) {
+                    setCoordinates({
+                      latitude: place.location.lat,
+                      longitude: place.location.lng,
+                    });
+                    setSearchQuery(place.formatted_address || "");
+                    if (map) {
+                      map.flyTo({
+                        center: [place.location.lng, place.location.lat],
+                        zoom: 17
+                      });
+                    }
+                  }
+                }}
+              />
             </div>
             {/* Map Controls */}
             <div className="absolute top-6 right-6 z-10 flex flex-col space-y-2">
@@ -324,34 +435,27 @@ const PinLocation = () => {
                 <Navigation className="w-5 h-5 text-blue-600" />
               </button>
             </div>
-            {/* Google Map Integration */}
-            <div style={{ width: '100%', height: 380 }}>
-              {(isGoogleMapsLoading || !isLoaded || !window.google || !window.google.maps || !window.google.maps.Map) && (
+            {/* Mapbox Map */}
+            <div style={{ width: '100%', height: 380, position: 'relative' }}>
+              {!map && (
                 <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-20">
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3a5f46] mx-auto mb-4"></div>
-                    <p className="text-gray-600">
-                      {isGoogleMapsLoading ? "Loading Google Maps..." : "Initializing map..."}
-                    </p>
+                    <p className="text-gray-600">Loading map...</p>
                   </div>
                 </div>
               )}
-              {isLoaded && window.google && window.google.maps && window.google.maps.Map && (
-                <GoogleMap
-                  mapContainerStyle={mapContainerStyle}
-                  center={center}
-                  zoom={mapZoom}
-                  onClick={handleMapClick}
-                  mapId={GOOGLE_MAPS_MAP_ID} // Pass the Map ID here for Advanced Markers
-                  options={{
-                    mapTypeId: 'roadmap',
-                    streetViewControl: true,
-                    fullscreenControl: true,
-                    zoomControl: false
-                  }}
-                  onLoad={setMap}
-                />
-              )}
+              <div 
+                ref={mapContainer} 
+                style={{ 
+                  width: '100%', 
+                  height: '100%',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  zIndex: 1
+                }} 
+              />
             </div>
           </div>
           {/* Coordinates Card - below the map */}
@@ -365,7 +469,6 @@ const PinLocation = () => {
               <div className="text-gray-700 text-sm mt-2">
                 <span className="font-medium">Address:</span> {address}
               </div>
-              {/* Static map preview removed as per request */}
             </div>
           </div>
           {/* Next Button - Centered below coordinates card */}
@@ -397,12 +500,6 @@ const PinLocation = () => {
       </main>
       
       <Footer />
-      {/*
-        IMPORTANT: For PlaceAutocompleteElement and AdvancedMarkerElement to work,
-        add these to your public/index.html (or equivalent):
-        <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_KEY&libraries=places,marker"></script>
-        <script src="https://unpkg.com/@googlemaps/places-autocomplete-element/dist/index.min.js"></script>
-      */}
     </div>
   )
 }
