@@ -791,94 +791,7 @@ const RouteMap = () => {
           </div>
         )}
 
-        {/* Route Optimization Info */}
-        {optimizedLocations.length > 0 && (
-          <div className="bg-white border rounded-2xl shadow-sm p-6 mb-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-[#3a5f46] flex items-center gap-2">
-                <Route className="w-5 h-5" />
-                Route Optimization
-              </h3>
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-600">
-                  {useMapboxOptimization ? "Mapbox AI Optimization" : "Simple Nearest Neighbor"}
-                </span>
-                <button
-                  onClick={async () => {
-                    setUseMapboxOptimization(!useMapboxOptimization);
-                    setTimeout(() => recalculateRoute(), 100); // Small delay to ensure state update
-                  }}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                    useMapboxOptimization
-                      ? 'bg-[#3a5f46] text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  {useMapboxOptimization ? 'AI Optimized' : 'Simple Mode'}
-                </button>
-              </div>
-            </div>
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-[#f7faf9] p-4 rounded-lg">
-                <div className="text-2xl font-bold text-[#3a5f46]">{optimizedLocations.length}</div>
-                <div className="text-sm text-gray-600">Total Stops</div>
-              </div>
-              <div className="bg-[#f7faf9] p-4 rounded-lg">
-                <div className="text-2xl font-bold text-[#3a5f46]">
-                  {useMapboxOptimization && mapboxRoute ? 'AI Optimized' : 'Sequential'}
-                </div>
-                <div className="text-sm text-gray-600">Route Type</div>
-              </div>
-              <div className="bg-[#f7faf9] p-4 rounded-lg">
-                <div className="text-2xl font-bold text-[#3a5f46]">
-                  {useMapboxOptimization ? 'Real-time' : 'Static'}
-                </div>
-                <div className="text-sm text-gray-600">Traffic Consideration</div>
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* Debug Info Panel */}
-        <div className="bg-white border rounded-2xl shadow-sm p-6 mb-6">
-          <h3 className="text-lg font-bold text-[#3a5f46] mb-4">Debug Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <p><strong>Company ID:</strong> {company_id || 'Not found'}</p>
-              <p><strong>Route ID:</strong> {route_id || 'Not found'}</p>
-              <p><strong>Waste Type:</strong> {waste_type || 'Not specified'}</p>
-            </div>
-            <div>
-              <p><strong>Loading Customers:</strong> {loadingCustomers ? 'Yes' : 'No'}</p>
-              <p><strong>Households Count:</strong> {households.length}</p>
-              <p><strong>Optimized Locations:</strong> {optimizedLocations.length}</p>
-              <p><strong>Map Loading:</strong> {isLoading ? 'Yes' : 'No'}</p>
-            </div>
-          </div>
-          <div className="mt-4 flex gap-2">
-            <button
-              onClick={() => {
-                console.log('Current state:', {
-                  company_id,
-                  route_id,
-                  households,
-                  optimizedLocations,
-                  loadingCustomers,
-                  isLoading
-                });
-              }}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Log State to Console
-            </button>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-            >
-              Reload Page
-            </button>
-          </div>
-        </div>
 
         {/* Map Card */}
         <div className="relative bg-white rounded-2xl shadow-xl border border-[#e6f4ea] overflow-hidden mb-10">
@@ -1020,10 +933,7 @@ const RouteMap = () => {
                     <td className="px-6 py-4 text-sm text-gray-600">{h.latitude}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{h.longitude}</td>
                     <td className="px-6 py-4">
-                      <div>
-                        <div className="font-medium">{h.contact}</div>
-                        <div className="text-sm text-gray-500">{h.address}</div>
-                      </div>
+                      <div className="font-medium">{h.contact}</div>
                     </td>
                     <td className="px-6 py-4">{h.notes}</td>
                     <td className="px-6 py-4">
