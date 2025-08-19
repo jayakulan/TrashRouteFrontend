@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { Recycle, Bell } from "lucide-react"
 import UserProfileDropdown from "./UserProfileDropdown"
 import CustomerNotification from "./CustomerNotification"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Footer from "../footer.jsx"
 import CustomerHeader from "./CustomerHeader";
 
@@ -15,6 +15,10 @@ const wasteTypeEmojis = {
   "Plastic Bottles": "🧴",
   "Paper Waste": "📄",
   "Glass Bottles": "🍾",
+  "Glass": "🍾",
+  "Metal": "🔩",
+  "Paper": "📄",
+  "Plastic": "🧴",
 };
 const companyIcons = {
   GreenCycle: "🏭",
@@ -53,49 +57,55 @@ function isToday(dateStr) {
 
 const HistoryLog = () => {
   const [search, setSearch] = useState("")
+  const [historyData, setHistoryData] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const navigate = useNavigate()
-  const historyData = [
-    {
-      date: "July 18, 2024",
-      wasteType: "Plastic Bottles",
-      quantity: "4.5 kg",
-      requestDate: "July 18, 2024, 11:00 AM",
-      pickupStatus: "Missed",
-      company: "PlasticRecycle",
-    },
-    {
-      date: "July 15, 2024",
-      wasteType: "Paper Waste",
-      quantity: "3.4 kg",
-      requestDate: "July 15, 2024, 10:30 AM",
-      pickupStatus: "Completed",
-      company: "PaperCo",
-    },
-    {
-      date: "July 10, 2024",
-      wasteType: "Glass Bottles",
-      quantity: "6.7 kg",
-      requestDate: "July 10, 2024, 12:00 PM",
-      pickupStatus: "Completed",
-      company: "GlassWorks",
-    },
-    {
-      date: "July 5, 2024",
-      wasteType: "Metal",
-      quantity: "7 kg",
-      requestDate: "July 5, 2024, 9:00 AM",
-      pickupStatus: "Completed",
-      company: "EcoGreen",
-    },
-  ];
+
+  // Fetch history data from backend
+  useEffect(() => {
+    const fetchHistoryData = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Customer/historylogs.php', {
+          method: 'GET',
+          credentials: 'include', // Include cookies for session
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const result = await response.json()
+        
+        if (result.success) {
+          setHistoryData(result.data)
+        } else {
+          setError(result.message || 'Failed to fetch history data')
+        }
+      } catch (err) {
+        console.error('Error fetching history data:', err)
+        setError('Failed to load history data. Please try again later.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchHistoryData()
+  }, [])
 
   // Filtered data based on search
   const filteredData = historyData.filter(record => {
     const q = search.toLowerCase();
     return (
-      record.wasteType.toLowerCase().includes(q) ||
-      record.company.toLowerCase().includes(q) ||
-      record.pickupStatus.toLowerCase().includes(q)
+      record.waste_type.toLowerCase().includes(q) ||
+      record.accepted_company.toLowerCase().includes(q) ||
+      record.status.toLowerCase().includes(q)
     );
   });
 
@@ -107,6 +117,47 @@ const HistoryLog = () => {
   const handleCompanyClick = (company) => {
     console.log("Company clicked:", company)
     // Handle company click - could show company profile
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <CustomerHeader />
+        <main className="container mx-auto px-6 py-8 max-w-7xl">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">History Log</h1>
+          </div>
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+            <span className="ml-3 text-gray-600">Loading history...</span>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <CustomerHeader />
+        <main className="container mx-auto px-6 py-8 max-w-7xl">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">History Log</h1>
+          </div>
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+            <p className="text-red-600 mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
   }
 
   return (
@@ -148,12 +199,14 @@ const HistoryLog = () => {
               <tbody className="divide-y divide-green-100">
                 {filteredData.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-8 text-gray-400">No records found.</td>
+                    <td colSpan={6} className="text-center py-8 text-gray-400">
+                      {historyData.length === 0 ? 'No pickup history found.' : 'No records match your search.'}
+                    </td>
                   </tr>
                 ) : (
                   filteredData.map((record, index) => (
                     <tr
-                      key={index}
+                      key={record.request_id}
                       className={`transition-colors duration-150 border-l-4 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} border-transparent hover:bg-green-50 hover:border-green-600 cursor-pointer group`}
                       title="Click to view full pickup details"
                     >
@@ -161,21 +214,21 @@ const HistoryLog = () => {
                         🗓️ {record.date}
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        {(wasteTypeEmojis[record.wasteType] || "♻️") + " " + record.wasteType}
+                        {(wasteTypeEmojis[record.waste_type] || "♻️") + " " + record.waste_type}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         {quantityIcon(record.quantity)} {record.quantity}
                       </td>
                       <td className="px-6 py-4 text-sm text-theme-color">
-                        {record.requestDate}
+                        {record.request_date}
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full border text-xs font-semibold ${statusColors[record.pickupStatus] || ''}`}>
-                          {statusIcons[record.pickupStatus] || ""} {record.pickupStatus}
+                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full border text-xs font-semibold ${statusColors[record.status] || ''}`}>
+                          {statusIcons[record.status] || ""} {record.status}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        {(companyIcons[record.company] || "🏢") + " " + record.company}
+                        {(companyIcons[record.accepted_company] || "🏢") + " " + record.accepted_company}
                       </td>
                     </tr>
                   ))
@@ -193,7 +246,9 @@ const HistoryLog = () => {
         </div>
 
         {/* Results Count */}
-        <div className="mt-4 text-sm text-gray-600">Showing {historyData.length} pickup records</div>
+        <div className="mt-4 text-sm text-gray-600">
+          Showing {filteredData.length} of {historyData.length} pickup records
+        </div>
       </main>
       
       <Footer />
