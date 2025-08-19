@@ -1,84 +1,66 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { Search, ChevronDown, Truck, Diamond, Menu, X, Users, Building, MessageSquare, BarChart3, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react"
 import SidebarLinks from "./SidebarLinks"
 import AdminProfileDropdown from "./AdminProfileDropdown"
 import Footer from "../footer";
+import { getCookie } from "../utils/cookieUtils";
 
 const Requests = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [requestsData, setRequestsData] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [deletingRequest, setDeletingRequest] = useState(null)
   const [filters, setFilters] = useState({
     status: "All Status",
-    priority: "All Priorities",
     location: "All Locations",
   })
   const [sidebarHovered, setSidebarHovered] = useState(false);
 
-  const requestsData = [
-    {
-      id: "#R001",
-      customer: "Emily Carter",
-      company: "Green Solutions Inc.",
-      location: "New York, NY",
-      status: "Pending",
-      priority: "High",
-      requestDate: "2024-03-15",
-      pickupDate: "2024-03-18",
-      wasteType: "Mixed Waste",
-      amount: "50 kg",
-    },
-    {
-      id: "#R002",
-      customer: "Michael Rodriguez",
-      company: "EcoWaste Management",
-      location: "Los Angeles, CA",
-      status: "In Progress",
-      priority: "Medium",
-      requestDate: "2024-03-14",
-      pickupDate: "2024-03-17",
-      wasteType: "Recyclables",
-      amount: "30 kg",
-    },
-    {
-      id: "#R003",
-      customer: "Sarah Johnson",
-      company: "RecyclePro",
-      location: "Chicago, IL",
-      status: "Completed",
-      priority: "Low",
-      requestDate: "2024-03-13",
-      pickupDate: "2024-03-16",
-      wasteType: "Organic Waste",
-      amount: "25 kg",
-    },
-    {
-      id: "#R004",
-      customer: "David Thompson",
-      company: "WasteAway Ltd.",
-      location: "Houston, TX",
-      status: "Cancelled",
-      priority: "High",
-      requestDate: "2024-03-12",
-      pickupDate: "2024-03-15",
-      wasteType: "Hazardous Waste",
-      amount: "15 kg",
-    },
-    {
-      id: "#R005",
-      customer: "Lisa Wang",
-      company: "CleanEarth Services",
-      location: "Phoenix, AZ",
-      status: "Pending",
-      priority: "Medium",
-      requestDate: "2024-03-11",
-      pickupDate: "2024-03-14",
-      wasteType: "Electronic Waste",
-      amount: "40 kg",
-    },
-  ]
+  // Fetch requests data from API
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        setLoading(true)
+        const token = getCookie('token');
+        const headers = {
+          'Content-Type': 'application/json'
+        };
+        
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/manageRequests.php', {
+          headers,
+          credentials: 'include'
+        })
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
+        const result = await response.json()
+        
+        if (result.success) {
+          setRequestsData(result.data)
+        } else {
+          throw new Error(result.error || 'Failed to fetch requests')
+        }
+      } catch (err) {
+        console.error('Error fetching requests:', err)
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchRequests()
+  }, [])
 
   const filteredRequests = requestsData.filter(
     (request) =>
@@ -105,9 +87,48 @@ const Requests = () => {
     // Handle edit request logic
   }
 
-  const handleDeleteRequest = (requestId) => {
-    console.log("Delete request:", requestId)
-    // Handle delete request logic
+  const handleDeleteRequest = async (requestId) => {
+    try {
+      setDeletingRequest(requestId);
+      
+      const token = getCookie('token');
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch(`http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/deleteRequests.php?action=delete`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          requestId: requestId
+        }),
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Remove the deleted request from the local state
+        setRequestsData(prevRequests => 
+          prevRequests.filter(request => request.id !== requestId)
+        );
+      } else {
+        throw new Error(result.error || 'Failed to delete request');
+      }
+    } catch (err) {
+      console.error('Error deleting request:', err);
+    } finally {
+      setDeletingRequest(null);
+    }
   }
 
   const getStatusColor = (status) => {
@@ -125,18 +146,7 @@ const Requests = () => {
     }
   }
 
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case "High":
-        return "bg-red-100 text-red-800"
-      case "Medium":
-        return "bg-yellow-100 text-yellow-800"
-      case "Low":
-        return "bg-green-100 text-green-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
+
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -177,6 +187,30 @@ const Requests = () => {
           <p className="text-gray-600 text-sm sm:text-base">View and manage waste pickup requests</p>
         </div>
 
+            {/* Loading State */}
+            {loading && (
+              <div className="text-center py-8 sm:py-12">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#3a5f46]"></div>
+                <p className="mt-2 text-[#618170] text-sm sm:text-base">Loading requests...</p>
+              </div>
+            )}
+
+            {/* Error State */}
+            {error && (
+              <div className="text-center py-8 sm:py-12">
+                <p className="text-red-600 text-sm sm:text-base">Error: {error}</p>
+                <button 
+                  onClick={() => window.location.reload()} 
+                  className="mt-2 bg-[#3a5f46] hover:bg-[#2e4d3a] text-white font-semibold px-4 py-2 rounded-lg shadow transition"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+
+            {/* Content when data is loaded */}
+            {!loading && !error && (
+              <>
           {/* Search Bar */}
           <div className="mb-4 sm:mb-6">
             <div className="relative max-w-2xl">
@@ -210,13 +244,7 @@ const Requests = () => {
                         <option value="Cancelled">Cancelled</option>
                       </>
                     )}
-                    {key === "priority" && (
-                      <>
-                        <option value="High">High</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Low">Low</option>
-                      </>
-                    )}
+
                     {key === "location" && (
                       <>
                         <option value="New York, NY">New York, NY</option>
@@ -241,14 +269,14 @@ const Requests = () => {
                   <tr>
                     <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Request ID</th>
                     <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Customer</th>
-                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Company</th>
                     <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Location</th>
                     <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Status</th>
-                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Priority</th>
                     <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Request Date</th>
-                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Pickup Date</th>
                     <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Waste Type</th>
                     <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Amount</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Latitude</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Longitude</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">OTP</th>
                     <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46]">Actions</th>
                   </tr>
                 </thead>
@@ -257,7 +285,6 @@ const Requests = () => {
                     <tr key={index} className="hover:bg-[#f7f9fb]">
                       <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-[#2e4d3a]">{request.id}</td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#3a5f46] font-semibold">{request.customer}</td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170]">{request.company}</td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170]">{request.location}</td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4">
                         <div className="flex items-center space-x-1">
@@ -267,23 +294,14 @@ const Requests = () => {
                           </span>
                         </div>
                       </td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(request.priority)}`}>
-                          {request.priority}
-                        </span>
-                      </td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170]">{request.requestDate}</td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170]">{request.pickupDate}</td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170]">{request.wasteType}</td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#3a5f46] font-semibold">{request.amount}</td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170]">{request.latitude || 'N/A'}</td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170]">{request.longitude || 'N/A'}</td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170]">{request.otp || 'N/A'}</td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4">
                         <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleViewRequest(request.id)}
-                            className="bg-[#3a5f46] hover:bg-[#2e4d3a] text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
-                          >
-                            View
-                          </button>
                           <button
                             onClick={() => handleEditRequest(request.id)}
                             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
@@ -292,9 +310,14 @@ const Requests = () => {
                           </button>
                           <button
                             onClick={() => handleDeleteRequest(request.id)}
-                            className="bg-red-600 hover:bg-red-700 text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
+                            disabled={deletingRequest === request.id}
+                            className={`font-semibold px-3 py-1 rounded-full shadow transition text-xs ${
+                              deletingRequest === request.id
+                                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                : 'bg-red-600 hover:bg-red-700 text-white'
+                            }`}
                           >
-                            Delete
+                            {deletingRequest === request.id ? 'Deleting...' : 'Delete'}
                           </button>
                         </div>
                       </td>
@@ -316,6 +339,8 @@ const Requests = () => {
           <div className="mt-4 text-xs sm:text-sm text-[#618170]">
             Showing {filteredRequests.length} of {requestsData.length} requests
           </div>
+              </>
+            )}
         </main>
         <Footer admin={true} />
       </div>
