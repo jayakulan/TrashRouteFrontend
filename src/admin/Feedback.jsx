@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { Search, ChevronDown, Star, Diamond, Bell, Menu, X, Users, Building, Truck, MessageSquare, BarChart3 } from "lucide-react"
 import SidebarLinks from "./SidebarLinks"
@@ -14,47 +14,45 @@ const FeedbackRatings = () => {
     users: "All Users",
     ratings: "All Ratings",
   })
-  const [sidebarHovered, setSidebarHovered] = useState(false);
+  const [sidebarHovered, setSidebarHovered] = useState(false)
+  const [companyFeedback, setCompanyFeedback] = useState([])
+  const [customerFeedback, setCustomerFeedback] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  const feedbackData = [
-    {
-      id: "#12345",
-      user: "Sophia Clark",
-      company: "Green Solutions Inc.",
-      rating: 5,
-      comment: "Excellent service, very professional and efficient.",
-    },
-    {
-      id: "#67890",
-      user: "Ethan Miller",
-      company: "EcoWaste Management",
-      rating: 3,
-      comment: "Service was okay, but pickup was delayed.",
-    },
-    {
-      id: "#24680",
-      user: "Olivia Davis",
-      company: "RecyclePro",
-      rating: 4,
-      comment: "Good communication and timely pickup.",
-    },
-    {
-      id: "#13579",
-      user: "Liam Wilson",
-      company: "WasteAway Ltd.",
-      rating: 1,
-      comment: "Terrible service, pickup never happened.",
-    },
-    {
-      id: "#98765",
-      user: "Ava Brown",
-      company: "Green Solutions Inc.",
-      rating: 5,
-      comment: "Highly recommend, very satisfied with the service.",
-    },
-  ]
+  // Fetch feedback data from database
+  useEffect(() => {
+    const fetchFeedbackData = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/feedback.php')
+        const data = await response.json()
+        
+        if (data.success) {
+          setCompanyFeedback(data.companyFeedback || [])
+          setCustomerFeedback(data.customerFeedback || [])
+        } else {
+          setError(data.error || 'Failed to fetch feedback data')
+        }
+      } catch (err) {
+        setError('Error connecting to server: ' + err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  const filteredFeedback = feedbackData.filter(
+    fetchFeedbackData()
+  }, [])
+
+  const filteredCompanyFeedback = companyFeedback.filter(
+    (item) =>
+      item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.comment.toLowerCase().includes(searchQuery.toLowerCase()),
+  )
+
+  const filteredCustomerFeedback = customerFeedback.filter(
     (item) =>
       item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -83,6 +81,90 @@ const FeedbackRatings = () => {
         <span className="ml-1 sm:ml-2 text-xs sm:text-sm text-gray-600">
           {rating} star{rating !== 1 ? "s" : ""}
         </span>
+      </div>
+    )
+  }
+
+  const renderFeedbackTable = (feedbackData, title, type) => {
+    return (
+      <div className="mb-8">
+        <h2 className="text-lg sm:text-xl font-bold text-[#3a5f46] mb-4">{title}</h2>
+        <div className="bg-white rounded-lg shadow-lg border border-[#d0e9d6] overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-[#e6f4ea] border-b border-[#d0e9d6]">
+                <tr>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Request ID</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">User</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Company</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Rating</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Comment</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46]">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#e6f4ea]">
+                {feedbackData.map((feedback, index) => (
+                  <tr key={`${type}-${index}`} className="hover:bg-[#f7f9fb]">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-[#2e4d3a]">{feedback.id}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#3a5f46]">{feedback.user}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#3a5f46]">{feedback.company}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">{renderStars(feedback.rating)}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170] max-w-xs">
+                      <div className="truncate" title={feedback.comment}>{feedback.comment}</div>
+                    </td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">
+                      <button
+                        onClick={() => handleViewFeedback(feedback.id)}
+                        className="bg-[#3a5f46] hover:bg-[#2e4d3a] text-white font-semibold px-3 py-1.5 rounded-full shadow transition text-xs sm:text-sm"
+                      >
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Empty State */}
+          {feedbackData.length === 0 && (
+            <div className="text-center py-8 sm:py-12">
+              <p className="text-[#618170] text-sm sm:text-base">No {type} feedback found matching your search.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Results Count */}
+        <div className="mt-4 text-xs sm:text-sm text-[#618170]">
+          Showing {feedbackData.length} of {type === 'company' ? companyFeedback.length : customerFeedback.length} {type} feedback entries
+        </div>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#f7f9fb] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3a5f46] mx-auto mb-4"></div>
+          <p className="text-[#3a5f46]">Loading feedback data...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#f7f9fb] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Error: {error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-[#3a5f46] text-white px-4 py-2 rounded-lg hover:bg-[#2e4d3a]"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     )
   }
@@ -164,56 +246,11 @@ const FeedbackRatings = () => {
             </div>
           </div>
 
-          {/* Feedback Table */}
-          <div className="bg-white rounded-lg shadow-lg border border-[#d0e9d6] overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-[#e6f4ea] border-b border-[#d0e9d6]">
-                  <tr>
-                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Request ID</th>
-                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">User</th>
-                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Company</th>
-                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Rating</th>
-                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Comment</th>
-                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46]">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#e6f4ea]">
-                  {filteredFeedback.map((feedback, index) => (
-                    <tr key={index} className="hover:bg-[#f7f9fb]">
-                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-[#2e4d3a]">{feedback.id}</td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#3a5f46]">{feedback.user}</td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#3a5f46]">{feedback.company}</td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4">{renderStars(feedback.rating)}</td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170] max-w-xs">
-                        <div className="truncate" title={feedback.comment}>{feedback.comment}</div>
-                      </td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4">
-                        <button
-                          onClick={() => handleViewFeedback(feedback.id)}
-                          className="bg-[#3a5f46] hover:bg-[#2e4d3a] text-white font-semibold px-3 py-1.5 rounded-full shadow transition text-xs sm:text-sm"
-                        >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          {/* Company Feedback Table */}
+          {renderFeedbackTable(filteredCompanyFeedback, "Company Feedback", "company")}
 
-            {/* Empty State */}
-            {filteredFeedback.length === 0 && (
-              <div className="text-center py-8 sm:py-12">
-                <p className="text-[#618170] text-sm sm:text-base">No feedback found matching your search.</p>
-              </div>
-            )}
-          </div>
-
-          {/* Results Count */}
-          <div className="mt-4 text-xs sm:text-sm text-[#618170]">
-            Showing {filteredFeedback.length} of {feedbackData.length} feedback entries
-          </div>
+          {/* Customer Feedback Table */}
+          {renderFeedbackTable(filteredCustomerFeedback, "Customer Feedback", "customer")}
         </main>
       </div>
     </div>

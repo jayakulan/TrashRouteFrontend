@@ -31,7 +31,7 @@ const statusColors = {
   on_the_way: "text-green-700",
 };
 
-export default function CustomerNotification({ hasNew = true, onViewDetails, notification = defaultNotification, iconOnly = false }) {
+export default function CustomerNotification({ hasNew = true, onViewDetails, notification = defaultNotification, iconOnly = false, mode = "track", wasteTypes = null, onGoNow = null }) {
   const [open, setOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const bellRef = useRef();
@@ -113,85 +113,74 @@ export default function CustomerNotification({ hasNew = true, onViewDetails, not
           marginTop: '0.5rem', // small gap below bell
         }}
       >
-        {/* Greeting/Title */}
-        <div className="flex flex-col items-start mb-2">
-          <span className="text-lg font-semibold text-gray-700 mb-1">{notification.greeting}</span>
-          <span className="text-2xl font-extrabold notif-title-bounce" style={{ color: THEME_GREEN }}>{notification.title}</span>
-        </div>
-        {/* Progress Bar or Badge */}
-        <div className="flex items-center gap-2 mb-1">
-          <Info className="w-4 h-4 text-green-700" />
-          <span className="text-sm font-medium text-green-700">
-            🟢 Status: Step {notification.progressStep} of {notification.progressTotal} — Scheduled
-          </span>
-        </div>
-        <div className="w-full h-2 bg-gray-200 rounded-full mb-2">
-          <div
-            className="h-2 rounded-full transition-all duration-300"
-            style={{ width: progressWidth, background: THEME_GREEN }}
-          ></div>
-        </div>
-        {/* Info Sections */}
-        <div className="flex flex-col gap-2 text-base">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-blue-600 notif-icon-glow" />
-            <span className="font-semibold">Pickup Date:</span>
-            <span>{notification.pickupDate}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-yellow-600 notif-icon-glow" />
-            <span className="font-semibold">Time Window:</span>
-            <span>{notification.pickupTime}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Truck className="w-5 h-5 text-green-700 notif-icon-bounce notif-icon-glow" />
-            <span className="font-semibold">Company:</span>
-            <span>{notification.company}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Receipt className="w-5 h-5 text-gray-600 notif-icon-glow" />
-            <span className="font-semibold">Waste Summary:</span>
-            <span>{notification.wasteSummary}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-green-700 notif-icon-bounce notif-icon-glow" />
-            <span className="font-semibold">Location:</span>
-            <span className="truncate max-w-[10rem]" title={notification.location}>{notification.location}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link2 className="w-5 h-5 text-gray-500 notif-icon-glow" />
-            <span className="font-semibold">Tracking ID:</span>
-            <span className="text-gray-700 font-mono">{notification.trackingId}</span>
-          </div>
-        </div>
-        {/* Status line (optional) */}
-        {notification.statusText && (
-          <div className="flex items-center mb-1 mt-2">
-            <Truck className="w-5 h-5 mr-2 text-green-700 notif-icon-bounce" />
-            <span className={`ml-2 text-base font-semibold`} style={{ color: THEME_GREEN }}>{notification.statusText}</span>
-          </div>
-        )}
-        {/* Assistant message */}
-        <div className="bg-white/80 rounded-lg px-4 py-3 text-gray-700 text-[1rem] shadow-sm border border-gray-100">
-          <span className="font-medium text-green-700">Smart Assistant:</span> {notification.assistantMsg}
-        </div>
         {/* Call-to-Action Button with Tooltip */}
         <div className="relative w-full flex flex-col items-center">
-          <button
-            className="w-full mt-2 py-3 px-6 bg-green-700 hover:bg-green-800 text-white text-lg font-bold rounded-xl shadow-md transition-all duration-200 notif-btn-grow"
-            style={{ background: THEME_GREEN }}
-            onClick={onViewDetails}
-            onMouseEnter={() => setShowTooltip(true)}
-            onMouseLeave={() => setShowTooltip(false)}
-            aria-label="Track Pickup Now"
-          >
-            📦 Track Pickup Now
-          </button>
-          {/* Tooltip */}
-          {showTooltip && (
-            <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-black bg-opacity-90 text-white text-xs rounded-md px-3 py-2 shadow-lg z-50 whitespace-nowrap animate-fade-slide">
-              Click to see full info, company contact & tracking.
-            </div>
+          {mode === "track" ? (
+            <>
+              <button
+                className="w-full mt-2 py-3 px-6 bg-green-700 hover:bg-green-800 text-white text-lg font-bold rounded-xl shadow-md transition-all duration-200 notif-btn-grow"
+                style={{ background: THEME_GREEN }}
+                onClick={onViewDetails}
+                onMouseEnter={() => setShowTooltip(true)}
+                onMouseLeave={() => setShowTooltip(false)}
+                aria-label="Track Pickup Now"
+              >
+                📦 Track Pickup Now
+              </button>
+              {/* Tooltip */}
+              {showTooltip && (
+                <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-black bg-opacity-90 text-white text-xs rounded-md px-3 py-2 shadow-lg z-50 whitespace-nowrap animate-fade-slide">
+                  Click to see full info, company contact & tracking.
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {/* All Waste Types Display */}
+              <div className="w-full mb-4 p-4 bg-white/90 rounded-lg border border-green-200">
+                <h3 className="text-lg font-bold text-green-700 mb-3">Available Waste Types</h3>
+                {wasteTypes && wasteTypes.length > 0 ? (
+                  <div className="space-y-3">
+                    {wasteTypes.map((waste, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm font-medium text-gray-700">{waste.type}</span>
+                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                              waste.status === "Completed" ? "bg-green-100 text-green-700" :
+                              waste.status === "Scheduled" ? "bg-blue-100 text-blue-700" :
+                              waste.status === "Missed" ? "bg-red-100 text-red-700" :
+                              "bg-yellow-100 text-yellow-700"
+                            }`}>
+                              {waste.status}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-500 py-2">No waste types available</div>
+                )}
+                {/* Single Go Now Button for all waste types */}
+                <button
+                  className="w-full mt-3 py-2 px-4 bg-green-700 hover:bg-green-800 text-white text-sm font-bold rounded-lg shadow-md transition-all duration-200 notif-btn-grow"
+                  style={{ background: THEME_GREEN }}
+                  onClick={onGoNow}
+                  onMouseEnter={() => setShowTooltip(true)}
+                  onMouseLeave={() => setShowTooltip(false)}
+                  aria-label="Go to Track Pickup"
+                >
+                  🚀 Go Now
+                </button>
+                {/* Tooltip */}
+                {showTooltip && (
+                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-black bg-opacity-90 text-white text-xs rounded-md px-3 py-2 shadow-lg z-50 whitespace-nowrap animate-fade-slide">
+                    Go to track pickup page.
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
         {notification.status === "completed" && (
