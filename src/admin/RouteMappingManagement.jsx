@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { Search, Bell, Diamond } from "lucide-react"
 import SidebarLinks from "./SidebarLinks";
@@ -12,60 +12,70 @@ const RouteMappingManagement = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [sidebarHovered, setSidebarHovered] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mappingData, setMappingData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const mappingData = [
-    {
-      mappingId: "#12345",
-      routeId: "Route #67890",
-      requestId: "Request #11223",
-      createdAt: "2024-01-15",
-    },
-    {
-      mappingId: "#67890",
-      routeId: "Route #12345",
-      requestId: "Request #44556",
-      createdAt: "2024-02-20",
-    },
-    {
-      mappingId: "#24680",
-      routeId: "Route #98765",
-      requestId: "Request #77889",
-      createdAt: "2024-03-25",
-    },
-    {
-      mappingId: "#13579",
-      routeId: "Route #54321",
-      requestId: "Request #99001",
-      createdAt: "2024-04-30",
-    },
-    {
-      mappingId: "#97531",
-      routeId: "Route #10101",
-      requestId: "Request #22334",
-      createdAt: "2024-05-05",
-    },
-  ]
+  // Fetch data from backend
+  useEffect(() => {
+    fetchMappingData();
+  }, []);
+
+  const fetchMappingData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/route_mapping.php');
+      const result = await response.json();
+      
+      if (result.success) {
+        setMappingData(result.data);
+      } else {
+        setError(result.message || 'Failed to fetch data');
+      }
+    } catch (err) {
+      setError('Error connecting to server');
+      console.error('Error fetching mapping data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredMappings = mappingData.filter(
     (mapping) =>
-      mapping.mappingId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      mapping.routeId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      mapping.requestId.toLowerCase().includes(searchQuery.toLowerCase()),
+      mapping.mapping_id.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
+      mapping.route_id.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
+      mapping.request_id.toString().toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
-  const handleCreateNewMapping = () => {
-    console.log("Create new mapping clicked")
-    // Handle create new mapping logic
+  const handleCreateNewMapping = async () => {
+    // For now, just show an alert - you can implement a modal form later
+    alert("Create new mapping functionality will be implemented");
   }
 
-  const handleEdit = (mappingId) => {
-    console.log("Edit mapping:", mappingId)
-    // Handle edit mapping logic
+  const handleEdit = async (mappingId) => {
+    // For now, just show an alert - you can implement a modal form later
+    alert(`Edit mapping ${mappingId} functionality will be implemented`);
   }
 
-  const handleDelete = (mappingId) => {
-    console.log("Delete mapping:", mappingId)
-    // Handle delete mapping logic
+  const handleDelete = async (mappingId) => {
+    if (window.confirm(`Are you sure you want to delete mapping ${mappingId}?`)) {
+      try {
+        const response = await fetch(`http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/route_mapping.php?mapping_id=${mappingId}`, {
+          method: 'DELETE'
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+          alert('Mapping deleted successfully');
+          fetchMappingData(); // Refresh the data
+        } else {
+          alert(result.message || 'Failed to delete mapping');
+        }
+      } catch (err) {
+        alert('Error deleting mapping');
+        console.error('Error deleting mapping:', err);
+      }
+    }
   }
 
   return (
@@ -132,59 +142,88 @@ const RouteMappingManagement = () => {
               />
             </div>
           </div>
-          {/* Mappings Table */}
-          <div className="bg-white rounded-lg shadow-lg border border-[#d0e9d6] overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-[#e6f4ea] border-b border-[#d0e9d6]">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">Mapping ID</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">Route ID</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">Request ID</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">Created At</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-[#618170] uppercase">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#d0e9d6]">
-                  {filteredMappings.map((mapping, index) => (
-                    <tr key={index} className="hover:bg-[#f7f9fb]">
-                      <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">{mapping.mappingId}</td>
-                      <td className="px-6 py-4 text-sm text-blue-600">{mapping.routeId}</td>
-                      <td className="px-6 py-4 text-sm text-blue-600">{mapping.requestId}</td>
-                      <td className="px-6 py-4 text-sm text-[#618170]">{mapping.createdAt}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex space-x-2 text-sm">
-                          <button
-                            onClick={() => handleEdit(mapping.mappingId)}
-                            className="text-[#3a5f46] hover:text-[#2e4d3a]"
-                          >
-                            Edit
-                          </button>
-                          <span className="text-gray-400">|</span>
-                          <button
-                            onClick={() => handleDelete(mapping.mappingId)}
-                            className="text-[#3a5f46] hover:text-red-600"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {/* Empty State */}
-            {filteredMappings.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-[#618170]">No mappings found matching your search.</p>
+          {/* Loading State */}
+          {loading && (
+            <div className="bg-white rounded-lg shadow-lg border border-[#d0e9d6] p-8">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3a5f46] mx-auto"></div>
+                <p className="mt-4 text-[#618170]">Loading mappings...</p>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && !loading && (
+            <div className="bg-white rounded-lg shadow-lg border border-red-200 p-8">
+              <div className="text-center">
+                <p className="text-red-600 mb-4">{error}</p>
+                <button
+                  onClick={fetchMappingData}
+                  className="bg-[#3a5f46] hover:bg-[#2e4d3a] text-white px-4 py-2 rounded-lg"
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Mappings Table */}
+          {!loading && !error && (
+            <div className="bg-white rounded-lg shadow-lg border border-[#d0e9d6] overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-[#e6f4ea] border-b border-[#d0e9d6]">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">Mapping ID</th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">Route ID</th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">Request ID</th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">Created At</th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-[#618170] uppercase">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#d0e9d6]">
+                    {filteredMappings.map((mapping, index) => (
+                      <tr key={index} className="hover:bg-[#f7f9fb]">
+                        <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">#{mapping.mapping_id}</td>
+                        <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">Route #{mapping.route_id}</td>
+                        <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">Request #{mapping.request_id}</td>
+                        <td className="px-6 py-4 text-sm text-[#618170]">{new Date(mapping.created_at).toLocaleDateString()}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex space-x-2 text-sm">
+                            <button
+                              onClick={() => handleEdit(mapping.mapping_id)}
+                              className="text-[#3a5f46] hover:text-[#2e4d3a]"
+                            >
+                              Edit
+                            </button>
+                            <span className="text-gray-400">|</span>
+                            <button
+                              onClick={() => handleDelete(mapping.mapping_id)}
+                              className="text-[#3a5f46] hover:text-red-600"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {/* Empty State */}
+              {filteredMappings.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-[#618170]">No mappings found matching your search.</p>
+                </div>
+              )}
+            </div>
+          )}
           {/* Results Count */}
-          <div className="mt-4 text-sm text-[#618170]">
-            Showing {filteredMappings.length} of {mappingData.length} mappings
-          </div>
+          {!loading && !error && (
+            <div className="mt-4 text-sm text-[#618170]">
+              Showing {filteredMappings.length} of {mappingData.length} mappings
+            </div>
+          )}
         </main>
         <Footer admin={true} />
       </div>
