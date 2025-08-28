@@ -6,6 +6,7 @@ import UserProfileDropdown from "./UserProfileDropdown"
 import CustomerNotification from "./CustomerNotification"
 import { useState, useEffect } from "react"
 import Footer from "../footer.jsx"
+import { getCookie } from "../utils/cookieUtils"
 import CustomerHeader from "./CustomerHeader";
 
 // Helper functions and icon maps
@@ -69,11 +70,13 @@ const HistoryLog = () => {
         setLoading(true)
         setError(null)
         
+        const token = getCookie('token')
         const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Customer/historylogs.php', {
           method: 'GET',
           credentials: 'include', // Include cookies for session
           headers: {
             'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': 'Bearer ' + token } : {})
           },
         })
 
@@ -238,11 +241,7 @@ const HistoryLog = () => {
           </div>
 
           {/* Empty State (if no data) */}
-          {historyData.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500">No pickup history found.</p>
-            </div>
-          )}
+         
         </div>
 
         {/* Results Count */}
