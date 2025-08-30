@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { Search, Bell } from "lucide-react"
 import SidebarLinks from "./SidebarLinks";
@@ -12,72 +12,71 @@ const NotificationsManagement = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [sidebarHovered, setSidebarHovered] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notificationsData, setNotificationsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const notificationsData = [
-    {
-      title: "System Update",
-      message: "Scheduled maintenance for the server",
-      recipient: "All Users",
-      date: "2024-03-15",
-      status: "Sent",
-    },
-    {
-      title: "New Feature Announcement",
-      message: "Introducing the new recycling guide",
-      recipient: "All Users",
-      date: "2024-03-10",
-      status: "Sent",
-    },
-    {
-      title: "Payment Reminder",
-      message: "Your payment is due",
-      recipient: "Specific Users",
-      date: "2024-03-05",
-      status: "Sent",
-    },
-    {
-      title: "Service Alert",
-      message: "Temporary service disruption in your area",
-      recipient: "Specific Users",
-      date: "2024-02-28",
-      status: "Sent",
-    },
-    {
-      title: "Welcome to EcoCycle",
-      message: "Get started with our services",
-      recipient: "New Users",
-      date: "2024-02-20",
-      status: "Sent",
-    },
-  ]
+  // Fetch data from backend
+  useEffect(() => {
+    fetchNotificationData();
+  }, []);
+
+  const fetchNotificationData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/notification.php');
+      const result = await response.json();
+      
+      if (result.success) {
+        setNotificationsData(result.data);
+      } else {
+        setError(result.message || 'Failed to fetch data');
+      }
+    } catch (err) {
+      setError('Error connecting to server');
+      console.error('Error fetching notification data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredNotifications = notificationsData.filter(
     (notification) =>
-      notification.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      notification.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      notification.recipient.toLowerCase().includes(searchQuery.toLowerCase()),
+      notification.notification_id.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
+      notification.request_id.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
+      notification.customer_id.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
+      notification.company_id.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
+      notification.message.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
-  const handleCreateNotification = () => {
-    console.log("Create notification clicked")
-    // Handle create notification logic
+  const handleCreateNotification = async () => {
+    // For now, just show an alert - you can implement a modal form later
+    alert("Create notification functionality will be implemented");
   }
 
-  const handleView = (notificationIndex) => {
-    console.log("View notification:", notificationIndex)
-    // Handle view notification logic
+  const handleView = async (notificationId) => {
+    // For now, just show an alert - you can implement a modal form later
+    alert(`View notification ${notificationId} functionality will be implemented`);
   }
 
-  const getRecipientColor = (recipient) => {
-    switch (recipient) {
-      case "All Users":
-        return "text-gray-600"
-      case "Specific Users":
-        return "text-blue-600"
-      case "New Users":
-        return "text-green-600"
-      default:
-        return "text-gray-600"
+  const handleDelete = async (notificationId) => {
+    if (window.confirm(`Are you sure you want to delete notification ${notificationId}?`)) {
+      try {
+        const response = await fetch(`http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/notification.php?notification_id=${notificationId}`, {
+          method: 'DELETE'
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+          alert('Notification deleted successfully');
+          fetchNotificationData(); // Refresh the data
+        } else {
+          alert(result.message || 'Failed to delete notification');
+        }
+      } catch (err) {
+        alert('Error deleting notification');
+        console.error('Error deleting notification:', err);
+      }
     }
   }
 
@@ -139,7 +138,7 @@ const NotificationsManagement = () => {
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#3a5f46] w-5 h-5" />
               <input
                 type="text"
-                placeholder="Search notifications"
+                placeholder="Search Notification ID, Request ID, Customer ID, Company ID, or Message"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-12 pr-4 py-4 bg-[#e6f4ea] border-0 rounded-lg text-[#2e4d3a] placeholder-[#618170] focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:bg-white transition-colors"
@@ -147,66 +146,106 @@ const NotificationsManagement = () => {
             </div>
           </div>
 
-          {/* Notifications Table */}
-          <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-[#e6f4ea] border-b border-[#d0e9d6]">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-[#3a5f46]">Title</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-[#3a5f46]">Message</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-[#3a5f46]">Recipient</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-[#3a5f46]">Date</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-[#3a5f46]">Status</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-[#3a5f46]">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#d0e9d6]">
-                  {filteredNotifications.map((notification, index) => (
-                    <tr key={index} className="hover:bg-[#f7f9fb]">
-                      <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">{notification.title}</td>
-                      <td className="px-6 py-4 text-sm text-[#618170] max-w-xs">
-                        <div className="truncate" title={notification.message}>
-                          {notification.message}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`text-sm ${getRecipientColor(notification.recipient)}`}>
-                          {notification.recipient}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-[#618170]">{notification.date}</td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                          {notification.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <button
-                          onClick={() => handleView(index)}
-                          className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                        >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Empty State */}
-            {filteredNotifications.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-[#618170]">No notifications found matching your search.</p>
+          {/* Loading State */}
+          {loading && (
+            <div className="bg-white rounded-lg shadow-lg border border-[#d0e9d6] p-8">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3a5f46] mx-auto"></div>
+                <p className="mt-4 text-[#618170]">Loading notifications...</p>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
+          {/* Error State */}
+          {error && !loading && (
+            <div className="bg-white rounded-lg shadow-lg border border-red-200 p-8">
+              <div className="text-center">
+                <p className="text-red-600 mb-4">{error}</p>
+                <button
+                  onClick={fetchNotificationData}
+                  className="bg-[#3a5f46] hover:bg-[#2e4d3a] text-white px-4 py-2 rounded-lg"
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Notifications Table */}
+          {!loading && !error && (
+            <div className="bg-white rounded-lg shadow-lg border border-[#d0e9d6] overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-[#e6f4ea] border-b border-[#d0e9d6]">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">NOTIFICATION ID</th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">REQUEST ID</th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">CUSTOMER ID</th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">COMPANY ID</th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">MESSAGE</th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">CREATED AT</th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-[#3a5f46] uppercase">STATUS</th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-[#618170] uppercase">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#d0e9d6]">
+                    {filteredNotifications.map((notification, index) => (
+                                             <tr key={index} className="hover:bg-[#f7f9fb]">
+                         <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">{notification.notification_id}</td>
+                         <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">{notification.request_id}</td>
+                         <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">{notification.customer_id}</td>
+                         <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">{notification.company_id}</td>
+                        <td className="px-6 py-4 text-sm text-[#618170] max-w-xs">
+                          <div className="truncate" title={notification.message}>
+                            {notification.message}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-[#618170]">{new Date(notification.created_at).toLocaleDateString()}</td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                            notification.seen === 1 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {notification.seen === 1 ? 'Seen' : 'Unseen'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex space-x-2 text-sm">
+                            <button
+                              onClick={() => handleView(notification.notification_id)}
+                              className="text-[#3a5f46] hover:text-[#2e4d3a]"
+                            >
+                              View
+                            </button>
+                            <span className="text-gray-400">|</span>
+                            <button
+                              onClick={() => handleDelete(notification.notification_id)}
+                              className="text-[#3a5f46] hover:text-red-600"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {/* Empty State */}
+              {filteredNotifications.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-[#618170]">No notifications found matching your search.</p>
+                </div>
+              )}
+            </div>
+          )}
           {/* Results Count */}
-          <div className="mt-4 text-sm text-[#618170]">
-            Showing {filteredNotifications.length} of {notificationsData.length} notifications
-          </div>
+          {!loading && !error && (
+            <div className="mt-4 text-sm text-[#618170]">
+              Showing {filteredNotifications.length} of {notificationsData.length} notifications
+            </div>
+          )}
         </main>
         <Footer admin={true} />
       </div>
