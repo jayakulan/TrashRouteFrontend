@@ -184,9 +184,9 @@ const RouteMappingManagement = () => {
                   <tbody className="divide-y divide-[#d0e9d6]">
                     {filteredMappings.map((mapping, index) => (
                       <tr key={index} className="hover:bg-[#f7f9fb]">
-                        <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">#{mapping.mapping_id}</td>
-                        <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">Route #{mapping.route_id}</td>
-                        <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">Request #{mapping.request_id}</td>
+                        <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">{mapping.mapping_id}</td>
+                        <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">{mapping.route_id}</td>
+                        <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">{mapping.request_id}</td>
                         <td className="px-6 py-4 text-sm text-[#618170]">{new Date(mapping.created_at).toLocaleDateString()}</td>
                         <td className="px-6 py-4">
                           <div className="flex space-x-2 text-sm">
