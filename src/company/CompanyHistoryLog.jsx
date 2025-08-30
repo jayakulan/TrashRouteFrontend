@@ -1,75 +1,16 @@
+import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Recycle } from "lucide-react"
 import UserProfileDropdowncom from "./UserProfileDropdowncom"
 import Footer from "../footer.jsx"
+import CompanyNotifications from "./CompanyNotifications"
+import { getCookie } from "../utils/cookieUtils"
 
 const CompanyHistoryLog = () => {
-  const processingData = [
-    {
-      date: "2024-07-26",
-      wasteType: "Plastic",
-      quantity: "50.5 kg",
-      source: "Factory A",
-      status: "Processed",
-      notes: "Recycled into new products",
-    },
-    {
-      date: "2024-07-25",
-      wasteType: "Paper",
-      quantity: "98.5 kg",
-      source: "Office B",
-      status: "Processed",
-      notes: "Used for cardboard production",
-    },
-    {
-      date: "2024-07-23",
-      wasteType: "Metal",
-      quantity: "25.7 kg",
-      source: "Construction Site D",
-      status: "Processed",
-      notes: "Melted down for reuse",
-    },
-    {
-      date: "2024-07-22",
-      wasteType: "Glass",
-      quantity: "60.2 kg",
-      source: "Residential Area E",
-      status: "Rejected",
-      notes: "Contaminated with non-recyclable materials",
-    },
-    {
-      date: "2024-07-21",
-      wasteType: "Plastic",
-      quantity: "45.3 kg",
-      source: "Factory F",
-      status: "Processed",
-      notes: "Recycled into plastic pellets",
-    },
-    {
-      date: "2024-07-20",
-      wasteType: "Paper",
-      quantity: "90.8 kg",
-      source: "Office G",
-      status: "Processed",
-      notes: "Reprocessed into new paper",
-    },
-    {
-      date: "2024-07-18",
-      wasteType: "Metal",
-      quantity: "30.1 kg",
-      source: "Construction Site I",
-      status: "Processed",
-      notes: "Used in metal fabrication",
-    },
-    {
-      date: "2024-07-17",
-      wasteType: "Glass",
-      quantity: "55.6 kg",
-      source: "Residential Area J",
-      status: "Processed",
-      notes: "Recycled into new glass products",
-    },
-  ]
+  const processingData = []
+  const [rows, setRows] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -106,6 +47,41 @@ const CompanyHistoryLog = () => {
   }
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const token = getCookie("token");
+        const company_id = getCookie("company_id");
+        if (!token || !company_id) {
+          setError("Missing auth cookie(s). Please log in again.");
+          setLoading(false);
+          return;
+        }
+        const res = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/comhistorylogs.php", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": "Bearer " + token
+          },
+          body: `company_id=${company_id}`
+        });
+        const data = await res.json();
+        if (data.success) {
+          setRows(data.data || []);
+        } else {
+          setError(data.message || "Failed to fetch history logs");
+        }
+      } catch (err) {
+        setError("Network error. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHistory();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -149,22 +125,13 @@ const CompanyHistoryLog = () => {
                 <div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
                 <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div>
               </button>
-              {/* Notification Bell Icon */}
-              <button className="relative focus:outline-none" aria-label="Notifications">
-                <svg className="w-6 h-6 text-gray-700 hover:text-gray-900" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-              </button>
+              <CompanyNotifications />
               {/* User Avatar Dropdown */}
               <UserProfileDropdowncom />
             </div>
             {/* Mobile menu button with notification/profile */}
             <div className="md:hidden flex items-center">
-              <button className="relative focus:outline-none" aria-label="Notifications">
-                <svg className="w-6 h-6 text-gray-700 hover:text-gray-900" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-              </button>
+              <CompanyNotifications />
               <UserProfileDropdowncom />
               <button className="ml-2 relative group p-2 rounded-lg transition-all duration-300 hover:bg-[#3a5f46]/10">
                 <div className="w-6 h-0.5 bg-gray-700 group-hover:bg-[#3a5f46] transition-all duration-300 mb-1.5"></div>
@@ -192,35 +159,42 @@ const CompanyHistoryLog = () => {
                   <th className="px-6 py-4 text-left text-sm font-medium text-gray-900">Date</th>
                   <th className="px-6 py-4 text-left text-sm font-medium text-gray-900">Waste Type</th>
                   <th className="px-6 py-4 text-left text-sm font-medium text-gray-900">Quantity</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-900">Source</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-900">Customer Name</th>
                   <th className="px-6 py-4 text-left text-sm font-medium text-gray-900">Status</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-900">Notes</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {processingData.map((record, index) => (
+                {loading && (
+                  <tr>
+                    <td className="px-6 py-6 text-center text-gray-500 text-sm" colSpan={5}>Loading...</td>
+                  </tr>
+                )}
+                {!loading && rows.length === 0 && !error && (
+                  <tr>
+                    <td className="px-6 py-6 text-center text-gray-500 text-sm" colSpan={5}>No history found.</td>
+                  </tr>
+                )}
+                {!loading && error && (
+                  <tr>
+                    <td className="px-6 py-6 text-center text-red-600 text-sm" colSpan={5}>{error}</td>
+                  </tr>
+                )}
+                {!loading && !error && rows.map((record, index) => (
                   <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm text-gray-600">{record.date}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{new Date(record.date).toLocaleString()}</td>
                     <td className="px-6 py-4">
-                      <span className={`text-sm font-medium ${getWasteTypeColor(record.wasteType)}`}>
-                        {record.wasteType}
+                      <span className={`text-sm font-medium ${getWasteTypeColor(record.waste_type)}`}>
+                        {record.waste_type}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{record.quantity}</td>
-                    <td className="px-6 py-4">
-                      <span className={`text-sm ${getSourceColor(record.source)}`}>{record.source}</span>
-                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{record.quantity} kg</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">{record.customer_name}</td>
                     <td className="px-6 py-4">
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(record.status)}`}
                       >
                         {record.status}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600 max-w-xs">
-                      <div className="truncate" title={record.notes}>
-                        {record.notes}
-                      </div>
                     </td>
                   </tr>
                 ))}
@@ -237,7 +211,7 @@ const CompanyHistoryLog = () => {
         </div>
 
         {/* Results Count */}
-        <div className="mt-4 text-sm text-gray-600">Showing {processingData.length} processing records</div>
+        <div className="mt-4 text-sm text-gray-600">Showing {rows.length} records</div>
       </main>
       
       <Footer />
