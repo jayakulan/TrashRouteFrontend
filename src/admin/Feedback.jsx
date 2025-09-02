@@ -10,8 +10,7 @@ const FeedbackRatings = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [filters, setFilters] = useState({
-    requests: "All Requests",
-    users: "All Users",
+    feedbackType: "All Feedback",
     ratings: "All Ratings",
   })
   const [sidebarHovered, setSidebarHovered] = useState(false)
@@ -45,19 +44,49 @@ const FeedbackRatings = () => {
   }, [])
 
   const filteredCompanyFeedback = companyFeedback.filter(
-    (item) =>
-      item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.comment.toLowerCase().includes(searchQuery.toLowerCase()),
+    (item) => {
+      const matchesSearch =
+        item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.comment.toLowerCase().includes(searchQuery.toLowerCase())
+
+      // Apply filters based on the filter values
+      const matchesFeedbackType = filters.feedbackType === "All Feedback" || 
+        filters.feedbackType === "Company Feedback"
+      
+      const matchesRatings = filters.ratings === "All Ratings" || 
+        (filters.ratings === "5 Stars" && item.rating === 5) ||
+        (filters.ratings === "4 Stars" && item.rating === 4) ||
+        (filters.ratings === "3 Stars" && item.rating === 3) ||
+        (filters.ratings === "2 Stars" && item.rating === 2) ||
+        (filters.ratings === "1 Star" && item.rating === 1)
+
+      return matchesSearch && matchesFeedbackType && matchesRatings
+    }
   )
 
   const filteredCustomerFeedback = customerFeedback.filter(
-    (item) =>
-      item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.comment.toLowerCase().includes(searchQuery.toLowerCase()),
+    (item) => {
+      const matchesSearch =
+        item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.comment.toLowerCase().includes(searchQuery.toLowerCase())
+
+      // Apply filters based on the filter values
+      const matchesFeedbackType = filters.feedbackType === "All Feedback" || 
+        filters.feedbackType === "Customer Feedback"
+      
+      const matchesRatings = filters.ratings === "All Ratings" || 
+        (filters.ratings === "5 Stars" && item.rating === 5) ||
+        (filters.ratings === "4 Stars" && item.rating === 4) ||
+        (filters.ratings === "3 Stars" && item.rating === 3) ||
+        (filters.ratings === "2 Stars" && item.rating === 2) ||
+        (filters.ratings === "1 Star" && item.rating === 1)
+
+      return matchesSearch && matchesFeedbackType && matchesRatings
+    }
   )
 
   const handleFilterChange = (filterType, value) => {
@@ -67,9 +96,12 @@ const FeedbackRatings = () => {
     }))
   }
 
-  const handleViewFeedback = (feedbackId) => {
-    console.log("View feedback:", feedbackId)
-    // Handle view feedback logic
+  const resetFilters = () => {
+    setFilters({
+      feedbackType: "All Feedback",
+      ratings: "All Ratings",
+    })
+    setSearchQuery("")
   }
 
   const renderStars = (rating) => {
@@ -99,7 +131,6 @@ const FeedbackRatings = () => {
                   <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Company</th>
                   <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Rating</th>
                   <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Comment</th>
-                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46]">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#e6f4ea]">
@@ -111,14 +142,6 @@ const FeedbackRatings = () => {
                     <td className="px-3 sm:px-6 py-3 sm:py-4">{renderStars(feedback.rating)}</td>
                     <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170] max-w-xs">
                       <div className="truncate" title={feedback.comment}>{feedback.comment}</div>
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4">
-                      <button
-                        onClick={() => handleViewFeedback(feedback.id)}
-                        className="bg-[#3a5f46] hover:bg-[#2e4d3a] text-white font-semibold px-3 py-1.5 rounded-full shadow transition text-xs sm:text-sm"
-                      >
-                        View
-                      </button>
                     </td>
                   </tr>
                 ))}
@@ -210,39 +233,39 @@ const FeedbackRatings = () => {
           {/* Filters */}
           <div className="mb-4 sm:mb-6 lg:mb-8">
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-              {Object.entries(filters).map(([key, value]) => (
-                <div key={key} className="relative flex-1">
-                  <select
-                    value={value}
-                    onChange={(e) => handleFilterChange(key, e.target.value)}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-2 bg-white border border-[#d0e9d6] rounded-lg text-[#3a5f46] font-semibold focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] appearance-none pr-8 sm:pr-10 text-sm shadow"
-                  >
-                    <option value={value}>{value}</option>
-                    {key === "requests" && (
-                      <>
-                        <option value="Completed Requests">Completed Requests</option>
-                        <option value="Pending Requests">Pending Requests</option>
-                      </>
-                    )}
-                    {key === "users" && (
-                      <>
-                        <option value="Active Users">Active Users</option>
-                        <option value="New Users">New Users</option>
-                      </>
-                    )}
-                    {key === "ratings" && (
-                      <>
-                        <option value="5 Stars">5 Stars</option>
-                        <option value="4 Stars">4 Stars</option>
-                        <option value="3 Stars">3 Stars</option>
-                        <option value="2 Stars">2 Stars</option>
-                        <option value="1 Star">1 Star</option>
-                      </>
-                    )}
-                  </select>
-                  <ChevronDown className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-[#3a5f46] pointer-events-none" />
-                </div>
-              ))}
+              <div className="relative flex-1">
+                <select
+                  value={filters.feedbackType}
+                  onChange={(e) => handleFilterChange("feedbackType", e.target.value)}
+                  className="w-full px-3 sm:px-4 py-2 sm:py-2 bg-white border border-[#d0e9d6] rounded-lg text-[#3a5f46] font-semibold focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] appearance-none pr-8 sm:pr-10 text-sm shadow"
+                >
+                  <option value="All Feedback">All Feedback</option>
+                  <option value="Customer Feedback">Customer Feedback</option>
+                  <option value="Company Feedback">Company Feedback</option>
+                </select>
+                <ChevronDown className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-[#3a5f46] pointer-events-none" />
+              </div>
+              <div className="relative flex-1">
+                <select
+                  value={filters.ratings}
+                  onChange={(e) => handleFilterChange("ratings", e.target.value)}
+                  className="w-full px-3 sm:px-4 py-2 sm:py-2 bg-white border border-[#d0e9d6] rounded-lg text-[#3a5f46] font-semibold focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] appearance-none pr-8 sm:pr-10 text-sm shadow"
+                >
+                  <option value="All Ratings">All Ratings</option>
+                  <option value="5 Stars">5 Stars</option>
+                  <option value="4 Stars">4 Stars</option>
+                  <option value="3 Stars">3 Stars</option>
+                  <option value="2 Stars">2 Stars</option>
+                  <option value="1 Star">1 Star</option>
+                </select>
+                <ChevronDown className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-[#3a5f46] pointer-events-none" />
+              </div>
+              <button
+                onClick={resetFilters}
+                className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors text-sm shadow"
+              >
+                Reset Filters
+              </button>
             </div>
           </div>
 

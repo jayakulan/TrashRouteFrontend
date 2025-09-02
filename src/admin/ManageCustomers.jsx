@@ -7,6 +7,7 @@ import AdminProfileDropdown from "./AdminProfileDropdown"
 import SidebarLinks from "./SidebarLinks";
 import Footer from "../footer";
 import { getCookie } from "../utils/cookieUtils";
+import DeleteWarningPopup from "./components/DeleteWarningPopup";
 
 const ManageCustomers = () => {
   const [searchQuery, setSearchQuery] = useState("")
@@ -19,6 +20,8 @@ const ManageCustomers = () => {
     status: "All Status",
   })
   const [sidebarHovered, setSidebarHovered] = useState(false);
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState(null);
 
   // Fetch customers data from API
   useEffect(() => {
@@ -62,11 +65,17 @@ const ManageCustomers = () => {
   }, [])
 
   const filteredCustomers = customersData.filter(
-    (customer) =>
-      customer.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.location.toLowerCase().includes(searchQuery.toLowerCase()),
+    (customer) => {
+      const matchesSearch =
+        customer.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        customer.location.toLowerCase().includes(searchQuery.toLowerCase())
+
+      const matchesStatus = filters.status === "All Status" || customer.status === filters.status
+
+      return matchesSearch && matchesStatus
+    }
   )
 
   const handleFilterChange = (filterType, value) => {
@@ -74,6 +83,13 @@ const ManageCustomers = () => {
       ...prev,
       [filterType]: value,
     }))
+  }
+
+  const resetFilters = () => {
+    setFilters({
+      status: "All Status",
+    })
+    setSearchQuery("")
   }
 
   const handleViewCustomer = (customerId) => {
@@ -86,9 +102,16 @@ const ManageCustomers = () => {
     // Handle edit customer logic
   }
 
-  const handleDeleteCustomer = async (customerId) => {
+  const handleDeleteClick = (customer) => {
+    setCustomerToDelete(customer);
+    setShowDeletePopup(true);
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!customerToDelete) return;
+    
     try {
-      setDeletingCustomer(customerId);
+      setDeletingCustomer(customerToDelete.id);
       
       const token = getCookie('token');
       const headers = {
@@ -103,7 +126,7 @@ const ManageCustomers = () => {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          customerId: customerId
+          customerId: customerToDelete.id
         }),
         credentials: 'include'
       });
@@ -119,11 +142,13 @@ const ManageCustomers = () => {
         // Update the customer status to 'Disabled' in the local state
         setCustomersData(prevCustomers => 
           prevCustomers.map(customer => 
-            customer.id === customerId 
+            customer.id === customerToDelete.id 
               ? { ...customer, status: 'Disabled' }
               : customer
           )
         );
+        setShowDeletePopup(false);
+        setCustomerToDelete(null);
       } else {
         throw new Error(result.error || 'Failed to disable customer');
       }
@@ -132,6 +157,11 @@ const ManageCustomers = () => {
     } finally {
       setDeletingCustomer(null);
     }
+  }
+
+  const handleDeleteCancel = () => {
+    setShowDeletePopup(false);
+    setCustomerToDelete(null);
   }
 
   const getStatusColor = (status) => {
@@ -175,133 +205,150 @@ const ManageCustomers = () => {
             <p className="text-gray-600 text-sm sm:text-base">View and manage registered customers</p>
           </div>
 
-            {/* Loading State */}
-            {loading && (
-              <div className="text-center py-8 sm:py-12">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#3a5f46]"></div>
-                <p className="mt-2 text-[#618170] text-sm sm:text-base">Loading customers...</p>
-              </div>
-            )}
+          {/* Loading State */}
+          {loading && (
+            <div className="text-center py-8 sm:py-12">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#3a5f46]"></div>
+              <p className="mt-2 text-[#618170] text-sm sm:text-base">Loading customers...</p>
+            </div>
+          )}
 
-            {/* Error State */}
-            {error && (
-              <div className="text-center py-8 sm:py-12">
-                <p className="text-red-600 text-sm sm:text-base">Error: {error}</p>
-                <button 
-                  onClick={() => window.location.reload()} 
-                  className="mt-2 bg-[#3a5f46] hover:bg-[#2e4d3a] text-white font-semibold px-4 py-2 rounded-lg shadow transition"
+          {/* Error State */}
+          {error && (
+            <div className="text-center py-8 sm:py-12">
+              <p className="text-red-600 text-sm sm:text-base">Error: {error}</p>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="mt-2 bg-[#3a5f46] hover:bg-[#2e4d3a] text-white font-semibold px-4 py-2 rounded-lg shadow transition"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {/* Content when data is loaded */}
+          {!loading && !error && (
+            <>
+              {/* Search Bar */}
+              <div className="mb-4 sm:mb-6">
+                <div className="relative max-w-2xl">
+                  <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-[#3a5f46] w-4 h-4 sm:w-5 sm:h-5" />
+                  <input
+                    type="text"
+                    placeholder="Search by customer name, email, or location"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-4 bg-[#e6f4ea] border-0 rounded-lg text-[#2e4d3a] placeholder-[#618170] focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:bg-white transition-colors text-sm sm:text-base shadow"
+                  />
+                </div>
+              </div>
+
+              {/* Filters */}
+              <div className="mb-4 sm:mb-6 lg:mb-8">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                  <div className="relative flex-1">
+                    <select
+                      value={filters.status}
+                      onChange={(e) => handleFilterChange("status", e.target.value)}
+                      className="w-full px-3 sm:px-4 py-2 sm:py-2 bg-white border border-[#d0e9d6] rounded-lg text-[#3a5f46] font-semibold focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] appearance-none pr-8 sm:pr-10 text-sm shadow"
+                    >
+                      <option value="All Status">All Status</option>
+                      <option value="Active">Active</option>
+                      <option value="Pending">Pending</option>
+                      <option value="Disabled">Disabled</option>
+                    </select>
+                    <ChevronDown className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-[#3a5f46] pointer-events-none" />
+                  </div>
+                </div>
+                <button
+                  onClick={resetFilters}
+                  className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors text-sm shadow"
                 >
-                  Retry
+                  Reset Filters
                 </button>
               </div>
-            )}
 
-            {/* Content when data is loaded */}
-            {!loading && !error && (
-              <>
-            {/* Search Bar */}
-            <div className="mb-4 sm:mb-6">
-              <div className="relative max-w-2xl">
-                <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-[#3a5f46] w-4 h-4 sm:w-5 sm:h-5" />
-                <input
-                  type="text"
-                  placeholder="Search by customer name, email, or location"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-4 bg-[#e6f4ea] border-0 rounded-lg text-[#2e4d3a] placeholder-[#618170] focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:bg-white transition-colors text-sm sm:text-base shadow"
-                />
-              </div>
-            </div>
-
-            {/* Filters */}
-            <div className="mb-4 sm:mb-6 lg:mb-8">
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <div className="relative flex-1">
-                  <select
-                    value={filters.status}
-                    onChange={(e) => handleFilterChange("status", e.target.value)}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-2 bg-white border border-[#d0e9d6] rounded-lg text-[#3a5f46] font-semibold focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] appearance-none pr-8 sm:pr-10 text-sm shadow"
-                  >
-                    <option value="All Status">All Status</option>
-                    <option value="Active">Active</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Disabled">Disabled</option>
-                  </select>
-                  <ChevronDown className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-[#3a5f46] pointer-events-none" />
-                </div>
-              </div>
-            </div>
-
-            {/* Customers Table */}
-            <div className="bg-white rounded-lg shadow-lg border border-[#d0e9d6] overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-[#e6f4ea] border-b border-[#d0e9d6]">
-                    <tr>
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Customer ID</th>
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Name</th>
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Email</th>
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Phone</th>
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Location</th>
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Status</th>
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Join Date</th>
-                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46]">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#e6f4ea]">
-                    {filteredCustomers.map((customer, index) => (
-                      <tr key={index} className="hover:bg-[#f7f9fb]">
-                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-[#2e4d3a]">{customer.id}</td>
-                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#3a5f46] font-semibold">{customer.name}</td>
-                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170]">{customer.email}</td>
-                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170]">{customer.phone}</td>
-                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170]">{customer.location}</td>
-                        <td className="px-3 sm:px-6 py-3 sm:py-4">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(customer.status)}`}>
-                            {customer.status}
-                          </span>
-                        </td>
-                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170]">{customer.joinDate}</td>
-                        <td className="px-3 sm:px-6 py-3 sm:py-4">
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => handleDeleteCustomer(customer.id)}
-                                  disabled={deletingCustomer === customer.id}
-                                  className={`font-semibold px-3 py-1 rounded-full shadow transition text-xs ${
-                                    deletingCustomer === customer.id
-                                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                                      : 'bg-red-600 hover:bg-red-700 text-white'
-                                  }`}
-                            >
-                                  {deletingCustomer === customer.id ? 'Disabling...' : 'Disable'}
-                            </button>
-                          </div>
-                        </td>
+              {/* Customers Table */}
+              <div className="bg-white rounded-lg shadow-lg border border-[#d0e9d6] overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-[#e6f4ea] border-b border-[#d0e9d6]">
+                      <tr>
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Customer ID</th>
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Name</th>
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Email</th>
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Phone</th>
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Location</th>
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Status</th>
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46] uppercase">Join Date</th>
+                        <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-[#3a5f46]">Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-[#e6f4ea]">
+                      {filteredCustomers.map((customer, index) => (
+                        <tr key={index} className="hover:bg-[#f7f9fb]">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-[#2e4d3a]">{customer.id}</td>
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#3a5f46] font-semibold">{customer.name}</td>
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170]">{customer.email}</td>
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170]">{customer.phone}</td>
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170]">{customer.location}</td>
+                          <td className="px-3 sm:px-6 py-3 sm:py-4">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(customer.status)}`}>
+                              {customer.status}
+                            </span>
+                          </td>
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170]">{customer.joinDate}</td>
+                          <td className="px-3 sm:px-6 py-3 sm:py-4">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleDeleteClick(customer)}
+                                disabled={deletingCustomer === customer.id}
+                                className={`font-semibold px-3 py-1 rounded-full shadow transition text-xs ${
+                                  deletingCustomer === customer.id
+                                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                    : 'bg-red-600 hover:bg-red-700 text-white'
+                                }`}
+                              >
+                                {deletingCustomer === customer.id ? 'Disabling...' : 'Disable'}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Empty State */}
+                {filteredCustomers.length === 0 && !loading && (
+                  <div className="text-center py-8 sm:py-12">
+                    <p className="text-[#618170] text-sm sm:text-base">
+                      {customersData.length === 0 ? 'No customers found in the database.' : 'No customers found matching your search.'}
+                    </p>
+                  </div>
+                )}
               </div>
 
-              {/* Empty State */}
-                  {filteredCustomers.length === 0 && !loading && (
-                <div className="text-center py-8 sm:py-12">
-                      <p className="text-[#618170] text-sm sm:text-base">
-                        {customersData.length === 0 ? 'No customers found in the database.' : 'No customers found matching your search.'}
-                      </p>
-                </div>
-              )}
-            </div>
-
-            {/* Results Count */}
-            <div className="mt-4 text-xs sm:text-sm text-[#618170]">
-              Showing {filteredCustomers.length} of {customersData.length} customers
-            </div>
-              </>
-            )}
+              {/* Results Count */}
+              <div className="mt-4 text-xs sm:text-sm text-[#618170]">
+                Showing {filteredCustomers.length} of {customersData.length} customers
+              </div>
+            </>
+          )}
         </main>
         <Footer admin={true} />
       </div>
+
+      {/* Delete Warning Popup */}
+      <DeleteWarningPopup
+        isOpen={showDeletePopup}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Disable Customer"
+        message="Are you sure you want to disable this customer?"
+        itemName={customerToDelete?.name || ""}
+        isLoading={deletingCustomer !== null}
+      />
     </div>
   )
 }

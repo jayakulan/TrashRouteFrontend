@@ -7,6 +7,7 @@ import SidebarLinks from "./SidebarLinks";
 import AdminProfileDropdown from "./AdminProfileDropdown";
 import Footer from "../footer";
 import { Menu, X } from "lucide-react";
+import DeleteWarningPopup from "./components/DeleteWarningPopup";
 
 const NotificationsManagement = () => {
   const [searchQuery, setSearchQuery] = useState("")
@@ -15,6 +16,9 @@ const NotificationsManagement = () => {
   const [notificationsData, setNotificationsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [deletingNotification, setDeletingNotification] = useState(null);
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [notificationToDelete, setNotificationToDelete] = useState(null);
 
   // Fetch data from backend
   useEffect(() => {
@@ -49,20 +53,22 @@ const NotificationsManagement = () => {
       notification.message.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
-  const handleCreateNotification = async () => {
-    // For now, just show an alert - you can implement a modal form later
-    alert("Create notification functionality will be implemented");
+  const resetSearch = () => {
+    setSearchQuery("")
   }
 
-  const handleView = async (notificationId) => {
-    // For now, just show an alert - you can implement a modal form later
-    alert(`View notification ${notificationId} functionality will be implemented`);
+  const handleDeleteClick = (notification) => {
+    setNotificationToDelete(notification);
+    setShowDeletePopup(true);
   }
 
-  const handleDelete = async (notificationId) => {
-    if (window.confirm(`Are you sure you want to delete notification ${notificationId}?`)) {
+  const handleDeleteConfirm = async () => {
+    if (!notificationToDelete) return;
+    
+    if (window.confirm(`Are you sure you want to delete notification ${notificationToDelete.notification_id}?`)) {
       try {
-        const response = await fetch(`http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/notification.php?notification_id=${notificationId}`, {
+        setDeletingNotification(notificationToDelete.notification_id);
+        const response = await fetch(`http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/notification.php?notification_id=${notificationToDelete.notification_id}`, {
           method: 'DELETE'
         });
         const result = await response.json();
@@ -70,14 +76,23 @@ const NotificationsManagement = () => {
         if (result.success) {
           alert('Notification deleted successfully');
           fetchNotificationData(); // Refresh the data
+          setShowDeletePopup(false);
+          setNotificationToDelete(null);
         } else {
           alert(result.message || 'Failed to delete notification');
         }
       } catch (err) {
         alert('Error deleting notification');
         console.error('Error deleting notification:', err);
+      } finally {
+        setDeletingNotification(null);
       }
     }
+  }
+
+  const handleDeleteCancel = () => {
+    setShowDeletePopup(false);
+    setNotificationToDelete(null);
   }
 
   return (
@@ -122,27 +137,29 @@ const NotificationsManagement = () => {
       <div className={`flex-1 min-w-0 ml-0 sm:ml-20 transition-all duration-300 ${sidebarHovered ? 'lg:ml-64' : 'lg:ml-20'}`}>
         <main className="p-4 sm:p-6 md:p-8">
           {/* Page Header */}
-          <div className="flex justify-between items-center mb-8">
+          <div className="mb-8">
             <h1 className="text-3xl font-bold text-[#3a5f46]">Notifications</h1>
-            <button
-              onClick={handleCreateNotification}
-              className="bg-[#e6f4ea] hover:bg-[#d0e9d6] text-[#3a5f46] font-medium py-2 px-4 rounded-lg transition-colors"
-            >
-              Create Notification
-            </button>
           </div>
 
           {/* Search Bar */}
           <div className="mb-8">
-            <div className="relative max-w-2xl">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#3a5f46] w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search Notification ID, Request ID, Customer ID, Company ID, or Message"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-[#e6f4ea] border-0 rounded-lg text-[#2e4d3a] placeholder-[#618170] focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:bg-white transition-colors"
-              />
+            <div className="flex gap-4 items-center">
+              <div className="relative flex-1 max-w-2xl">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#3a5f46] w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Search Notification ID, Request ID, Customer ID, Company ID, or Message"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-4 py-4 bg-[#e6f4ea] border-0 rounded-lg text-[#2e4d3a] placeholder-[#618170] focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:bg-white transition-colors"
+                />
+              </div>
+              <button
+                onClick={resetSearch}
+                className="px-4 py-4 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors text-sm shadow"
+              >
+                Reset Search
+              </button>
             </div>
           </div>
 
@@ -190,11 +207,11 @@ const NotificationsManagement = () => {
                   </thead>
                   <tbody className="divide-y divide-[#d0e9d6]">
                     {filteredNotifications.map((notification, index) => (
-                                             <tr key={index} className="hover:bg-[#f7f9fb]">
-                         <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">{notification.notification_id}</td>
-                         <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">{notification.request_id}</td>
-                         <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">{notification.customer_id}</td>
-                         <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">{notification.company_id}</td>
+                      <tr key={index} className="hover:bg-[#f7f9fb]">
+                        <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">{notification.notification_id}</td>
+                        <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">{notification.request_id}</td>
+                        <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">{notification.customer_id}</td>
+                        <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">{notification.company_id}</td>
                         <td className="px-6 py-4 text-sm text-[#618170] max-w-xs">
                           <div className="truncate" title={notification.message}>
                             {notification.message}
@@ -211,19 +228,17 @@ const NotificationsManagement = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="flex space-x-2 text-sm">
+                          <div className="flex space-x-2">
                             <button
-                              onClick={() => handleView(notification.notification_id)}
-                              className="text-[#3a5f46] hover:text-[#2e4d3a]"
+                              onClick={() => handleDeleteClick(notification)}
+                              disabled={deletingNotification === notification.notification_id}
+                              className={`font-semibold px-3 py-1 rounded-full shadow transition text-xs ${
+                                deletingNotification === notification.notification_id
+                                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                  : 'bg-red-600 hover:bg-red-700 text-white'
+                              }`}
                             >
-                              View
-                            </button>
-                            <span className="text-gray-400">|</span>
-                            <button
-                              onClick={() => handleDelete(notification.notification_id)}
-                              className="text-[#3a5f46] hover:text-red-600"
-                            >
-                              Delete
+                              {deletingNotification === notification.notification_id ? 'Deleting...' : 'Delete'}
                             </button>
                           </div>
                         </td>
@@ -247,8 +262,20 @@ const NotificationsManagement = () => {
             </div>
           )}
         </main>
+        <div className="mb-12"></div>
         <Footer admin={true} />
       </div>
+
+      {/* Delete Warning Popup */}
+      <DeleteWarningPopup
+        isOpen={showDeletePopup}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Notification"
+        message="Are you sure you want to delete this notification?"
+        itemName={notificationToDelete?.notification_id || ""}
+        isLoading={deletingNotification !== null}
+      />
     </div>
   )
 }

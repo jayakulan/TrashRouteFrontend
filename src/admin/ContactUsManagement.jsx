@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
-import { Search, Bell, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search } from "lucide-react"
 import SidebarLinks from "./SidebarLinks";
 import AdminProfileDropdown from "./AdminProfileDropdown";
 import Footer from "../footer";
@@ -10,8 +10,6 @@ import { getCookie } from "../utils/cookieUtils";
 
 const ContactUsManagement = () => {
   const [searchQuery, setSearchQuery] = useState("")
-  const [activeFilter, setActiveFilter] = useState("All")
-  const [currentPage, setCurrentPage] = useState(1)
   const [sidebarHovered, setSidebarHovered] = useState(false);
   const [contactData, setContactData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -65,18 +63,18 @@ const ContactUsManagement = () => {
     fetchContactData();
   }, []);
 
-  const filters = ["All", "New", "Read", "Responded"]
-
   const filteredData = contactData.filter((contact) => {
     const matchesSearch =
       contact.sender.toLowerCase().includes(searchQuery.toLowerCase()) ||
       contact.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       contact.subject.toLowerCase().includes(searchQuery.toLowerCase())
 
-    const matchesFilter = activeFilter === "All" || contact.status === activeFilter
-
-    return matchesSearch && matchesFilter
+    return matchesSearch
   })
+
+  const resetSearch = () => {
+    setSearchQuery("")
+  }
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -91,21 +89,10 @@ const ContactUsManagement = () => {
     }
   }
 
-  const handleFilterChange = (filter) => {
-    setActiveFilter(filter)
-    setCurrentPage(1)
-  }
-
   const handleView = (contactId) => {
     console.log("View contact:", contactId)
     // Handle view contact logic
   }
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page)
-  }
-
-  const totalPages = 5 // Based on the pagination shown in the image
 
   return (
     <div className="min-h-screen bg-[#f7f9fb] flex overflow-x-hidden">
@@ -133,35 +120,27 @@ const ContactUsManagement = () => {
 
           {/* Search Bar */}
           <div className="mb-4 sm:mb-6">
-            <div className="relative max-w-2xl">
-              <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-[#3a5f46] w-4 h-4 sm:w-5 sm:h-5" />
-              <input
-                type="text"
-                placeholder="Search by keyword or email"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-4 bg-[#e6f4ea] border-0 rounded-lg text-[#2e4d3a] placeholder-[#618170] focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:bg-white transition-colors text-sm sm:text-base shadow"
-              />
+            <div className="flex gap-4 items-center">
+              <div className="relative flex-1 max-w-2xl">
+                <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-[#3a5f46] w-4 h-4 sm:w-5 sm:h-5" />
+                <input
+                  type="text"
+                  placeholder="Search by keyword or email"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-4 bg-[#e6f4ea] border-0 rounded-lg text-[#2e4d3a] placeholder-[#618170] focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:bg-white transition-colors text-sm sm:text-base shadow"
+                />
+              </div>
+              <button
+                onClick={resetSearch}
+                className="px-4 py-3 sm:py-4 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors text-sm shadow"
+              >
+                Reset Search
+              </button>
             </div>
           </div>
 
-          {/* Filter Tabs */}
-          <div className="mb-6 flex space-x-4">
-            {filters.map((filter) => (
-              <button
-                key={filter}
-                onClick={() => handleFilterChange(filter)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
-                  activeFilter === filter
-                    ? "bg-blue-50 border-blue-200 text-blue-700"
-                    : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
-                }`}
-              >
-                <span>{filter}</span>
-                <ChevronDown className="w-4 h-4" />
-              </button>
-            ))}
-          </div>
+
 
           {/* Loading State */}
           {loading && (
@@ -235,39 +214,13 @@ const ContactUsManagement = () => {
             </div>
           )}
 
-          {/* Pagination */}
-          <div className="mt-6 flex justify-center items-center space-x-2">
-            <button
-              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
 
-            {[1, 2, 3, 4, 5].map((page) => (
-              <button
-                key={page}
-                onClick={() => handlePageChange(page)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  currentPage === page
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-600 hover:bg-gray-100 border border-gray-200"
-                }`}
-              >
-                {page}
-              </button>
-            ))}
 
-            <button
-              onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-              className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
+
+
+
         </main>
+        <div className="mb-32"></div>
         <Footer admin={true} />
       </div>
     </div>

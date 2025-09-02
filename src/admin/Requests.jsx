@@ -7,6 +7,7 @@ import SidebarLinks from "./SidebarLinks"
 import AdminProfileDropdown from "./AdminProfileDropdown"
 import Footer from "../footer";
 import { getCookie } from "../utils/cookieUtils";
+import DeleteWarningPopup from "./components/DeleteWarningPopup";
 
 const Requests = () => {
   const [searchQuery, setSearchQuery] = useState("")
@@ -17,9 +18,10 @@ const Requests = () => {
   const [deletingRequest, setDeletingRequest] = useState(null)
   const [filters, setFilters] = useState({
     status: "All Status",
-    location: "All Locations",
   })
   const [sidebarHovered, setSidebarHovered] = useState(false);
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [requestToDelete, setRequestToDelete] = useState(null);
 
   // Fetch requests data from API
   useEffect(() => {
@@ -63,11 +65,17 @@ const Requests = () => {
   }, [])
 
   const filteredRequests = requestsData.filter(
-    (request) =>
-      request.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.location.toLowerCase().includes(searchQuery.toLowerCase()),
+    (request) => {
+      const matchesSearch =
+        request.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        request.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        request.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        request.location.toLowerCase().includes(searchQuery.toLowerCase())
+
+      const matchesStatus = filters.status === "All Status" || request.status === filters.status
+
+      return matchesSearch && matchesStatus
+    }
   )
 
   const handleFilterChange = (filterType, value) => {
@@ -75,6 +83,13 @@ const Requests = () => {
       ...prev,
       [filterType]: value,
     }))
+  }
+
+  const resetFilters = () => {
+    setFilters({
+      status: "All Status",
+    })
+    setSearchQuery("")
   }
 
   const handleViewRequest = (requestId) => {
@@ -87,9 +102,16 @@ const Requests = () => {
     // Handle edit request logic
   }
 
-  const handleDeleteRequest = async (requestId) => {
+  const handleDeleteClick = (request) => {
+    setRequestToDelete(request);
+    setShowDeletePopup(true);
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!requestToDelete) return;
+    
     try {
-      setDeletingRequest(requestId);
+      setDeletingRequest(requestToDelete.id);
       
       const token = getCookie('token');
       const headers = {
@@ -104,7 +126,7 @@ const Requests = () => {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          requestId: requestId
+          requestId: requestToDelete.id
         }),
         credentials: 'include'
       });
@@ -119,8 +141,10 @@ const Requests = () => {
       if (result.success) {
         // Remove the deleted request from the local state
         setRequestsData(prevRequests => 
-          prevRequests.filter(request => request.id !== requestId)
+          prevRequests.filter(request => request.id !== requestToDelete.id)
         );
+        setShowDeletePopup(false);
+        setRequestToDelete(null);
       } else {
         throw new Error(result.error || 'Failed to delete request');
       }
@@ -131,33 +155,32 @@ const Requests = () => {
     }
   }
 
+  const handleDeleteCancel = () => {
+    setShowDeletePopup(false);
+    setRequestToDelete(null);
+  }
+
   const getStatusColor = (status) => {
     switch (status) {
-      case "Pending":
+      case "Request received":
         return "bg-yellow-100 text-yellow-800"
-      case "In Progress":
+      case "Accepted":
         return "bg-blue-100 text-blue-800"
       case "Completed":
         return "bg-green-100 text-green-800"
-      case "Cancelled":
-        return "bg-red-100 text-red-800"
       default:
         return "bg-gray-100 text-gray-800"
     }
   }
 
-
-
   const getStatusIcon = (status) => {
     switch (status) {
-      case "Pending":
+      case "Request received":
         return <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-      case "In Progress":
+      case "Accepted":
         return <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
       case "Completed":
         return <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-      case "Cancelled":
-        return <XCircle className="w-3 h-3 sm:w-4 sm:h-4" />
       default:
         return <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
     }
@@ -228,36 +251,25 @@ const Requests = () => {
           {/* Filters */}
           <div className="mb-4 sm:mb-6 lg:mb-8">
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-              {Object.entries(filters).map(([key, value]) => (
-                <div key={key} className="relative flex-1">
-                  <select
-                    value={value}
-                    onChange={(e) => handleFilterChange(key, e.target.value)}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-2 bg-white border border-[#d0e9d6] rounded-lg text-[#3a5f46] font-semibold focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] appearance-none pr-8 sm:pr-10 text-sm shadow"
-                  >
-                    <option value={value}>{value}</option>
-                    {key === "status" && (
-                      <>
-                        <option value="Pending">Pending</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Cancelled">Cancelled</option>
-                      </>
-                    )}
-
-                    {key === "location" && (
-                      <>
-                        <option value="New York, NY">New York, NY</option>
-                        <option value="Los Angeles, CA">Los Angeles, CA</option>
-                        <option value="Chicago, IL">Chicago, IL</option>
-                        <option value="Houston, TX">Houston, TX</option>
-                        <option value="Phoenix, AZ">Phoenix, AZ</option>
-                      </>
-                    )}
-                  </select>
-                  <ChevronDown className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-[#3a5f46] pointer-events-none" />
-                </div>
-              ))}
+              <div className="relative flex-1">
+                <select
+                  value={filters.status}
+                  onChange={(e) => handleFilterChange("status", e.target.value)}
+                  className="w-full px-3 sm:px-4 py-2 sm:py-2 bg-white border border-[#d0e9d6] rounded-lg text-[#3a5f46] font-semibold focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] appearance-none pr-8 sm:pr-10 text-sm shadow"
+                >
+                  <option value="All Status">All Status</option>
+                  <option value="Request received">Request received</option>
+                  <option value="Accepted">Accepted</option>
+                  <option value="Completed">Completed</option>
+                </select>
+                <ChevronDown className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-[#3a5f46] pointer-events-none" />
+              </div>
+              <button
+                onClick={resetFilters}
+                className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors text-sm shadow"
+              >
+                Reset Filters
+              </button>
             </div>
           </div>
 
@@ -303,13 +315,7 @@ const Requests = () => {
                       <td className="px-3 sm:px-6 py-3 sm:py-4">
                         <div className="flex space-x-2">
                           <button
-                            onClick={() => handleEditRequest(request.id)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteRequest(request.id)}
+                            onClick={() => handleDeleteClick(request)}
                             disabled={deletingRequest === request.id}
                             className={`font-semibold px-3 py-1 rounded-full shadow transition text-xs ${
                               deletingRequest === request.id
@@ -344,6 +350,17 @@ const Requests = () => {
         </main>
         <Footer admin={true} />
       </div>
+
+      {/* Delete Warning Popup */}
+      <DeleteWarningPopup
+        isOpen={showDeletePopup}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Request"
+        message="Are you sure you want to delete this request?"
+        itemName={requestToDelete?.id || ""}
+        isLoading={deletingRequest !== null}
+      />
     </div>
   )
 }

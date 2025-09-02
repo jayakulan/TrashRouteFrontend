@@ -7,14 +7,17 @@ import SidebarLinks from "./SidebarLinks";
 import Footer from "../footer";
 import AdminProfileDropdown from "./AdminProfileDropdown";
 import { getCookie } from "../utils/cookieUtils";
+import DeleteWarningPopup from "./components/DeleteWarningPopup";
 
 const RoutesManagement = () => {
   const [searchQuery, setSearchQuery] = useState("")
-  const [activeTab, setActiveTab] = useState("All")
   const [sidebarHovered, setSidebarHovered] = useState(false);
   const [routesData, setRoutesData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [deletingRoute, setDeletingRoute] = useState(null);
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [routeToDelete, setRouteToDelete] = useState(null);
 
   // Fetch routes data from backend
   useEffect(() => {
@@ -69,13 +72,37 @@ const RoutesManagement = () => {
       route.assignedCompany.toLowerCase().includes(searchQuery.toLowerCase()) ||
       route.routeDetails.toLowerCase().includes(searchQuery.toLowerCase())
 
-    const matchesTab =
-      activeTab === "All" ||
-      (activeTab === "Active" && route.disabledStatus === "Enabled") ||
-      (activeTab === "Inactive" && route.disabledStatus === "Disabled")
-
-    return matchesSearch && matchesTab
+    return matchesSearch
   })
+
+  const handleDeleteClick = (route) => {
+    setRouteToDelete(route);
+    setShowDeletePopup(true);
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!routeToDelete) return;
+    
+    try {
+      setDeletingRoute(routeToDelete.routeId);
+      // Here you would implement the actual delete API call
+      // For now, we'll just remove it from the local state
+      setRoutesData(prevRoutes => 
+        prevRoutes.filter(route => route.routeId !== routeToDelete.routeId)
+      );
+      setShowDeletePopup(false);
+      setRouteToDelete(null);
+    } catch (err) {
+      console.error('Error deleting route:', err);
+    } finally {
+      setDeletingRoute(null);
+    }
+  }
+
+  const handleDeleteCancel = () => {
+    setShowDeletePopup(false);
+    setRouteToDelete(null);
+  }
 
   const getAcceptanceStatusColor = (status) => {
     switch (status) {
@@ -101,14 +128,9 @@ const RoutesManagement = () => {
     }
   }
 
-  const handleViewEditDelete = (routeId, action) => {
-    console.log(`${action} route:`, routeId)
-    // Handle view/edit/delete logic
-  }
-
   return (
     <div className="min-h-screen bg-[#f7f9fb] flex overflow-x-hidden">
-      {/* Sidebar: hover-expand */}
+      {/* Hover-expand Sidebar */}
       <div
         className={`fixed top-0 left-0 h-full z-30 bg-white shadow-lg flex-col transition-all duration-300 hidden sm:flex ${sidebarHovered ? 'w-64' : 'w-20'}`}
         onMouseEnter={() => setSidebarHovered(true)}
@@ -142,24 +164,6 @@ const RoutesManagement = () => {
               />
             </div>
           </div>
-          {/* Filter Tabs */}
-          <div className="mb-4 sm:mb-6 lg:mb-8">
-            <div className="flex space-x-8 border-b border-[#d0e9d6]">
-              {["All", "Active", "Inactive"].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                    activeTab === tab
-                      ? "border-[#3a5f46] text-[#3a5f46]"
-                      : "border-transparent text-[#618170] hover:text-[#3a5f46] hover:border-[#d0e9d6]"
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-          </div>
           {/* Loading State */}
           {loading && (
             <div className="bg-white rounded-lg shadow-lg border border-[#d0e9d6] p-8 text-center">
@@ -170,7 +174,7 @@ const RoutesManagement = () => {
 
           {/* Error State */}
           {error && !loading && (
-            <div className="bg-red-50 border-l-4 border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+            <div className="red-50 border-l-4 border-red-400 text-red-700 px-4 py-3 rounded mb-6">
               <p className="font-semibold">Error loading routes data:</p>
               <p>{error}</p>
             </div>
@@ -235,22 +239,15 @@ const RoutesManagement = () => {
                         <td className="px-3 sm:px-6 py-3 sm:py-4">
                           <div className="flex space-x-2">
                             <button
-                              onClick={() => handleViewEditDelete(route.routeId, "View")}
-                              className="bg-[#3a5f46] hover:bg-[#2e4d3a] text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
+                              onClick={() => handleDeleteClick(route)}
+                              disabled={deletingRoute === route.routeId}
+                              className={`font-semibold px-3 py-1 rounded-full shadow transition text-xs ${
+                                deletingRoute === route.routeId
+                                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                  : 'bg-red-600 hover:bg-red-700 text-white'
+                              }`}
                             >
-                              View
-                            </button>
-                            <button
-                              onClick={() => handleViewEditDelete(route.routeId, "Edit")}
-                              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleViewEditDelete(route.routeId, "Delete")}
-                              className="bg-red-600 hover:bg-red-700 text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
-                            >
-                              Delete
+                              {deletingRoute === route.routeId ? 'Deleting...' : 'Delete'}
                             </button>
                           </div>
                         </td>
@@ -274,6 +271,17 @@ const RoutesManagement = () => {
         </main>
         <Footer admin={true} />
       </div>
+
+      {/* Delete Warning Popup */}
+      <DeleteWarningPopup
+        isOpen={showDeletePopup}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Route"
+        message="Are you sure you want to delete this route?"
+        itemName={routeToDelete?.routeId || ""}
+        isLoading={deletingRoute !== null}
+      />
     </div>
   )
 }
