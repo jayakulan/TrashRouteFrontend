@@ -29,64 +29,121 @@ const AdminDashboard = () => {
     };
   }, [profileOpen]);
 
-  const stats = [
+  // Fetch dashboard data
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/dashboard.php');
+        const result = await response.json();
+        
+        if (result.success) {
+          const data = result.data;
+          
+          // Update stats
+          setStats([
+            {
+              title: "Total Customers",
+              value: data.total_customers?.toLocaleString() || "0",
+              bgColor: "bg-blue-50",
+            },
+            {
+              title: "Total Companies",
+              value: data.total_companies?.toLocaleString() || "0",
+              bgColor: "bg-purple-50",
+            },
+            {
+              title: "Total Requests",
+              value: data.total_requests?.toLocaleString() || "0",
+              bgColor: "bg-green-50",
+            },
+          ]);
+          
+          // Update pickup status
+          setPickupStatus([
+            {
+              title: "Pending",
+              value: data.pending?.toLocaleString() || "0",
+              bgColor: "bg-yellow-50",
+            },
+            {
+              title: "Active",
+              value: data.active?.toLocaleString() || "0",
+              bgColor: "bg-blue-50",
+            },
+            {
+              title: "Completed",
+              value: data.completed?.toLocaleString() || "0",
+              bgColor: "bg-green-50",
+            },
+          ]);
+          
+          // Update recent activity
+          if (data.recent_activity) {
+            setRecentActivity(data.recent_activity.map((activity, index) => ({
+              id: index + 1,
+              title: activity.title,
+              time: activity.time,
+            })));
+          }
+        } else {
+          setError(result.error || 'Failed to fetch dashboard data');
+        }
+      } catch (err) {
+        setError('Failed to connect to server');
+        console.error('Error fetching dashboard data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+    
+    // Refresh data every 5 minutes
+    const interval = setInterval(fetchDashboardData, 5 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  const [stats, setStats] = useState([
     {
       title: "Total Customers",
-      value: "1,234",
+      value: "0",
       bgColor: "bg-blue-50",
     },
     {
       title: "Total Companies",
-      value: "56",
+      value: "0",
       bgColor: "bg-purple-50",
     },
     {
       title: "Total Requests",
-      value: "789",
+      value: "0",
       bgColor: "bg-green-50",
     },
-  ]
+  ])
 
-  const pickupStatus = [
+  const [pickupStatus, setPickupStatus] = useState([
     {
       title: "Pending",
-      value: "123",
+      value: "0",
       bgColor: "bg-yellow-50",
     },
     {
       title: "Active",
-      value: "456",
+      value: "0",
       bgColor: "bg-blue-50",
     },
     {
       title: "Completed",
-      value: "789",
+      value: "0",
       bgColor: "bg-green-50",
     },
-  ]
+  ])
 
-  const recentActivity = [
-    {
-      id: 1,
-      title: "New user registered: Emily Carter",
-      time: "2 hours ago",
-    },
-    {
-      id: 2,
-      title: "Pickup request #12345 completed",
-      time: "3 hours ago",
-    },
-    {
-      id: 3,
-      title: "New company registered: Green Solutions Inc.",
-      time: "4 hours ago",
-    },
-    {
-      id: 4,
-      title: "Pickup request #67890 created",
-      time: "5 hours ago",
-    },
-  ]
+  const [recentActivity, setRecentActivity] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   const quickLinks = [
     {
@@ -201,13 +258,24 @@ const AdminDashboard = () => {
           {/* Page Title */}
           <div className="mb-4 sm:mb-6">
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#3a5f46] tracking-tight mb-2">Dashboard</h1>
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+                <p className="text-sm">{error}</p>
+              </div>
+            )}
           </div>
           {/* Statistics Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
             {stats.map((stat, index) => (
               <div key={index} className={`${stat.bgColor} rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 border border-[#d0e9d6] shadow hover:shadow-lg transition-all duration-200`}> 
                 <div className="text-xs sm:text-sm font-semibold text-[#3a5f46] mb-1 sm:mb-2 uppercase tracking-wide">{stat.title}</div>
-                <div className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#2e4d3a]">{stat.value}</div>
+                <div className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#2e4d3a]">
+                  {loading ? (
+                    <div className="animate-pulse bg-gray-300 h-8 w-20 rounded"></div>
+                  ) : (
+                    stat.value
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -218,7 +286,13 @@ const AdminDashboard = () => {
               {pickupStatus.map((status, index) => (
                 <div key={index} className={`${status.bgColor} rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 border border-[#d0e9d6] shadow hover:shadow-lg transition-all duration-200`}> 
                   <div className="text-xs sm:text-sm font-semibold text-[#3a5f46] mb-1 sm:mb-2 uppercase tracking-wide">{status.title}</div>
-                  <div className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#2e4d3a]">{status.value}</div>
+                  <div className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#2e4d3a]">
+                    {loading ? (
+                      <div className="animate-pulse bg-gray-300 h-8 w-20 rounded"></div>
+                    ) : (
+                      status.value
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -228,12 +302,26 @@ const AdminDashboard = () => {
             <div>
               <h2 className="text-base sm:text-lg lg:text-xl font-bold text-[#3a5f46] mb-3 sm:mb-4 lg:mb-6">Recent Activity</h2>
               <div className="space-y-2 sm:space-y-3 lg:space-y-4">
-                {recentActivity.map((activity) => (
-                  <div key={activity.id} className="bg-white rounded-lg p-3 sm:p-4 border border-[#d0e9d6] shadow-sm hover:shadow-md transition">
-                    <div className="text-[#2e4d3a] font-semibold mb-1 text-sm sm:text-base">{activity.title}</div>
-                    <div className="text-xs sm:text-sm text-[#3a5f46]">{activity.time}</div>
+                {loading ? (
+                  // Loading skeleton for recent activity
+                  Array.from({ length: 4 }).map((_, index) => (
+                    <div key={index} className="bg-white rounded-lg p-3 sm:p-4 border border-[#d0e9d6] shadow-sm">
+                      <div className="animate-pulse bg-gray-300 h-4 w-3/4 rounded mb-2"></div>
+                      <div className="animate-pulse bg-gray-300 h-3 w-1/2 rounded"></div>
+                    </div>
+                  ))
+                ) : recentActivity.length > 0 ? (
+                  recentActivity.map((activity) => (
+                    <div key={activity.id} className="bg-white rounded-lg p-3 sm:p-4 border border-[#d0e9d6] shadow-sm hover:shadow-md transition">
+                      <div className="text-[#2e4d3a] font-semibold mb-1 text-sm sm:text-base">{activity.title}</div>
+                      <div className="text-xs sm:text-sm text-[#3a5f46]">{activity.time}</div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="bg-white rounded-lg p-3 sm:p-4 border border-[#d0e9d6] shadow-sm">
+                    <div className="text-[#2e4d3a] text-sm text-center py-4">No recent activity</div>
                   </div>
-                ))}
+                )}
               </div>
             </div>
             {/* Quick Links Section */}
@@ -266,3 +354,4 @@ const AdminDashboard = () => {
 }
 
 export default AdminDashboard;
+
