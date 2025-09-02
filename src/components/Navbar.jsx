@@ -1,9 +1,29 @@
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 
 function Navbar({ onContactClick, showHomeButton }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [showContactModal, setShowContactModal] = useState(false);
+
+  const handleScrollOrNavigate = (targetId) => {
+    const isHome = location.pathname === '/';
+    if (!isHome) {
+      navigate('/', { state: { scrollTo: targetId } });
+      return;
+    }
+    const section = document.getElementById(targetId);
+    const navHeight = 80;
+    if (section) {
+      const pos = section.offsetTop - navHeight;
+      window.scrollTo({ top: pos, behavior: 'smooth' });
+    }
+  };
+
+  const handleContact = () => {
+    // Always open contact on home page
+    navigate('/', { state: { showContactModal: true } });
+  };
 
   return (
     <>
@@ -30,18 +50,7 @@ function Navbar({ onContactClick, showHomeButton }) {
             <a 
               href="#about" 
               className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10" 
-              onClick={(e) => {
-                e.preventDefault();
-                const aboutSection = document.getElementById('about');
-                const navHeight = 80; // Updated height of the navigation bar
-                if (aboutSection) {
-                  const aboutPosition = aboutSection.offsetTop - navHeight;
-                  window.scrollTo({
-                    top: aboutPosition,
-                    behavior: 'smooth'
-                  });
-                }
-              }}
+              onClick={(e) => { e.preventDefault(); handleScrollOrNavigate('about'); }}
             >
               <span className="relative z-10">About</span>
               <div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div>
@@ -50,18 +59,7 @@ function Navbar({ onContactClick, showHomeButton }) {
             <a 
               href="#services" 
               className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10" 
-              onClick={(e) => {
-                e.preventDefault();
-                const servicesSection = document.getElementById('services');
-                const navHeight = 80; // Updated height of the navigation bar
-                if (servicesSection) {
-                  const servicesPosition = servicesSection.offsetTop - navHeight;
-                  window.scrollTo({
-                    top: servicesPosition,
-                    behavior: 'smooth'
-                  });
-                }
-              }}
+              onClick={(e) => { e.preventDefault(); handleScrollOrNavigate('services'); }}
             >
               <span className="relative z-10">Services</span>
               <div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div>
@@ -69,7 +67,7 @@ function Navbar({ onContactClick, showHomeButton }) {
             </a>
             <button 
               type="button" 
-              onClick={onContactClick ? onContactClick : () => setShowContactModal(true)} 
+              onClick={handleContact} 
               className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10 focus:outline-none bg-transparent"
             >
               <span className="relative z-10">Contact</span>

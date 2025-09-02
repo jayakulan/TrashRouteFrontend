@@ -4,17 +4,16 @@
 import { useEffect, useRef, useState } from "react"
 import { Link, useLocation, useParams, useNavigate } from "react-router-dom"
 import { Plus, Minus, Navigation, Check, Route } from "lucide-react"
-import { GoogleMap, Polyline } from "@react-google-maps/api"
 import UserProfileDropdowncom from "./UserProfileDropdowncom"
 import CompanyNotifications from "./CompanyNotifications"
-import { useGoogleMaps } from "../components/GoogleMapsProvider"
+// Removed Google Maps usage; Mapbox-only
 import { useMapbox } from "../components/MapboxProvider"
 import { getCookie } from "../utils/cookieUtils"
 import Footer from "../footer.jsx"
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
-const GOOGLE_MAPS_MAP_ID = "2d11b98e205d938c1f59291f" // Custom Map ID for TrashRoute
+// Google Maps removed; Mapbox-only
 
 // Simple nearest neighbor optimization
 function getOptimizedPath(points) {
@@ -71,15 +70,7 @@ async function getMapboxOptimizedRoute(points) {
 }
 
 const RouteMap = () => {
-  // Safely get Google Maps context with fallback
-  let googleMapsContext = { isLoaded: false, loadError: null, isLoading: false };
-  try {
-    googleMapsContext = useGoogleMaps();
-  } catch (error) {
-    console.warn('Google Maps provider not available, using Mapbox only');
-  }
-  
-  const { isLoaded: isGoogleMapsLoaded, loadError: googleMapsError, isLoading: isGoogleMapsLoading } = googleMapsContext;
+  // Mapbox-only
   const { isLoaded: isMapboxLoaded, loadError: mapboxError, isLoading: isMapboxLoading } = useMapbox();
   const mapRef = useRef(null)
   const mapboxMapRef = useRef(null)
@@ -236,40 +227,7 @@ const RouteMap = () => {
     }
   }, [useMapboxOptimization, isMapboxLoaded, households]);
 
-  const onLoad = (map) => {
-    setMap(map)
-    setIsLoading(false)
-    
-    // Create regular markers after map loads
-    if (window.google && optimizedLocations.length > 0) {
-      const newMarkers = optimizedLocations.map((location, index) => {
-        return new window.google.maps.Marker({
-          position: location,
-          map: map,
-          label: {
-            text: `${index + 1}`,
-            color: 'white',
-            fontWeight: 'bold'
-          },
-          icon: {
-            path: window.google.maps.SymbolPath.CIRCLE,
-            scale: 12,
-            fillColor: '#4285F4',
-            fillOpacity: 1,
-            strokeColor: '#ffffff',
-            strokeWeight: 2
-          }
-        })
-      })
-      
-      setMarkers(newMarkers)
-      
-      // Fit bounds to show all markers
-      const bounds = new window.google.maps.LatLngBounds()
-      optimizedLocations.forEach(loc => bounds.extend(loc))
-      map.fitBounds(bounds)
-    }
-  }
+  // Google Maps onLoad removed
 
   // Update loading state when data is loaded
   useEffect(() => {
@@ -399,48 +357,9 @@ const RouteMap = () => {
     }
   }, [mapboxMap, mapboxRoute]);
 
-  const onError = (error) => {
-    console.error("Google Maps API Error:", error)
-    setApiError(true)
-    setIsLoading(false)
-  }
+  // Google Maps error removed
 
-  // Show error if Google Maps failed to load
-  if (googleMapsError) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <header className="bg-white shadow-sm border-b">
-          <nav className="container mx-auto px-6 py-4 flex justify-between">
-            <img src="/images/logo.png" className="h-16" alt="Logo" />
-            <div className="flex space-x-6 items-center">
-              <Link to="/company-waste-prefer">Dashboard</Link>
-              <Link to="/company/historylogs">Historylogs</Link>
-              <UserProfileDropdowncom />
-            </div>
-          </nav>
-        </header>
-
-        <main className="container mx-auto px-6 py-8">
-          <h1 className="text-3xl font-bold mb-2">Route Map</h1>
-          <p className="text-gray-600 mb-6">View and manage your waste collection route.</p>
-
-          <div className="bg-white border rounded-2xl shadow-sm p-8 text-center">
-            <div className="text-6xl mb-4">🗺</div>
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">Google Maps API Error</h3>
-            <p className="text-gray-500 mb-4">
-              Failed to load Google Maps API. Please refresh the page.
-            </p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="bg-[#3a5f46] text-white px-4 py-2 rounded hover:bg-[#2e4d3a]"
-            >
-              Refresh Page
-            </button>
-          </div>
-        </main>
-      </div>
-    )
-  }
+  // Google Maps error UI removed
 
   const handleLocateMe = () => {
     if (navigator.geolocation) {
@@ -684,7 +603,7 @@ const RouteMap = () => {
               <button
                 type="button"
                 onClick={() => navigate("/")}
-                className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10 focus:outline-none bg-transparent"
+                className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10 focus:outline-none bg-transparent nav-link-text"
               >
                 <span className="relative z-10">Home</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
@@ -693,7 +612,7 @@ const RouteMap = () => {
               <button
                 type="button"
                 onClick={() => navigate("/company-waste-prefer")}
-                className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10 focus:outline-none bg-transparent"
+                className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10 focus:outline-none bg-transparent nav-link-text"
               >
                 <span className="relative z-10">Dashboard</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
@@ -702,7 +621,7 @@ const RouteMap = () => {
               <button
                 type="button"
                 onClick={() => navigate("/company/historylogs")}
-                className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10 focus:outline-none bg-transparent"
+                className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10 focus:outline-none bg-transparent nav-link-text"
               >
                 <span className="relative z-10">Historylogs</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
@@ -826,59 +745,22 @@ const RouteMap = () => {
             <span className="text-sm font-medium">Locate Me</span>
           </button>
 
-          {(isGoogleMapsLoading || isLoading) && (
+          {isLoading && (
             <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-20">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3a5f46] mx-auto mb-4"></div>
-                <p className="text-gray-600">
-                  {isGoogleMapsLoading ? "Loading Google Maps..." : "Loading map..."}
-                </p>
+                <p className="text-gray-600">Loading map...</p>
               </div>
             </div>
           )}
 
-          {useMapboxOptimization && isMapboxLoaded ? (
-            // Mapbox Map
-            <div ref={mapboxMapRef} style={mapContainerStyle} />
-          ) : isGoogleMapsLoaded && window.google && window.google.maps && window.google.maps.Map ? (
-            // Google Maps
-            <GoogleMap
-              mapContainerStyle={mapContainerStyle}
-              center={center}
-              zoom={5}
-              onLoad={onLoad}
-              mapId={GOOGLE_MAPS_MAP_ID}
-              options={{
-                mapTypeId: 'roadmap',
-                streetViewControl: true,
-                fullscreenControl: true,
-                zoomControl: false
-              }}
-            >
-              {optimizedLocations.length > 1 && window.google.maps.Polyline && (
-                <Polyline
-                  path={optimizedLocations}
-                  geodesic={true}
-                  strokeColor="#4285F4"
-                  strokeOpacity={0.8}
-                  strokeWeight={4}
-                />
-              )}
-            </GoogleMap>
-          ) : isMapboxLoaded ? (
-            // Fallback to Mapbox if Google Maps is not available
+          {isMapboxLoaded ? (
             <div ref={mapboxMapRef} style={mapContainerStyle} />
           ) : (
             <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-20">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3a5f46] mx-auto mb-4"></div>
-                <p className="text-gray-600">
-                  {useMapboxOptimization 
-                    ? (isMapboxLoading ? "Loading Mapbox..." : "Initializing Mapbox map...")
-                    : (isGoogleMapsLoading ? "Loading Google Maps..." : "Initializing map...")
-                  }
-                  {!isMapboxLoaded && !isGoogleMapsLoaded && "Loading map services..."}
-                </p>
+                <p className="text-gray-600">Initializing Mapbox map...</p>
               </div>
             </div>
           )}

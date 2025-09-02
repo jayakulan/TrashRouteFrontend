@@ -274,11 +274,20 @@ function LandingPage() {
     return () => observer.disconnect();
   }, []);
 
-  // Check if we should show contact modal from navigation state
+  // Check if we should show contact modal or scroll to section from navigation state
   useEffect(() => {
     if (location.state?.showContactModal) {
       setShowContactModal(true);
       // Clear the state to prevent showing modal on refresh
+      navigate(location.pathname, { replace: true, state: {} });
+    } else if (location.state?.scrollTo) {
+      const targetId = location.state.scrollTo;
+      const navHeight = 80;
+      const section = document.getElementById(targetId);
+      if (section) {
+        const pos = section.offsetTop - navHeight;
+        setTimeout(() => window.scrollTo({ top: pos, behavior: 'smooth' }), 0);
+      }
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location.state, navigate, location.pathname]);
