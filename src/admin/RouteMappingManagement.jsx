@@ -7,6 +7,7 @@ import SidebarLinks from "./SidebarLinks";
 import AdminProfileDropdown from "./AdminProfileDropdown";
 import Footer from "../footer";
 import { Menu, X, MapPin } from "lucide-react";
+import DeleteWarningPopup from "./components/DeleteWarningPopup";
 
 const RouteMappingManagement = () => {
   const [searchQuery, setSearchQuery] = useState("")
@@ -15,6 +16,9 @@ const RouteMappingManagement = () => {
   const [mappingData, setMappingData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [deletingMapping, setDeletingMapping] = useState(null);
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [mappingToDelete, setMappingToDelete] = useState(null);
 
   // Fetch data from backend
   useEffect(() => {
@@ -47,20 +51,18 @@ const RouteMappingManagement = () => {
       mapping.request_id.toString().toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
-  const handleCreateNewMapping = async () => {
-    // For now, just show an alert - you can implement a modal form later
-    alert("Create new mapping functionality will be implemented");
+  const handleDeleteClick = (mapping) => {
+    setMappingToDelete(mapping);
+    setShowDeletePopup(true);
   }
 
-  const handleEdit = async (mappingId) => {
-    // For now, just show an alert - you can implement a modal form later
-    alert(`Edit mapping ${mappingId} functionality will be implemented`);
-  }
-
-  const handleDelete = async (mappingId) => {
-    if (window.confirm(`Are you sure you want to delete mapping ${mappingId}?`)) {
+  const handleDeleteConfirm = async () => {
+    if (!mappingToDelete) return;
+    
+    if (window.confirm(`Are you sure you want to delete mapping ${mappingToDelete.mapping_id}?`)) {
       try {
-        const response = await fetch(`http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/route_mapping.php?mapping_id=${mappingId}`, {
+        setDeletingMapping(mappingToDelete.mapping_id);
+        const response = await fetch(`http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/route_mapping.php?mapping_id=${mappingToDelete.mapping_id}`, {
           method: 'DELETE'
         });
         const result = await response.json();
@@ -68,14 +70,23 @@ const RouteMappingManagement = () => {
         if (result.success) {
           alert('Mapping deleted successfully');
           fetchMappingData(); // Refresh the data
+          setShowDeletePopup(false);
+          setMappingToDelete(null);
         } else {
           alert(result.message || 'Failed to delete mapping');
         }
       } catch (err) {
         alert('Error deleting mapping');
         console.error('Error deleting mapping:', err);
+      } finally {
+        setDeletingMapping(null);
       }
     }
+  }
+
+  const handleDeleteCancel = () => {
+    setShowDeletePopup(false);
+    setMappingToDelete(null);
   }
 
   return (
@@ -120,14 +131,8 @@ const RouteMappingManagement = () => {
       <div className={`flex-1 min-w-0 ml-0 sm:ml-20 transition-all duration-300 ${sidebarHovered ? 'lg:ml-64' : 'lg:ml-20'}`}>
         <main className="p-4 sm:p-6 md:p-8">
           {/* Page Header */}
-          <div className="flex justify-between items-center mb-8">
+          <div className="mb-8">
             <h1 className="text-3xl font-bold text-[#3a5f46]">Route Mapping Management</h1>
-            <button
-              onClick={handleCreateNewMapping}
-              className="bg-[#e6f4ea] hover:bg-[#d0e9d6] text-[#3a5f46] font-medium py-2 px-4 rounded-lg transition-colors"
-            >
-              Create New Mapping
-            </button>
           </div>
           {/* Search Bar */}
           <div className="mb-8">
@@ -189,19 +194,17 @@ const RouteMappingManagement = () => {
                         <td className="px-6 py-4 text-sm font-medium text-[#2e4d3a]">{mapping.request_id}</td>
                         <td className="px-6 py-4 text-sm text-[#618170]">{new Date(mapping.created_at).toLocaleDateString()}</td>
                         <td className="px-6 py-4">
-                          <div className="flex space-x-2 text-sm">
+                          <div className="flex space-x-2">
                             <button
-                              onClick={() => handleEdit(mapping.mapping_id)}
-                              className="text-[#3a5f46] hover:text-[#2e4d3a]"
+                              onClick={() => handleDeleteClick(mapping)}
+                              disabled={deletingMapping === mapping.mapping_id}
+                              className={`font-semibold px-3 py-1 rounded-full shadow transition text-xs ${
+                                deletingMapping === mapping.mapping_id
+                                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                  : 'bg-red-600 hover:bg-red-700 text-white'
+                              }`}
                             >
-                              Edit
-                            </button>
-                            <span className="text-gray-400">|</span>
-                            <button
-                              onClick={() => handleDelete(mapping.mapping_id)}
-                              className="text-[#3a5f46] hover:text-red-600"
-                            >
-                              Delete
+                              {deletingMapping === mapping.mapping_id ? 'Deleting...' : 'Delete'}
                             </button>
                           </div>
                         </td>
@@ -227,6 +230,17 @@ const RouteMappingManagement = () => {
         </main>
         <Footer admin={true} />
       </div>
+
+      {/* Delete Warning Popup */}
+      <DeleteWarningPopup
+        isOpen={showDeletePopup}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Mapping"
+        message="Are you sure you want to delete this route mapping?"
+        itemName={mappingToDelete?.mapping_id || ""}
+        isLoading={deletingMapping !== null}
+      />
     </div>
   )
 }

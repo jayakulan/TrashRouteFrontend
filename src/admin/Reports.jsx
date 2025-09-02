@@ -70,10 +70,20 @@ const Reports = () => {
   ]
 
   const filteredReports = reportsData.filter(
-    (report) =>
-      report.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      report.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      report.type.toLowerCase().includes(searchQuery.toLowerCase()),
+    (report) => {
+      const matchesSearch =
+        report.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        report.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        report.type.toLowerCase().includes(searchQuery.toLowerCase())
+
+      const matchesReportType = filters.reportType === "All Reports" || report.type === filters.reportType
+      const matchesStatus = filters.status === "All Status" || report.status === filters.status
+      
+      // For dateRange filter, we'll implement basic logic (you can enhance this later)
+      const matchesDateRange = filters.dateRange === "Last 30 Days" || true // Placeholder for date filtering
+
+      return matchesSearch && matchesReportType && matchesStatus && matchesDateRange
+    }
   )
 
   const handleFilterChange = (filterType, value) => {
@@ -81,6 +91,15 @@ const Reports = () => {
       ...prev,
       [filterType]: value,
     }))
+  }
+
+  const resetFilters = () => {
+    setFilters({
+      reportType: "All Reports",
+      dateRange: "Last 30 Days",
+      status: "All Status",
+    })
+    setSearchQuery("")
   }
 
   const handleDownloadReport = (reportId) => {
@@ -271,6 +290,12 @@ const Reports = () => {
                   <ChevronDown className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-[#3a5f46] pointer-events-none" />
                 </div>
               ))}
+              <button
+                onClick={resetFilters}
+                className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors text-sm shadow"
+              >
+                Reset Filters
+              </button>
           </div>
         </div>
 
