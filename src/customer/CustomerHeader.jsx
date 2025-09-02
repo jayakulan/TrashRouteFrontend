@@ -1,10 +1,13 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import CustomerNotification from "./CustomerNotification";
 import UserProfileDropdown from "./UserProfileDropdown";
+import { useAuth } from "../context/AuthContext";
 
 const CustomerHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, getCustomerId } = useAuth();
+  const userId = (user && (user.user_id || user.id)) || getCustomerId();
   return (
     <>
       {/* Accent bar at the very top */}
@@ -23,60 +26,12 @@ const CustomerHeader = () => {
             <a href="/customer/track-pickup" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">Track Pickup</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
             <a href="/customer/history-log" className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10"><span className="relative z-10">History Log</span><div className="absolute inset-0 bg-gradient-to-r from-[#3a5f46]/20 to-[#2e4d3a]/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100"></div><div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] group-hover:w-full transition-all duration-300"></div></a>
             {/* Notification and Profile */}
-            {location.pathname.includes('/history-log') ? (
-              <CustomerNotification 
-                mode="history"
-                wasteTypes={[
-                  { type: "Plastics", status: "Completed" },
-                  { type: "Paper", status: "Scheduled" },
-                  { type: "Glass", status: "Missed" },
-                  { type: "Metal", status: "Completed" }
-                ]}
-                onGoNow={() => navigate('/customer/track-pickup')}
-              />
-            ) : location.pathname.includes('/request-pickup') || location.pathname.includes('/trash-type') || location.pathname.includes('/pin-location') || location.pathname.includes('/pickup-summary') ? (
-              <CustomerNotification 
-                mode="request"
-                wasteTypes={[
-                  { type: "Plastics", status: "Pending" },
-                  { type: "Paper", status: "Pending" },
-                  { type: "Glass", status: "Pending" },
-                  { type: "Metal", status: "Pending" }
-                ]}
-                onGoNow={() => navigate('/customer/track-pickup')}
-              />
-            ) : (
-              <CustomerNotification onViewDetails={() => navigate('/customer/track-pickup')} />
-            )}
+            <CustomerNotification userId={userId} />
             <UserProfileDropdown />
           </div>
           {/* Mobile menu button with animation */}
           <div className="md:hidden flex items-center">
-            {location.pathname.includes('/history-log') ? (
-              <CustomerNotification 
-                mode="history"
-                wasteTypes={[
-                  { type: "Plastics", status: "Completed" },
-                  { type: "Paper", status: "Scheduled" },
-                  { type: "Glass", status: "Missed" },
-                  { type: "Metal", status: "Completed" }
-                ]}
-                onGoNow={() => navigate('/customer/track-pickup')}
-              />
-            ) : location.pathname.includes('/request-pickup') || location.pathname.includes('/trash-type') || location.pathname.includes('/pin-location') || location.pathname.includes('/pickup-summary') ? (
-              <CustomerNotification 
-                mode="request"
-                wasteTypes={[
-                  { type: "Plastics", status: "Pending" },
-                  { type: "Paper", status: "Pending" },
-                  { type: "Glass", status: "Pending" },
-                  { type: "Metal", status: "Pending" }
-                ]}
-                onGoNow={() => navigate('/customer/track-pickup')}
-              />
-            ) : (
-              <CustomerNotification onViewDetails={() => navigate('/customer/track-pickup')} />
-            )}
+            <CustomerNotification userId={userId} />
             <UserProfileDropdown />
             <button className="ml-2 relative group p-2 rounded-lg transition-all duration-300 hover:bg-[#3a5f46]/10">
               <div className="w-6 h-0.5 bg-gray-700 group-hover:bg-[#3a5f46] transition-all duration-300 mb-1.5"></div>

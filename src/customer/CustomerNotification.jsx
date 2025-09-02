@@ -1,41 +1,79 @@
 import { useState, useRef, useEffect } from "react";
-import { Bell, Calendar, Clock, Truck, MapPin, CheckCircle, AlertCircle, Hourglass, Receipt, Link2, Info } from "lucide-react";
+import { Bell, Info, Calendar, Clock, Truck, Receipt, Link2, MapPin } from "lucide-react";
+import { getCookie } from "../utils/cookieUtils";
 
-// Default notification data
-const defaultNotification = {
-  name: "Alex",
-  greeting: "Hi Alex, your waste pickup is ready!",
-  title: "Pickup Scheduled Successfully!",
-  pickupDate: "July 7, 2025",
-  pickupTime: "9:00 AM – 12:00 PM",
-  company: "EcoGreen Recycling",
-  wasteSummary: "Plastic (3kg), Glass (2kg)",
-  location: "123 Green St, Springfield",
-  trackingId: "#TR-002194",
-  status: "on_the_way", // 'confirmed', 'pending', 'missed', 'on_the_way'
-  statusText: "🚛 Status: On the Way",
-  assistantMsg: "We've locked in your pickup with EcoGreen 🚛. Your sorted waste will be picked up at your scheduled time — just have it ready at your drop point!",
-  progressStep: 3,
-  progressTotal: 4,
-  progressPercent: 75,
-};
+// Default title fallback
+const defaultTitle = "Notifications";
 
 const THEME_GREEN = "#3a5f46";
 const THEME_GREEN_DARK = "#2e4a36";
 const LIGHT_GRAY = "#f7faf7";
 
-const statusColors = {
-  confirmed: "text-green-600",
-  pending: "text-yellow-500",
-  missed: "text-red-600",
-  on_the_way: "text-green-700",
-};
+// simple colors
 
-export default function CustomerNotification({ hasNew = true, onViewDetails, notification = defaultNotification, iconOnly = false }) {
+export default function CustomerNotification({ userId, iconOnly = false }) {
   const [open, setOpen] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
   const bellRef = useRef();
   const dropdownRef = useRef();
+  const [loading, setLoading] = useState(false);
+  const [items, setItems] = useState([]);
+  const [hasNew, setHasNew] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!userId) return;
+      try {
+        setLoading(true);
+        const res = await fetch(`http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/notifications.php?user_id=${userId}&limit=25`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message || 'Failed to fetch');
+        const data = json.data || [];
+        setItems(data);
+        setHasNew(data.some(n => (n.seen === 0 || String(n.seen) === '0')));
+
+        // Fallback: if no notifications yet, synthesize from latest pickup requests
+        if ((data || []).length === 0) {
+          const token = getCookie('token');
+          const headers = { 'Content-Type': 'application/json' };
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+          const tr = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Customer/trackPickup.php', {
+            method: 'GET',
+            credentials: 'include',
+            headers
+          });
+          if (tr.ok) {
+            const trJson = await tr.json();
+            if (trJson.success) {
+              const reqs = trJson.data?.pickup_requests || [];
+              const synthesized = reqs.slice(0, 5).map(r => ({
+                notification_id: `syn-${r.request_id}`,
+                message: `Pickup ${r.status || 'Request received'}`,
+                created_at: r.timestamp,
+                request_id: r.request_id,
+                request_waste_type: r.waste_type,
+                request_quantity: r.quantity,
+                request_status: r.status,
+                request_otp: r.otp,
+                request_timestamp: r.timestamp,
+                seen: 1
+              }));
+              if (synthesized.length > 0) setItems(synthesized);
+            }
+          }
+        }
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [userId]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -66,7 +104,7 @@ export default function CustomerNotification({ hasNew = true, onViewDetails, not
   const popupWidth = "w-[25rem] max-w-[95vw] sm:w-[28rem]";
 
   // Progress bar width
-  const progressWidth = `${notification.progressPercent || 0}%`;
+  const progressWidth = `100%`;
 
   if (iconOnly) {
     return (
@@ -113,108 +151,107 @@ export default function CustomerNotification({ hasNew = true, onViewDetails, not
           marginTop: '0.5rem', // small gap below bell
         }}
       >
-        {/* Title Only */}
         <div className="flex flex-col items-start mb-2">
-          <span className="text-2xl font-extrabold notif-title-bounce" style={{ color: THEME_GREEN }}>{notification.title}</span>
+          <span className="text-2xl font-extrabold notif-title-bounce" style={{ color: THEME_GREEN }}>{defaultTitle}</span>
         </div>
-        {/* Progress Bar or Badge */}
-        <div className="flex items-center gap-2 mb-1">
-          <Info className="w-4 h-4 text-green-700" />
-          <span className="text-sm font-medium text-green-700">
-            🟢 Status: Step {notification.progressStep} of {notification.progressTotal} — Scheduled
-          </span>
-        </div>
-        <div className="w-full h-2 bg-gray-200 rounded-full mb-2">
-          <div
-            className="h-2 rounded-full transition-all duration-300"
-            style={{ width: progressWidth, background: THEME_GREEN }}
-          ></div>
-        </div>
-        {/* Info Sections */}
-        <div className="flex flex-col gap-2 text-base">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-blue-600 notif-icon-glow" />
-            <span className="font-semibold">Pickup Date:</span>
-            <span>{notification.pickupDate}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-yellow-600 notif-icon-glow" />
-            <span className="font-semibold">Time Window:</span>
-            <span>{notification.pickupTime}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Truck className="w-5 h-5 text-green-700 notif-icon-bounce notif-icon-glow" />
-            <span className="font-semibold">Company:</span>
-            <span>{notification.company}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Receipt className="w-5 h-5 text-gray-600 notif-icon-glow" />
-            <span className="font-semibold">Waste Summary:</span>
-            <span>{notification.wasteSummary}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-green-700 notif-icon-bounce notif-icon-glow" />
-            <span className="font-semibold">Location:</span>
-            <span className="truncate max-w-[10rem]" title={notification.location}>{notification.location}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link2 className="w-5 h-5 text-gray-500 notif-icon-glow" />
-            <span className="font-semibold">Tracking ID:</span>
-            <span className="text-gray-700 font-mono">{notification.trackingId}</span>
-          </div>
-        </div>
-        {/* Status line (optional) */}
-        {notification.statusText && (
-          <div className="flex items-center mb-1 mt-2">
-            <Truck className="w-5 h-5 mr-2 text-green-700 notif-icon-bounce" />
-            <span className={`ml-2 text-base font-semibold`} style={{ color: THEME_GREEN }}>{notification.statusText}</span>
+        {loading && <div className="text-sm text-gray-600">Loading notifications…</div>}
+        {error && <div className="text-sm text-red-600">{error}</div>}
+        {!loading && !error && items.length === 0 && (
+          <div className="text-sm text-gray-700">No notifications yet.</div>
+        )}
+        {!loading && !error && items.length > 0 && (
+          <div className="flex flex-col gap-4">
+            {items.map((n) => {
+              // derive step and progress
+              let step = 1;
+              if (n.request_status === 'Completed') step = 4; else if (n.request_status === 'Accepted' && n.request_otp) step = 3; else if (n.request_status === 'Accepted') step = 2; else step = 1;
+              const total = 4;
+              const progress = [0,25,50,75,100][step] || 25;
+              const msg = (n.message || defaultTitle).trim();
+              const lowerMsg = msg.toLowerCase();
+              const hasPickupScheduledPrefix = lowerMsg.startsWith('pickup scheduled:');
+              const titleText = hasPickupScheduledPrefix ? 'Pickup scheduled:' : msg;
+              // Parse details from message if backend fields missing
+              let parsedDetails = '';
+              if (hasPickupScheduledPrefix) {
+                const afterColon = msg.substring(msg.indexOf(':') + 1).trim();
+                // Extract until first period or end
+                const firstSentence = afterColon.split('.')[0].trim();
+                parsedDetails = firstSentence;
+              }
+              // Prefer explicit backend fields
+              const detailsLine = n.request_waste_type
+                ? `${n.request_waste_type}${(n.request_quantity || n.request_quantity === 0) ? ` (qty: ${n.request_quantity})` : ''}.`
+                : (hasPickupScheduledPrefix ? `${parsedDetails}${parsedDetails.endsWith('.') ? '' : '.'}` : '');
+              // Try to parse Request # from message if request_id absent
+              let derivedRequestId = n.request_id;
+              if (!derivedRequestId && /request\s*#(\d+)/i.test(msg)) {
+                const m = msg.match(/request\s*#(\d+)/i);
+                if (m) derivedRequestId = m[1];
+              }
+              return (
+                <div key={n.notification_id} className="bg-white/80 rounded-xl px-4 py-4 text-gray-800 shadow-sm border border-gray-100">
+                  {/* Title */}
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-lg font-extrabold notif-title-bounce" style={{ color: THEME_GREEN }}>{titleText}</span>
+                  </div>
+                  {hasPickupScheduledPrefix && detailsLine && (
+                    <div className="-mt-1 mb-2 text-sm text-[#2e4d3a] font-medium">
+                      {detailsLine}
+                    </div>
+                  )}
+                  {/* Status line */}
+                  <div className="flex items-center gap-2 mb-1">
+                    <Info className="w-4 h-4 text-green-700" />
+                    <span className="text-sm font-medium text-green-700">🟢 Status: Step {step} of {total}</span>
+                  </div>
+                  {/* Progress bar */}
+                  <div className="w-full h-2 bg-gray-200 rounded-full mb-2">
+                    <div className="h-2 rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: THEME_GREEN }}></div>
+                  </div>
+                  {/* Info sections */}
+                  <div className="flex flex-col gap-2 text-base">
+                    {n.request_timestamp && (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-5 h-5 text-blue-600 notif-icon-glow" />
+                        <span className="font-semibold">Pickup Date:</span>
+                        <span>{new Date(n.request_timestamp).toLocaleDateString()}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-5 h-5 text-yellow-600 notif-icon-glow" />
+                      <span className="font-semibold">Time Window:</span>
+                      <span>{n.created_at ? new Date(n.created_at).toLocaleString() : 'TBD'}</span>
+                    </div>
+                    {n.request_waste_type && (
+                      <div className="flex items-center gap-2">
+                        <Receipt className="w-5 h-5 text-gray-600 notif-icon-glow" />
+                        <span className="font-semibold">Waste Summary:</span>
+                        <span>{n.request_waste_type}{n.request_quantity ? ` (${n.request_quantity}kg)` : ''}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <Link2 className="w-5 h-5 text-gray-500 notif-icon-glow" />
+                      <span className="font-semibold">Tracking ID:</span>
+                      <span className="text-gray-700 font-mono">{derivedRequestId ? `#REQ-${derivedRequestId}` : `#N-${n.notification_id}`}</span>
+                    </div>
+                    {n.request_otp && (
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded-full bg-[#f3f8f5] border border-[#cfe0d6] text-[#2e4d3a] text-xs font-medium">OTP: {n.request_otp}</span>
+                      </div>
+                    )}
+                  </div>
+                  {/* Footer badges */}
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-600">
+                    {n.request_status ? <span className="px-2 py-0.5 rounded-full bg-[#eaf3ee] border border-[#cfe0d6] text-[#2e4d3a]">{n.request_status}</span> : null}
+                    {n.seen ? null : <span className="px-2 py-0.5 rounded-full bg-[#3a5f46] text-white">New</span>}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
-        {/* Assistant message */}
-        <div className="bg-white/80 rounded-lg px-4 py-3 text-gray-700 text-[1rem] shadow-sm border border-gray-100">
-          <span className="font-medium text-green-700">Smart Assistant:</span> {notification.assistantMsg}
-        </div>
-        {/* Call-to-Action Button with Tooltip */}
-        <div className="relative w-full flex flex-col items-center">
-          <button
-            className="w-full mt-2 py-3 px-6 bg-green-700 hover:bg-green-800 text-white text-lg font-bold rounded-xl shadow-md transition-all duration-200 notif-btn-grow"
-            style={{ background: THEME_GREEN }}
-            onClick={onViewDetails}
-            onMouseEnter={() => setShowTooltip(true)}
-            onMouseLeave={() => setShowTooltip(false)}
-            aria-label="Track Pickup Now"
-          >
-            📦 Track Pickup Now
-          </button>
-          {/* Tooltip */}
-          {showTooltip && (
-            <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-black bg-opacity-90 text-white text-xs rounded-md px-3 py-2 shadow-lg z-50 whitespace-nowrap animate-fade-slide">
-              Click to see full info, company contact & tracking.
-            </div>
-          )}
-        </div>
-        {notification.status === "completed" && (
-          <div className="w-full flex justify-center mt-3">
-            <button
-              className="py-2 px-6 text-white text-base font-semibold rounded-lg shadow transition-all duration-200"
-              style={{ background: '#5E856D' }}
-              onMouseOver={e => e.currentTarget.style.background = '#466a54'}
-              onMouseOut={e => e.currentTarget.style.background = '#5E856D'}
-              onClick={e => {
-                e.stopPropagation();
-                console.log("Give Feedback clicked");
-                setShowFeedbackPopup(true);
-              }}
-            >
-              Give Feedback
-            </button>
-          </div>
-        )}
-        {/* Mini Confirmation Note */}
-        <div className="mt-2 text-center text-green-800 text-sm font-medium bg-green-50 rounded-lg py-2 px-3 shadow-sm">
-          Thank you for recycling with TrashRoute 🌿<br />
-          You're helping reduce landfill waste and support cleaner communities.
-        </div>
+        {/* End content */}
       </div>
       {/* Animation keyframes and hover effects */}
       <style>{`
