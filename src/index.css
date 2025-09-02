@@ -191,6 +191,12 @@ input[type="range"].slider::-moz-range-thumb {
   transform: scaleX(1);
 }
 
+/* Unified nav link text style for customer and company headers */
+.nav-link-text {
+  font-size: 1rem; /* 16px */
+  font-weight: 600;
+}
+
 .social-blink:hover svg, .social-blink:focus svg {
   animation: bounce-green 0.6s cubic-bezier(.68,-0.55,.27,1.55) 1;
   fill: #3a5f46;
