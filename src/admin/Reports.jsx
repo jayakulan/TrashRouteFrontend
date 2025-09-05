@@ -1,11 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { Search, ChevronDown, BarChart3, Diamond, Menu, X, Users, Building, Truck, MessageSquare, Download, Calendar, TrendingUp, TrendingDown } from "lucide-react"
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js'
+import { Pie, Bar } from 'react-chartjs-2'
 import SidebarLinks from "./SidebarLinks"
 import AdminProfileDropdown from "./AdminProfileDropdown"
-import Footer from "../footer";
+import Footer from "../footer"
+
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title)
 
 const Reports = () => {
   const [searchQuery, setSearchQuery] = useState("")
@@ -15,6 +19,50 @@ const Reports = () => {
     dateRange: "Last 30 Days",
     status: "All Status",
   })
+  const [wasteTypeData, setWasteTypeData] = useState({
+    Paper: { count: 0, percentage: 0 },
+    Glass: { count: 0, percentage: 0 },
+    Metal: { count: 0, percentage: 0 },
+    Plastic: { count: 0, percentage: 0 }
+  })
+  const [soldRoutesData, setSoldRoutesData] = useState([0, 0, 0, 0, 0])
+  const [loading, setLoading] = useState(true)
+
+  // Fetch reports data from API
+  useEffect(() => {
+    const fetchReportsData = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/reports.php', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch reports data')
+        }
+
+        const result = await response.json()
+        
+        if (result.success && result.data) {
+          setWasteTypeData(result.data.wasteTypeData)
+          setSoldRoutesData(result.data.soldRoutesData)
+        } else {
+          console.error('API Error:', result.message)
+        }
+      } catch (error) {
+        console.error('Error fetching reports data:', error)
+        // Keep default values if API fails
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchReportsData()
+  }, [])
 
   const reportsData = [
     {
@@ -69,6 +117,161 @@ const Reports = () => {
     },
   ]
 
+  // Pie chart data for waste types (dynamic data)
+  const pieChartData = {
+    labels: ['Paper', 'Glass', 'Metal', 'Plastic'],
+    datasets: [
+      {
+        data: [
+          wasteTypeData.Paper.count,
+          wasteTypeData.Glass.count,
+          wasteTypeData.Metal.count,
+          wasteTypeData.Plastic.count
+        ],
+        backgroundColor: [
+          '#3a5f46', // Paper - matches your theme green
+          '#6b7280', // Glass - gray
+          '#f59e0b', // Metal - amber
+          '#3b82f6', // Plastic - blue
+        ],
+        borderColor: [
+          '#2e4d3a', // Darker green for border
+          '#4b5563', // Darker gray for border
+          '#d97706', // Darker amber for border
+          '#2563eb', // Darker blue for border
+        ],
+        borderWidth: 2,
+        hoverBackgroundColor: [
+          '#2e4d3a',
+          '#4b5563',
+          '#d97706',
+          '#2563eb',
+        ],
+      },
+    ],
+  }
+
+  const pieChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false, // Hide the default legend since we'll use custom legend
+      },
+      tooltip: {
+        backgroundColor: 'rgba(58, 95, 70, 0.9)',
+        titleColor: 'white',
+        bodyColor: 'white',
+        borderColor: '#2e4d3a',
+        borderWidth: 1,
+        callbacks: {
+          label: function(context) {
+            const label = context.label || ''
+            const value = context.parsed
+            const total = context.dataset.data.reduce((a, b) => a + b, 0)
+            const percentage = ((value / total) * 100).toFixed(1)
+            return `${label}: ${value} requests (${percentage}%)`
+          }
+        }
+      },
+    },
+  }
+
+  // Bar chart data for sold routes by week (dynamic data)
+  const barChartData = {
+    labels: ['1st Week', '2nd Week', '3rd Week', '4th Week', '5th Week'],
+    datasets: [
+      {
+        label: 'Sold Routes',
+        data: soldRoutesData, // Total number of sold routes for each week
+        backgroundColor: [
+          '#3a5f46', // Week 1 - theme green
+          '#4ade80', // Week 2 - lighter green
+          '#3a5f46', // Week 3 - theme green
+          '#22c55e', // Week 4 - bright green
+          '#6b7280', // Week 5 - gray
+        ],
+        borderColor: [
+          '#2e4d3a', // Darker green for border
+          '#16a34a', // Darker green for border
+          '#2e4d3a', // Darker green for border
+          '#15803d', // Darker green for border
+          '#4b5563', // Darker gray for border
+        ],
+        borderWidth: 2,
+        borderRadius: 4,
+        borderSkipped: false,
+      },
+    ],
+  }
+
+  const barChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false, // Hide legend since we only have one dataset
+      },
+      tooltip: {
+        backgroundColor: 'rgba(58, 95, 70, 0.9)',
+        titleColor: 'white',
+        bodyColor: 'white',
+        borderColor: '#2e4d3a',
+        borderWidth: 1,
+        callbacks: {
+          label: function(context) {
+            return `Sold Routes: ${context.parsed.y}`
+          }
+        }
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: Math.max(...soldRoutesData) > 0 ? Math.max(...soldRoutesData) + 1 : 10,
+        grid: {
+          color: '#e6f4ea',
+        },
+        ticks: {
+          color: '#3a5f46',
+          font: {
+            weight: 'bold',
+          },
+          stepSize: 1,
+        },
+        title: {
+          display: true,
+          text: 'Number of Sold Routes',
+          color: '#3a5f46',
+          font: {
+            weight: 'bold',
+            size: 12,
+          },
+        },
+      },
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          color: '#3a5f46',
+          font: {
+            weight: 'bold',
+          },
+        },
+        title: {
+          display: true,
+          text: 'Previous Month Weeks',
+          color: '#3a5f46',
+          font: {
+            weight: 'bold',
+            size: 12,
+          },
+        },
+      },
+    },
+  }
+
   const filteredReports = reportsData.filter(
     (report) => {
       const matchesSearch =
@@ -110,6 +313,56 @@ const Reports = () => {
   const handleViewReport = (reportId) => {
     console.log("View report:", reportId)
     // Handle view logic
+  }
+
+  const handleGenerateReport = async () => {
+    try {
+      console.log("Generating last month report...")
+      
+      const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/generate_monthly_report.php', {
+        method: 'GET',
+        credentials: 'include',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate report')
+      }
+
+      // Check if the response is actually a PDF
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/pdf')) {
+        // If it's not a PDF, it might be an error message
+        const text = await response.text()
+        throw new Error('Server returned an error: ' + text)
+      }
+
+      // Get the PDF blob from the response
+      const blob = await response.blob()
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      
+      // Generate filename with current date
+      const currentDate = new Date()
+      const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
+      const filename = `TrashRoute_Monthly_Report_${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}.pdf`
+      
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      
+      // Clean up
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      
+      console.log("Report generated and downloaded successfully!")
+      
+    } catch (error) {
+      console.error('Error generating report:', error)
+      alert('Failed to generate report. Please try again.')
+    }
   }
 
   const getStatusColor = (status) => {
@@ -236,6 +489,87 @@ const Reports = () => {
             </div>
           </div>
         </div>
+
+          {/* Charts Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6 lg:mb-8">
+            {/* Waste Type Distribution Pie Chart */}
+            <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-6 border border-[#d0e9d6] shadow-lg">
+              <div className="mb-4">
+                <h2 className="text-lg sm:text-xl font-bold text-[#3a5f46] mb-2">Waste Type Distribution</h2>
+                <p className="text-sm text-[#618170]">Total completed pickup requests by waste type</p>
+              </div>
+              <div className="flex flex-col lg:flex-row items-start gap-10">
+                <div className="w-full lg:w-1/2 h-64 lg:h-80 flex justify-start">
+                  {loading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-[#3a5f46]">Loading...</div>
+                    </div>
+                  ) : (
+                    <Pie data={pieChartData} options={pieChartOptions} />
+                  )}
+                </div>
+                <div className="w-full lg:w-1/2">
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-4 h-4 rounded-full bg-[#3a5f46]"></div>
+                      <div>
+                        <div className="text-sm font-semibold text-[#3a5f46]">Paper</div>
+                        <div className="text-xs text-[#618170]">{wasteTypeData.Paper.count} requests ({wasteTypeData.Paper.percentage}%)</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-4 h-4 rounded-full bg-[#6b7280]"></div>
+                      <div>
+                        <div className="text-sm font-semibold text-[#3a5f46]">Glass</div>
+                        <div className="text-xs text-[#618170]">{wasteTypeData.Glass.count} requests ({wasteTypeData.Glass.percentage}%)</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-4 h-4 rounded-full bg-[#f59e0b]"></div>
+                      <div>
+                        <div className="text-sm font-semibold text-[#3a5f46]">Metal</div>
+                        <div className="text-xs text-[#618170]">{wasteTypeData.Metal.count} requests ({wasteTypeData.Metal.percentage}%)</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-4 h-4 rounded-full bg-[#3b82f6]"></div>
+                      <div>
+                        <div className="text-sm font-semibold text-[#3a5f46]">Plastic</div>
+                        <div className="text-xs text-[#618170]">{wasteTypeData.Plastic.count} requests ({wasteTypeData.Plastic.percentage}%)</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Sold Routes Bar Chart */}
+            <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-6 border border-[#d0e9d6] shadow-lg">
+              <div className="mb-4">
+                <h2 className="text-lg sm:text-xl font-bold text-[#3a5f46] mb-2">Sold Routes Analysis</h2>
+                <p className="text-sm text-[#618170]">Total number of sold routes for previous month weeks</p>
+              </div>
+              <div className="w-full h-80 flex justify-center">
+                {loading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-[#3a5f46]">Loading...</div>
+                  </div>
+                ) : (
+                  <Bar data={barChartData} options={barChartOptions} />
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Generate Report Button */}
+          <div className="mb-4 sm:mb-6 lg:mb-8 flex justify-center">
+            <button
+              onClick={() => handleGenerateReport()}
+              className="bg-[#3a5f46] hover:bg-[#2e4d3a] text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:ring-opacity-50"
+            >
+              Generate Last Month Report
+            </button>
+          </div>
 
           {/* Search Bar */}
           <div className="mb-4 sm:mb-6">
