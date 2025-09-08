@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useAuth } from "../context/AuthContext"
 import { Link } from "react-router-dom"
 import { Search, ChevronDown, BarChart3, Diamond, Menu, X, Users, Building, Truck, MessageSquare, Download, Calendar, TrendingUp, TrendingDown } from "lucide-react"
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js'
@@ -27,6 +28,7 @@ const Reports = () => {
   })
   const [soldRoutesData, setSoldRoutesData] = useState([0, 0, 0, 0, 0])
   const [loading, setLoading] = useState(true)
+  const { getAuthHeaders } = useAuth()
 
   // Fetch reports data from API
   useEffect(() => {
@@ -37,7 +39,7 @@ const Reports = () => {
           method: 'GET',
           credentials: 'include',
           headers: {
-            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
           },
         })
 
@@ -322,6 +324,9 @@ const Reports = () => {
       const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/generate_monthly_report.php', {
         method: 'GET',
         credentials: 'include',
+        headers: {
+          ...getAuthHeaders(),
+        },
       })
 
       if (!response.ok) {
