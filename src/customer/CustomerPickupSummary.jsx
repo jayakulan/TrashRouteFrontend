@@ -324,7 +324,7 @@ const ConfirmPickup = () => {
               <img src="/images/close.png" alt="Close" style={{ width: '1.5rem', height: '1.5rem', objectFit: 'contain', display: 'block', margin: 0 }} />
             </button>
             <div style={{ fontSize: '2.2rem', marginBottom: '0.5rem', animation: 'popIn 0.4s' }}>✅</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#3a5f46', marginBottom: '0.25rem' }}>OTPs Generated Successfully!</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#3a5f46', marginBottom: '0.25rem' }}>Pickup Reference Numbers Generated Successfully!</div>
             
             {otpList.length > 0 && (
               <div style={{ 
@@ -336,7 +336,7 @@ const ConfirmPickup = () => {
                 textAlign: 'center'
               }}>
                 <div style={{ fontSize: '1rem', color: '#3a5f46', fontWeight: 600, marginBottom: '0.5rem' }}>
-                  Your Pickup OTPs:
+                  Your Pickup Reference Numbers:
                 </div>
                 <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
                   {otpList.map((otpItem, index) => (
@@ -376,7 +376,7 @@ const ConfirmPickup = () => {
               <div style={{ fontSize: '0.8rem', color: '#666', marginBottom: '0.7rem' }}>
                 Coordinates: {pickupSummary.coordinates.latitude}, {pickupSummary.coordinates.longitude}
               </div>
-              Please provide these OTPs to the pickup company when they arrive.<br/>
+              Please provide these <b>pickup reference numbers</b> to the pickup company when they arrive.<br/>
               Thank you for choosing TrashRoute!
             </div>
             
