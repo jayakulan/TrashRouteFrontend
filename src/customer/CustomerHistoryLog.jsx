@@ -124,9 +124,9 @@ const HistoryLog = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         <CustomerHeader />
-        <main className="container mx-auto px-6 py-8 max-w-7xl">
+        <main className="container mx-auto px-6 py-8 max-w-7xl flex-1">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900">History Log</h1>
           </div>
@@ -142,9 +142,9 @@ const HistoryLog = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         <CustomerHeader />
-        <main className="container mx-auto px-6 py-8 max-w-7xl">
+        <main className="container mx-auto px-6 py-8 max-w-7xl flex-1">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900">History Log</h1>
           </div>
@@ -164,11 +164,11 @@ const HistoryLog = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <CustomerHeader />
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-8 max-w-7xl">
+      <main className="container mx-auto px-6 py-8 max-w-7xl flex-1">
         {/* Page Title - clean, no green underline or stripe */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">History Log</h1>

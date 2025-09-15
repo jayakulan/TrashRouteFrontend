@@ -164,8 +164,9 @@ const WastePreferences = () => {
       {/* Main Content */}
       <main className="container mx-auto px-6 py-12 max-w-6xl pt-[85px]">
         {/* Title Section */}
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Waste Preferences</h1>
+        <div className="mb-12 text-left">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-[#3a5f46] mb-4">Waste Preferences</h1>
+          <div className="w-24 h-1 bg-gradient-to-r from-[#3a5f46] to-[#2e4d3a] rounded-full mb-4"></div>
           <p className="text-lg text-[#3a5f46]">Select the type of waste your company processes.</p>
         </div>
 

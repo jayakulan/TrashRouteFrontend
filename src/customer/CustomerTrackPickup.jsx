@@ -36,7 +36,7 @@ function ZigzagTimeline({ steps, currentStep, isBlinking = false }) {
           const isLeft = idx % 2 === 0;
           const isCompleted = idx < currentStep;
           const isCurrent = idx === currentStep;
-          const shouldBlink = isBlinking && (idx === 1 || idx === 2); // Blink for Scheduled and Ongoing
+          const shouldBlink = isBlinking && (idx === 1 || idx === 2); // Blink for Scheduled and Ongoing simultaneously
           
           // Animation classes
           const slideClass = isLeft ? `animate-slide-in-left` : `animate-slide-in-right`;
@@ -169,12 +169,14 @@ export default function CustomerTrackPickup() {
   const currentStep = getCurrentStep();
   const isCompleted = currentStep === 3;
   
-  // Only blink for Scheduled and Ongoing when status is "Accepted"
+  // Get current waste data for blinking logic
   const wasteTypeKey = trackingData?.waste_types ? Object.keys(trackingData.waste_types).find(
     key => key.toLowerCase() === selectedWaste.toLowerCase()
   ) : null;
   const currentWasteData = wasteTypeKey ? trackingData.waste_types[wasteTypeKey] : null;
-  const isBlinking = (currentStep === 1 || currentStep === 2) && currentWasteData?.status === 'Accepted';
+  
+  // Blink both Scheduled and Ongoing steps when status is "Accepted"
+  const isBlinking = currentWasteData?.status === 'Accepted';
 
   // Map step to progress percent
   const progressPercents = [25, 50, 75, 100];
@@ -187,6 +189,17 @@ export default function CustomerTrackPickup() {
     ) : null;
     
     const currentWasteData = wasteTypeKey ? trackingData.waste_types[wasteTypeKey] : null;
+    
+    // Calculate estimated arrival date (3 days from accepted date)
+    const getEstimatedArrival = () => {
+      if (currentWasteData?.timestamp && currentWasteData?.status === 'Accepted') {
+        const acceptedDate = new Date(currentWasteData.timestamp);
+        const estimatedDate = new Date(acceptedDate);
+        estimatedDate.setDate(acceptedDate.getDate() + 3);
+        return estimatedDate.toLocaleDateString();
+      }
+      return 'TBD';
+    };
     
     const stepNotifications = [
       {
@@ -214,8 +227,9 @@ export default function CustomerTrackPickup() {
             <b>Waste Type:</b> {currentWasteData?.waste_type || 'N/A'}<br/>
             <b>Quantity:</b> {currentWasteData?.quantity || 'N/A'} kg<br/>
             <b>Scheduled Date:</b> {currentWasteData?.timestamp ? new Date(currentWasteData.timestamp).toLocaleDateString() : 'TBD'}<br/>
-            <b>Time Slot:</b> [Time Range]<br/>
-            <b>Company:</b> [Company Name]<br/>
+            <b>Time Slot:</b> 4:00 PM - 6:00 PM<br/>
+            <b>Company:</b> {currentWasteData?.company_name || 'TBD'}<br/>
+            <b>Estimated Arrival:</b> {getEstimatedArrival()} (4:00 PM - 6:00 PM)<br/>
             Next Step: You'll be notified when the pickup is on the way.
           </>
         ),
@@ -232,9 +246,9 @@ export default function CustomerTrackPickup() {
             <b>Waste Type:</b> {currentWasteData?.waste_type || 'N/A'}<br/>
             <b>Quantity:</b> {currentWasteData?.quantity || 'N/A'} kg<br/>
             <b>OTP:</b> {currentWasteData?.otp || 'Not generated yet'}<br/>
-            <b>Company Agent:</b> [Agent Name]<br/>
-            <b>Live Location:</b> [Map or "Tracking Enabled"]<br/>
-            <b>Estimated Arrival:</b> [Time]
+            <b>Company:</b> {currentWasteData?.company_name || 'TBD'}<br/>
+            <b>Live Location:</b> Tracking Enabled<br/>
+            <b>Estimated Arrival:</b> {getEstimatedArrival()} (4:00 PM - 6:00 PM)
           </>
         ),
         progress: 75,
@@ -249,7 +263,7 @@ export default function CustomerTrackPickup() {
             Your waste was successfully collected.<br/>
             <b>Waste Type:</b> {currentWasteData?.waste_type || 'N/A'}<br/>
             <b>Quantity:</b> {currentWasteData?.quantity || 'N/A'} kg<br/>
-            <b>Collected By:</b> [Company Name / Agent Name]<br/>
+            <b>Collected By:</b> {currentWasteData?.company_name || 'TBD'}<br/>
             <b>Date & Time:</b> {currentWasteData?.timestamp ? new Date(currentWasteData.timestamp).toLocaleString() : 'TBD'}<br/>
             <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center' }}>
               <button
@@ -569,10 +583,10 @@ export default function CustomerTrackPickup() {
             <div className="text-center text-[#2e4d3a]">
               Tracking is disabled after feedback submission. Thank you!
             </div>
-          ) : ( (groupedByWasteType[selectedWaste] || [trackingData?.waste_types?.[selectedWaste]]).length === 0 ? (
+          ) : (groupedByWasteType[selectedWaste]?.length === 0 ? (
             <div className="text-center text-gray-600">No submissions for this waste type yet.</div>
           ) : (
-            (groupedByWasteType[selectedWaste] || []).map((req, idx) => {
+            groupedByWasteType[selectedWaste]?.map((req, idx) => {
               const reqStep = computeStepForRequest(req);
               const reqBlink = (reqStep === 1 || reqStep === 2) && (req?.status === 'Accepted');
               return (
