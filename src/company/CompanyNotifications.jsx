@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Info, Calendar, Clock, Truck, Receipt, Link2, MapPin } from "lucide-react";
+import { Bell, Info, Calendar, Clock, Truck, Receipt, Link2, MapPin, X } from "lucide-react";
 import { getCookie } from "../utils/cookieUtils";
 
 const API_BASE = "http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend";
@@ -28,6 +28,13 @@ function parseCustomerCount(message) {
 function parseTotalQty(message) {
   const match = message && message.match(/Total\s*Qty:\s*(\d+)\s*kg/i);
   return match ? parseInt(match[1], 10) : null;
+}
+
+function parseCustomerName(message) {
+  // Extract customer name from completion notification
+  // Format: "Pickup request {Customer Name} has been completed."
+  const match = message && message.match(/Pickup request (.+?) has been completed/i);
+  return match ? match[1].trim() : null;
 }
 
 const CompanyNotifications = () => {
@@ -99,6 +106,33 @@ const CompanyNotifications = () => {
     } catch (_) {}
   };
 
+  const dismissNotification = async (notificationId) => {
+    if (!userId || !notificationId) return;
+    try {
+      const response = await fetch(`${API_BASE}/api/notifications.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          action: "dismiss", 
+          user_id: userId, 
+          notification_id: notificationId 
+        })
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        // Remove the notification from the local state (hide it from UI)
+        setItems(prev => prev.filter(item => item.notification_id !== notificationId));
+        // Update hasNew state
+        setHasNew(items.some(n => n.notification_id !== notificationId && (n.seen === 0 || String(n.seen) === '0')));
+      } else {
+        console.error('Failed to dismiss notification:', result.message);
+      }
+    } catch (error) {
+      console.error('Error dismissing notification:', error);
+    }
+  };
+
   const handleGoToRoute = async (notif) => {
     const routeId = notif.request_id ? null : parseRouteIdFromMessage(notif.message);
     await markSeen([notif.notification_id]);
@@ -161,6 +195,7 @@ const CompanyNotifications = () => {
               const wasteType = parseWasteType(n.message);
               const customers = parseCustomerCount(n.message);
               const qty = parseTotalQty(n.message);
+              const customerName = parseCustomerName(n.message);
               const isUnread = n.seen === 0;
               
               // Check if this is a completion notification
@@ -183,8 +218,33 @@ const CompanyNotifications = () => {
                 <div key={n.notification_id} className="bg-white/80 rounded-xl px-4 py-4 text-gray-800 shadow-sm border border-gray-100">
                   {/* For completion notifications, show only the message */}
                   {isCompletionNotification ? (
-                    <div className="text-base text-gray-700">
-                      {n.message || 'No message available'}
+                    <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                        <span className="text-sm font-semibold text-green-700 uppercase tracking-wide">Pickup Completed</span>
+                      </div>
+                      <div className="text-base text-gray-800 font-medium">
+                        {customerName ? (
+                          <>
+                            Pickup request <span className="font-bold text-green-700 bg-green-100 px-2 py-1 rounded">{customerName}</span> has been completed.
+                          </>
+                        ) : (
+                          n.message || 'No message available'
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-2">
+                        {new Date(n.created_at).toLocaleString()}
+                      </div>
+                      {/* Footer with dismiss button */}
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          onClick={() => dismissNotification(n.notification_id)}
+                          className="px-2 py-1 rounded-full bg-red-100 hover:bg-red-200 text-red-600 hover:text-red-700 transition-colors duration-200 text-xs"
+                          title="Dismiss notification"
+                        >
+                          ✕
+                        </button>
+                      </div>
                     </div>
                   ) : (
                     <>
@@ -249,16 +309,25 @@ const CompanyNotifications = () => {
                   </div>
                   
                       {/* Action button */}
-                      <div className="mt-3 flex gap-2">
+                      <div className="mt-3 flex justify-between items-center">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleGoToRoute(n)}
+                            className="px-4 py-2 rounded-lg text-white text-sm bg-[#3a5f46] hover:bg-[#2e4d3a] shadow-sm transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0 notif-btn-grow"
+                          >
+                            Open Route Map
+                          </button>
+                          {isUnread && (
+                            <span className="px-2 py-1 rounded-full bg-[#3a5f46] text-white text-xs">New</span>
+                          )}
+                        </div>
                         <button
-                          onClick={() => handleGoToRoute(n)}
-                          className="px-4 py-2 rounded-lg text-white text-sm bg-[#3a5f46] hover:bg-[#2e4d3a] shadow-sm transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0 notif-btn-grow"
+                          onClick={() => dismissNotification(n.notification_id)}
+                          className="px-2 py-1 rounded-full bg-red-100 hover:bg-red-200 text-red-600 hover:text-red-700 transition-colors duration-200 text-xs"
+                          title="Dismiss notification"
                         >
-                          Open Route Map
+                          ✕
                         </button>
-                        {isUnread && (
-                          <span className="px-2 py-1 rounded-full bg-[#3a5f46] text-white text-xs">New</span>
-                        )}
                       </div>
                     </>
                   )}
