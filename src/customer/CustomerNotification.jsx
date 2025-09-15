@@ -19,6 +19,8 @@ export default function CustomerNotification({ userId, iconOnly = false }) {
   const [items, setItems] = useState([]);
   const [hasNew, setHasNew] = useState(false);
   const [error, setError] = useState(null);
+  const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
+  const [selectedRequestId, setSelectedRequestId] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -75,6 +77,26 @@ export default function CustomerNotification({ userId, iconOnly = false }) {
     fetchData();
   }, [userId]);
 
+  const dismissNotification = async (notificationId) => {
+    if (!notificationId || !userId) return;
+    try {
+      const response = await fetch(`http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/notifications.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "dismiss", user_id: userId, notification_id: notificationId })
+      });
+      
+      if (response.ok) {
+        // Remove the notification from the local state
+        setItems(prev => prev.filter(item => item.notification_id !== notificationId));
+        // Update hasNew state
+        setHasNew(items.some(n => n.seen === 0 && n.notification_id !== notificationId));
+      }
+    } catch (error) {
+      console.error('Error dismissing notification:', error);
+    }
+  };
+
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
@@ -125,6 +147,7 @@ export default function CustomerNotification({ userId, iconOnly = false }) {
   }
 
   return (
+    <>
     <div className="relative flex items-center">
       {/* Bell Icon with red dot */}
       <button
@@ -162,15 +185,62 @@ export default function CustomerNotification({ userId, iconOnly = false }) {
         {!loading && !error && items.length > 0 && (
           <div className="flex flex-col gap-4">
             {items.map((n) => {
-              // derive step and progress
-              let step = 1;
-              if (n.request_status === 'Completed') step = 4; else if (n.request_status === 'Accepted' && n.request_otp) step = 3; else if (n.request_status === 'Accepted') step = 2; else step = 1;
-              const total = 4;
-              const progress = [0,25,50,75,100][step] || 25;
               const msg = (n.message || defaultTitle).trim();
               const lowerMsg = msg.toLowerCase();
               const hasPickupScheduledPrefix = lowerMsg.startsWith('pickup scheduled:');
-              const titleText = hasPickupScheduledPrefix ? 'Pickup scheduled:' : msg;
+              
+              // Transform the message for display - remove request ID and add "company" prefix
+              const transformMessage = (message) => {
+                console.log('Original message:', message); // Debug log
+                // Check if it's an "accepted by" message
+                const acceptedPattern = /Your pickup request #\d+ has been accepted by (.+)\./;
+                const match = message.match(acceptedPattern);
+                if (match) {
+                  const companyName = match[1];
+                  console.log('Matched accepted pattern, company:', companyName); // Debug log
+                  return `Your request accepted by ${companyName}`;
+                }
+                // For old notifications, show simple "Pickup request received"
+                console.log('Using fallback message'); // Debug log
+                return "Pickup request received";
+              };
+              
+              // Determine the title text and status based on notification type
+              let titleText;
+              let displayStatus;
+              let progressPercent;
+              
+              if (hasPickupScheduledPrefix) {
+                // For old notifications that start with "Pickup scheduled:", show "Pickup request received"
+                titleText = "Pickup request received";
+                displayStatus = "Pickup Scheduled";
+                progressPercent = 25;
+              } else if (msg.includes('accepted by')) {
+                // For any accepted message - prioritize this check
+                titleText = transformMessage(msg);
+                displayStatus = "Accepted";
+                progressPercent = 50;
+              } else if (n.request_status === 'Accepted') {
+                // For accepted requests, show the transformed message
+                titleText = transformMessage(msg);
+                displayStatus = "Accepted";
+                progressPercent = 50;
+              } else if (n.request_status === 'Completed') {
+                // For completed requests
+                titleText = "Pickup completed successfully";
+                displayStatus = "Completed";
+                progressPercent = 100;
+              } else if (msg.includes('OTPs generated') || msg.includes('Pickup schedule confirmed')) {
+                // For OTP/schedule confirmation
+                titleText = "Pickup schedule confirmed";
+                displayStatus = "Pickup Scheduled";
+                progressPercent = 25;
+              } else {
+                // Default fallback
+                titleText = "Pickup request received";
+                displayStatus = "Pickup Scheduled";
+                progressPercent = 25;
+              }
               // Parse details from message if backend fields missing
               let parsedDetails = '';
               if (hasPickupScheduledPrefix) {
@@ -179,10 +249,8 @@ export default function CustomerNotification({ userId, iconOnly = false }) {
                 const firstSentence = afterColon.split('.')[0].trim();
                 parsedDetails = firstSentence;
               }
-              // Prefer explicit backend fields
-              const detailsLine = n.request_waste_type
-                ? `${n.request_waste_type}${(n.request_quantity || n.request_quantity === 0) ? ` (qty: ${n.request_quantity})` : ''}.`
-                : (hasPickupScheduledPrefix ? `${parsedDetails}${parsedDetails.endsWith('.') ? '' : '.'}` : '');
+              // Remove waste type and quantity details from the message
+              const detailsLine = '';
               // Try to parse Request # from message if request_id absent
               let derivedRequestId = n.request_id;
               if (!derivedRequestId && /request\s*#(\d+)/i.test(msg)) {
@@ -203,48 +271,73 @@ export default function CustomerNotification({ userId, iconOnly = false }) {
                   {/* Status line */}
                   <div className="flex items-center gap-2 mb-1">
                     <Info className="w-4 h-4 text-green-700" />
-                    <span className="text-sm font-medium text-green-700">🟢 Status: Step {step} of {total}</span>
+                    <span className="text-sm font-medium text-green-700">🟢 Status: {displayStatus}</span>
                   </div>
                   {/* Progress bar */}
                   <div className="w-full h-2 bg-gray-200 rounded-full mb-2">
-                    <div className="h-2 rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: THEME_GREEN }}></div>
+                    <div className="h-2 rounded-full transition-all duration-300" style={{ width: `${progressPercent}%`, background: THEME_GREEN }}></div>
                   </div>
                   {/* Info sections */}
                   <div className="flex flex-col gap-2 text-base">
-                    {n.request_timestamp && (
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-5 h-5 text-blue-600 notif-icon-glow" />
-                        <span className="font-semibold">Pickup Date:</span>
-                        <span>{new Date(n.request_timestamp).toLocaleDateString()}</span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-5 h-5 text-blue-600 notif-icon-glow" />
+                      <span className="font-semibold">Date:</span>
+                      <span>{n.created_at ? new Date(n.created_at).toLocaleDateString() : 'TBD'}</span>
+                    </div>
                     <div className="flex items-center gap-2">
                       <Clock className="w-5 h-5 text-yellow-600 notif-icon-glow" />
-                      <span className="font-semibold">Time Window:</span>
-                      <span>{n.created_at ? new Date(n.created_at).toLocaleString() : 'TBD'}</span>
+                      <span className="font-semibold">Time:</span>
+                      <span>{n.created_at ? new Date(n.created_at).toLocaleTimeString() : 'TBD'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Link2 className="w-5 h-5 text-gray-500 notif-icon-glow" />
+                      <span className="font-semibold">Request ID:</span>
+                      <span className="text-gray-700 font-mono">#req-{n.request_id || 'N/A'}</span>
                     </div>
                     {n.request_waste_type && (
                       <div className="flex items-center gap-2">
                         <Receipt className="w-5 h-5 text-gray-600 notif-icon-glow" />
-                        <span className="font-semibold">Waste Summary:</span>
-                        <span>{n.request_waste_type}{n.request_quantity ? ` (${n.request_quantity}kg)` : ''}</span>
+                        <span className="font-semibold">Waste Type:</span>
+                        <span>{n.request_waste_type}</span>
                       </div>
                     )}
-                    <div className="flex items-center gap-2">
-                      <Link2 className="w-5 h-5 text-gray-500 notif-icon-glow" />
-                      <span className="font-semibold">Tracking ID:</span>
-                      <span className="text-gray-700 font-mono">{derivedRequestId ? `#REQ-${derivedRequestId}` : `#N-${n.notification_id}`}</span>
-                    </div>
-                    {n.request_otp && (
+                    {n.request_quantity && (
                       <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 rounded-full bg-[#f3f8f5] border border-[#cfe0d6] text-[#2e4d3a] text-xs font-medium">OTP: {n.request_otp}</span>
+                        <Truck className="w-5 h-5 text-purple-600 notif-icon-glow" />
+                        <span className="font-semibold">Quantity:</span>
+                        <span>{n.request_quantity} kg</span>
                       </div>
                     )}
                   </div>
                   {/* Footer badges */}
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-600">
-                    {n.request_status ? <span className="px-2 py-0.5 rounded-full bg-[#eaf3ee] border border-[#cfe0d6] text-[#2e4d3a]">{n.request_status}</span> : null}
-                    {n.seen ? null : <span className="px-2 py-0.5 rounded-full bg-[#3a5f46] text-white">New</span>}
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {displayStatus && <span className="px-2 py-0.5 rounded-full bg-[#eaf3ee] border border-[#cfe0d6] text-[#2e4d3a]">{displayStatus}</span>}
+                      {n.request_otp && <span className="px-2 py-0.5 rounded-full bg-[#f3f8f5] border border-[#cfe0d6] text-[#2e4d3a] font-medium">OTP: {n.request_otp}</span>}
+                      {n.seen ? null : <span className="px-2 py-0.5 rounded-full bg-[#3a5f46] text-white">New</span>}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {/* Give Feedback button for completed notifications */}
+                      {displayStatus === 'Completed' && (
+                        <button
+                          onClick={() => {
+                            setSelectedRequestId(n.request_id);
+                            setShowFeedbackPopup(true);
+                          }}
+                          className="px-3 py-1 rounded-full bg-[#3a5f46] hover:bg-[#2e4d3a] text-white text-xs transition-colors duration-200"
+                          title="Give Feedback"
+                        >
+                          Give Feedback
+                        </button>
+                      )}
+                      <button
+                        onClick={() => dismissNotification(n.notification_id)}
+                        className="px-2 py-1 rounded-full bg-red-100 hover:bg-red-200 text-red-600 hover:text-red-700 transition-colors duration-200 text-xs"
+                        title="Dismiss notification"
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -327,6 +420,175 @@ export default function CustomerNotification({ userId, iconOnly = false }) {
           }
         }
       `}</style>
+    </div>
+    
+    {/* Feedback Popup Modal - rendered outside dropdown container */}
+    {showFeedbackPopup && (
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        background: 'rgba(0,0,0,0.55)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <FeedbackFormModal 
+          onClose={() => setShowFeedbackPopup(false)} 
+          onThankYou={() => setShowFeedbackPopup(false)}
+          requestId={selectedRequestId}
+        />
+      </div>
+    )}
+    </>
+  );
+}
+
+// FeedbackFormModal component (from CustomerTrackPickup.jsx)
+function FeedbackFormModal({ onClose, onThankYou, requestId }) {
+  const [feedback, setFeedback] = useState("");
+  const [rating, setRating] = useState(5);
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      // Get the JWT token from cookies
+      const token = getCookie('token');
+      
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Add Authorization header if token exists
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Customer/submitFeedback.php', {
+        method: 'POST',
+        credentials: 'include',
+        headers: headers,
+        body: JSON.stringify({
+          request_id: requestId,
+          rating: rating,
+          comment: feedback
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          // Handle unauthorized - redirect to login
+          console.log('Unauthorized access, redirecting to login');
+          window.location.href = '/login';
+          return;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setSubmitted(true);
+        setTimeout(() => {
+          if (onThankYou) onThankYou();
+        }, 500);
+      } else {
+        throw new Error(result.error || 'Failed to submit feedback');
+      }
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      alert('Failed to submit feedback. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (submitted) return null;
+
+  return (
+    <div style={{
+      background: '#fff',
+      borderRadius: '1.5rem',
+      boxShadow: '0 8px 40px 0 rgba(58, 95, 70, 0.25)',
+      padding: '2.5rem 2.5rem 2rem 2.5rem',
+      minWidth: 340,
+      maxWidth: '90vw',
+      textAlign: 'center',
+      position: 'relative',
+    }}>
+      <button
+        onClick={onClose}
+        aria-label="Close feedback form"
+        style={{
+          position: 'absolute',
+          top: '1rem',
+          right: '1rem',
+          background: 'transparent',
+          border: 'none',
+          padding: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          zIndex: 10
+        }}
+      >
+        <img src="/images/close.png" alt="Close" style={{ width: 24, height: 24, display: 'block' }} />
+      </button>
+        <form onSubmit={handleSubmit}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3a5f46', marginBottom: '1.2rem' }}>Feedback</div>
+          <div style={{ marginBottom: '1rem' }}>
+            <label htmlFor="feedback-text" style={{ display: 'block', fontWeight: 500, marginBottom: 6 }}>Your Feedback</label>
+            <textarea
+              id="feedback-text"
+              value={feedback}
+              onChange={e => setFeedback(e.target.value)}
+              rows={4}
+              style={{ width: '100%', borderRadius: 8, border: '1px solid #ccc', padding: 10, resize: 'vertical' }}
+              required
+            />
+          </div>
+          <div style={{ marginBottom: '1.2rem' }}>
+            <label htmlFor="feedback-rating" style={{ display: 'block', fontWeight: 500, marginBottom: 6 }}>Rating</label>
+            <select
+              id="feedback-rating"
+              value={rating}
+              onChange={e => setRating(Number(e.target.value))}
+              style={{ width: '100%', borderRadius: 8, border: '1px solid #ccc', padding: 8 }}
+            >
+              <option value={5}>5 - Excellent</option>
+              <option value={4}>4 - Good</option>
+              <option value={3}>3 - Average</option>
+              <option value={2}>2 - Poor</option>
+              <option value={1}>1 - Very Poor</option>
+            </select>
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              background: loading ? '#ccc' : '#5E856D',
+              color: '#fff',
+              fontWeight: 600,
+              fontSize: '1.1rem',
+              border: 'none',
+              borderRadius: 8,
+              padding: '0.7rem 2.2rem',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              marginTop: 10,
+              boxShadow: '0 2px 8px 0 rgba(58, 95, 70, 0.18)',
+              transition: 'background 0.2s',
+            }}
+            onMouseOver={e => !loading && (e.currentTarget.style.background = '#466a54')}
+            onMouseOut={e => !loading && (e.currentTarget.style.background = '#5E856D')}
+          >
+            {loading ? 'Submitting...' : 'Submit Feedback'}
+          </button>
+        </form>
     </div>
   );
 }

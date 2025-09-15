@@ -12,6 +12,7 @@ import CustomerHeader from "./CustomerHeader";
 const ConfirmPickup = () => {
   const [confirmed, setConfirmed] = useState(false)
   const [showPopup, setShowPopup] = useState(false);
+  const [isPickupAlreadyConfirmed, setIsPickupAlreadyConfirmed] = useState(false);
   const [pickupSummary, setPickupSummary] = useState({
     wasteTypes: "Loading...",
     approximateTotalWeight: "Loading...",
@@ -89,9 +90,14 @@ const ConfirmPickup = () => {
             }
           });
           
-          // If OTP list exists, set it
-          if (data.data.otp_list && data.data.otp_list.length > 0) {
-            setOtpList(data.data.otp_list);
+          // Check if pickup is already confirmed
+          if (data.data.pickup_confirmed) {
+            setIsPickupAlreadyConfirmed(true);
+            setConfirmed(true);
+            // If OTP list exists, set it
+            if (data.data.otp_list && data.data.otp_list.length > 0) {
+              setOtpList(data.data.otp_list);
+            }
           }
         } else {
           setError(data.message || 'Failed to fetch pickup summary');
@@ -130,7 +136,7 @@ const ConfirmPickup = () => {
         setOtpData(data.data);
         setOtpList(data.data.otp_list || []);
         setConfirmed(true);
-    setShowPopup(true);
+        setShowPopup(true); // Only show popup for new confirmations
         console.log("OTPs generated successfully:", data.data.otp_list);
       } else {
         setError(data.message || 'Failed to generate OTPs');
@@ -229,8 +235,8 @@ const ConfirmPickup = () => {
                 </div>
               </div>
 
-                {/* OTP Display (if scheduled) */}
-                {otpList.length > 0 && (
+                {/* OTP Display (only if pickup is confirmed) */}
+                {confirmed && otpList.length > 0 && (
                   <div className="px-6 py-6 bg-green-50 border-t border-green-200">
                     <div className="text-sm font-medium text-theme-color mb-3">Pickup OTPs</div>
                     <div className="space-y-2">
@@ -244,6 +250,12 @@ const ConfirmPickup = () => {
                           </div>
                         </div>
                       ))}
+                    </div>
+                    <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="text-sm text-blue-800 font-medium mb-1">📱 Important:</div>
+                      <div className="text-xs text-blue-700">
+                        Please provide these OTPs to the pickup company when they arrive at your location.
+                      </div>
                     </div>
                   </div>
                 )}
@@ -260,9 +272,23 @@ const ConfirmPickup = () => {
               disabled={schedulingLoading}
               className={`next-btn py-4 px-12 rounded-full text-lg ${schedulingLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              {schedulingLoading ? 'Scheduling...' : 'Confirm Schedule'}
+              {schedulingLoading ? 'Generating OTPs...' : 'Confirm Pickup Schedule'}
             </button>
-          ) : null}
+          ) : (
+            <div className="text-center">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-4">
+                <div className="text-green-600 font-semibold text-lg mb-2">
+                  {isPickupAlreadyConfirmed ? '✅ Pickup Already Confirmed!' : '✅ Pickup Schedule Confirmed!'}
+                </div>
+                <div className="text-green-700 text-sm">
+                  {isPickupAlreadyConfirmed 
+                    ? 'Your pickup has already been scheduled and OTPs are available above.'
+                    : 'Your pickup has been scheduled and OTPs have been generated. Please keep the OTPs safe and provide them to the pickup company when they arrive.'
+                  }
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
 

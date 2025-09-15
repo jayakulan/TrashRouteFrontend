@@ -3,7 +3,7 @@ const GOOGLE_MAPS_LIBRARIES = ['places'];
 
 import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { Recycle, Search, Plus, Minus, Navigation, Bell } from "lucide-react"
+import { Recycle, Bell } from "lucide-react"
 import UserProfileDropdown from "./UserProfileDropdown"
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -17,100 +17,23 @@ import CustomerHeader from "./CustomerHeader";
 // Set Mapbox access token
 mapboxgl.accessToken = "pk.eyJ1IjoidmlzaG5udTA0IiwiYSI6ImNtZThtcnd0bDBiOGsya3FhbzI4cnVmcDUifQ.7-tKIyQsvzMkXIw3CeU0AA";
 
-// --- PlaceAutocompleteInput: Uses Mapbox Geocoding API ---
-function PlaceAutocompleteInput({ onPlaceSelect }) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const inputRef = useRef(null);
-
-  const searchPlaces = async (query) => {
-    if (query.length < 3) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxgl.accessToken}&country=lk&types=address,poi`
-      );
-      const data = await response.json();
-      
-      if (data.features) {
-        setSuggestions(data.features.slice(0, 5));
-        setShowSuggestions(true);
-      }
-    } catch (error) {
-      console.error('Search error:', error);
-    }
-  };
-
-  const handleInputChange = (e) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-    searchPlaces(query);
-  };
-
-  const handleSuggestionClick = (suggestion) => {
-    const [lng, lat] = suggestion.center;
-    setSearchQuery(suggestion.place_name);
-    setShowSuggestions(false);
-    if (onPlaceSelect) {
-      onPlaceSelect({
-        location: { lat, lng },
-        formatted_address: suggestion.place_name
-      });
-    }
-  };
-
-  return (
-    <div className="relative w-full">
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
-        <input
-          ref={inputRef}
-          type="text"
-          value={searchQuery}
-          onChange={handleInputChange}
-          placeholder="Search for a location..."
-          className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3a5f46] focus:border-transparent"
-        />
-      </div>
-      
-      {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-60 overflow-y-auto">
-          {suggestions.map((suggestion, index) => (
-            <button
-              key={index}
-              onClick={() => handleSuggestionClick(suggestion)}
-              className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-            >
-              <div className="font-medium text-gray-900">{suggestion.text}</div>
-              <div className="text-sm text-gray-500">{suggestion.place_name}</div>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 // --- Main Component ---
 const PinLocation = () => {
   const { isLoaded, loadError: mapboxError, isLoading: isMapboxLoading } = useMapbox();
   const [coordinates, setCoordinates] = useState({
-    latitude: 9.6615, // Jaffna, Sri Lanka
-    longitude: 80.0255,
+    latitude: 6.9850, // Default: Uva Wellassa University, Sri Lanka
+    longitude: 81.0750,
   })
   const [address, setAddress] = useState("");
-  const [searchQuery, setSearchQuery] = useState("")
   const [mapZoom, setMapZoom] = useState(17);
   const [map, setMap] = useState(null);
   const [marker, setMarker] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [mapInitialized, setMapInitialized] = useState(false);
+  const [fetchingExistingLocation, setFetchingExistingLocation] = useState(true);
+  const [hasExistingLocation, setHasExistingLocation] = useState(false);
   const navigate = useNavigate();
   const mapContainer = useRef(null);
 
@@ -122,56 +45,48 @@ const PinLocation = () => {
     });
   }
 
-  const handleZoomIn = () => {
-    if (map) {
-      map.zoomIn();
-      setMapZoom(map.getZoom());
-    }
-  };
 
-  const handleZoomOut = () => {
-    if (map) {
-      map.zoomOut();
-      setMapZoom(map.getZoom());
-    }
-  };
 
-  const handleLocationCenter = () => {
-    if (map) {
-      map.flyTo({
-        center: [coordinates.longitude, coordinates.latitude],
-        zoom: 17
-      });
-    }
-  }
 
   // Locate Me button using Geolocation API
-  const handleLocateMe = () => {
-    if (navigator.geolocation) {
-      setLoading(true);
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setCoordinates({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          });
-          if (map) {
-            map.flyTo({
-              center: [position.coords.longitude, position.coords.latitude],
-              zoom: 18
-            });
-          }
-          setLoading(false);
+  // Fetch existing pinned location from backend
+  const fetchExistingLocation = async () => {
+    try {
+      const token = getCookie('token');
+      if (!token) {
+        setFetchingExistingLocation(false);
+        return;
+      }
+
+      const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Customer/CustomerLocationPin.php", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-        (error) => {
-          setMessage({ type: "error", text: "Unable to get your location." });
-          setLoading(false);
-        }
-      );
-    } else {
-      setMessage({ type: "error", text: "Geolocation is not supported by your browser." });
+      });
+
+      const result = await response.json();
+      
+      if (result.success && result.data && result.data.latitude && result.data.longitude) {
+        setCoordinates({
+          latitude: parseFloat(result.data.latitude),
+          longitude: parseFloat(result.data.longitude),
+        });
+        setHasExistingLocation(true);
+        setMessage({ 
+          type: "success", 
+          text: "Your previously pinned location has been loaded as the current location." 
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching existing location:', error);
+      // Don't show error message for this, just use default location
+    } finally {
+      setFetchingExistingLocation(false);
     }
   };
+
 
   const handleSaveLocation = async () => {
     setLoading(true);
@@ -212,11 +127,17 @@ const PinLocation = () => {
     }
   };
 
+  // Fetch existing location on component mount
+  useEffect(() => {
+    fetchExistingLocation();
+  }, []);
+
   // Initialize Mapbox map
   useEffect(() => {
     // Wait for the component to be fully mounted and the container to be available
+    // Also wait for existing location to be fetched
     const initializeMap = () => {
-      if (mapContainer.current && !mapInitialized && mapboxgl && mapboxgl.Map) {
+      if (mapContainer.current && !mapInitialized && mapboxgl && mapboxgl.Map && !fetchingExistingLocation) {
         console.log('Initializing Mapbox map...');
         console.log('Map container:', mapContainer.current);
         console.log('Mapbox GL available:', !!mapboxgl);
@@ -274,7 +195,7 @@ const PinLocation = () => {
     return () => {
       clearTimeout(timer);
     };
-  }, [coordinates.longitude, coordinates.latitude, mapZoom, mapInitialized]);
+  }, [coordinates.longitude, coordinates.latitude, mapZoom, mapInitialized, fetchingExistingLocation]);
 
   // Update marker when coordinates change
   useEffect(() => {
@@ -383,6 +304,15 @@ const PinLocation = () => {
           </div>
           {/* Title */}
           <h1 className="text-3xl font-bold text-gray-900 mb-6">Pin your location</h1>
+          {/* Loading existing location */}
+          {fetchingExistingLocation && (
+            <div className="mb-6 p-4 rounded-lg bg-blue-50 border border-blue-200 text-blue-700">
+              <div className="flex items-center space-x-2">
+                <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <span className="font-medium">Loading your previously pinned location...</span>
+              </div>
+            </div>
+          )}
           {/* Message Display */}
           {message.text && (
             <div className={`mb-6 p-4 rounded-lg ${
@@ -400,48 +330,15 @@ const PinLocation = () => {
           )}
           {/* Map Card */}
           <div className="relative bg-white rounded-2xl shadow border overflow-hidden" style={{ minHeight: 380 }}>
-            {/* Floating Search Bar */}
-            <div className="absolute top-6 left-6 right-32 z-10">
-              <PlaceAutocompleteInput
-                onPlaceSelect={place => {
-                  if (place && place.location) {
-                    setCoordinates({
-                      latitude: place.location.lat,
-                      longitude: place.location.lng,
-                    });
-                    setSearchQuery(place.formatted_address || "");
-                    if (map) {
-                      map.flyTo({
-                        center: [place.location.lng, place.location.lat],
-                        zoom: 17
-                      });
-                    }
-                  }
-                }}
-              />
-            </div>
-            {/* Map Controls */}
-            <div className="absolute top-6 right-6 z-10 flex flex-col space-y-2">
-              <button onClick={handleZoomIn} className="w-10 h-10 bg-white border border-gray-200 rounded-lg shadow flex items-center justify-center hover:bg-gray-50 transition-colors">
-                <Plus className="w-5 h-5 text-gray-600" />
-              </button>
-              <button onClick={handleZoomOut} className="w-10 h-10 bg-white border border-gray-200 rounded-lg shadow flex items-center justify-center hover:bg-gray-50 transition-colors">
-                <Minus className="w-5 h-5 text-gray-600" />
-              </button>
-              <button onClick={handleLocationCenter} className="w-10 h-10 bg-white border border-gray-200 rounded-lg shadow flex items-center justify-center hover:bg-gray-50 transition-colors">
-                <Navigation className="w-5 h-5 text-gray-600" />
-              </button>
-              <button onClick={handleLocateMe} className="w-10 h-10 bg-blue-50 border border-blue-200 rounded-lg shadow flex items-center justify-center hover:bg-blue-100 transition-colors" title="Locate Me">
-                <Navigation className="w-5 h-5 text-blue-600" />
-              </button>
-            </div>
             {/* Mapbox Map */}
             <div style={{ width: '100%', height: 380, position: 'relative' }}>
-              {!map && (
+              {(!map || fetchingExistingLocation) && (
                 <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-20">
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3a5f46] mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading map...</p>
+                    <p className="text-gray-600">
+                      {fetchingExistingLocation ? 'Loading your location...' : 'Loading map...'}
+                    </p>
                   </div>
                 </div>
               )}
@@ -461,7 +358,9 @@ const PinLocation = () => {
           {/* Coordinates Card - below the map */}
           <div className="mt-8 mb-4 w-full max-w-2xl mx-auto">
             <div className="bg-white rounded-2xl shadow border p-6 flex flex-col gap-2 items-center">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Pinned Location</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">
+                {hasExistingLocation ? 'Current Location (Previously Pinned)' : 'Pinned Location'}
+              </h2>
               <div className="flex gap-8 text-base">
                 <div className="text-theme-color font-medium">Latitude: <span className="text-gray-900 font-normal">{coordinates.latitude.toFixed(6)}</span></div>
                 <div className="text-theme-color font-medium">Longitude: <span className="text-gray-900 font-normal">{coordinates.longitude.toFixed(6)}</span></div>
@@ -469,6 +368,13 @@ const PinLocation = () => {
               <div className="text-gray-700 text-sm mt-2">
                 <span className="font-medium">Address:</span> {address}
               </div>
+              {hasExistingLocation && (
+                <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="text-green-700 text-xs font-medium">
+                    📍 This is your previously saved location
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           {/* Next Button - Centered below coordinates card */}

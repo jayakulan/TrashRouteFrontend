@@ -165,11 +165,27 @@ const RouteActivation = () => {
 
   const handlePayNow = () => setShowModal(true)
   const handleCloseModal = () => setShowModal(false)
+  
+  // Card number formatting function
+  const formatCardNumber = (value) => {
+    // Remove all non-digits
+    const digitsOnly = value.replace(/\D/g, '')
+    // Limit to 16 digits
+    const limitedDigits = digitsOnly.slice(0, 16)
+    // Add spaces every 4 digits
+    return limitedDigits.replace(/(\d{4})(?=\d)/g, '$1 ')
+  }
+  
+  const handleCardNumberChange = (e) => {
+    const formatted = formatCardNumber(e.target.value)
+    setCardNumber(formatted)
+  }
   const handleProceed = async (e) => {
     e.preventDefault();
     setPaymentMessage("");
-    // Card number validation: 16 digits
-    if (!/^\d{16}$/.test(cardNumber)) {
+    // Card number validation: 16 digits (remove spaces for validation)
+    const cardNumberDigits = cardNumber.replace(/\s/g, '')
+    if (!/^\d{16}$/.test(cardNumberDigits)) {
       setPaymentMessage("Card number must be exactly 16 digits.");
       return;
     }
@@ -217,7 +233,7 @@ const RouteActivation = () => {
           "Content-Type": "application/x-www-form-urlencoded",
           "Authorization": "Bearer " + token
         },
-        body: `company_id=${company_id}&card_number=${cardNumber}&cardholder_name=${encodeURIComponent(cardName)}&expiry_date=${expiry}&pin_number=${cvv}&amount=${amount}&waste_type=${encodeURIComponent(wasteType || '')}`,
+        body: `company_id=${company_id}&card_number=${cardNumberDigits}&cardholder_name=${encodeURIComponent(cardName)}&expiry_date=${expiry}&pin_number=${cvv}&amount=${amount}&waste_type=${encodeURIComponent(wasteType || '')}`,
       });
       const data = await res.json();
       if (data.success) {
@@ -614,7 +630,7 @@ const RouteActivation = () => {
               </div>
               <div>
                 <label className="block text-gray-700 font-medium mb-1">Card Number</label>
-                <input type="text" value={cardNumber} onChange={e => setCardNumber(e.target.value)} required maxLength={16} className="w-full border rounded-lg px-3 py-2" placeholder="1234 5678 9012 3456" />
+                <input type="text" value={cardNumber} onChange={handleCardNumberChange} required maxLength={19} className="w-full border rounded-lg px-3 py-2" placeholder="1234 5678 9012 3456" />
               </div>
               <div>
                 <label className="block text-gray-700 font-medium mb-1">Name on Card</label>

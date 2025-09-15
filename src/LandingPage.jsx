@@ -303,10 +303,12 @@ function LandingPage() {
 
   return (
     <div className="min-h-screen bg-[#f7f9fb] flex flex-col overflow-x-hidden w-full">
-      {/* Navigation */}
-      {/* Accent bar at the very top */}
-      <div className="w-full h-1 bg-[#26a360] rounded-t-2xl"></div>
-      <nav className="w-full bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-40 shadow-xl transition-all duration-300 relative">
+      {/* Fixed Header Container */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-lg">
+        {/* Accent bar at the very top */}
+        <div className="w-full h-1 bg-[#26a360]"></div>
+        {/* Navigation */}
+        <nav className="w-full bg-white/95 backdrop-blur-md border-b border-gray-200/50">
         <div className="w-full flex flex-wrap items-center justify-between h-20 px-2 sm:px-4">
           {/* Logo with animation */}
           <div className="flex items-center min-w-0">
@@ -374,9 +376,10 @@ function LandingPage() {
           </div>
         </div>
       </nav>
+      </div>
 
       {/* Hero Section - Video right after header */}
-      <section className="relative w-full overflow-hidden bg-[#f7f9fb] min-h-[60vh] sm:min-h-[70vh] md:min-h-[80vh] lg:min-h-[90vh]">
+      <section className="relative w-full overflow-hidden bg-[#f7f9fb] min-h-[60vh] sm:min-h-[70vh] md:min-h-[80vh] lg:min-h-[90vh] pt-[85px]">
         <div className="w-full h-full relative bg-[#f7f9fb] p-0 m-0" style={{maxWidth: '100vw', overflow: 'hidden'}}>
           <img
             src="/images/homepic2.png"

@@ -163,6 +163,14 @@ const CompanyNotifications = () => {
               const qty = parseTotalQty(n.message);
               const isUnread = n.seen === 0;
               
+              // Check if this is a completion notification
+              const isCompletionNotification = n.message && (
+                n.message.includes('completed successfully') || 
+                n.message.includes('Route completed') ||
+                n.message.includes('All notifications have been dismissed') ||
+                n.message.includes('has been completed')
+              );
+              
               // Determine progress based on notification type
               let step = 1;
               let progress = 25;
@@ -173,24 +181,31 @@ const CompanyNotifications = () => {
               
               return (
                 <div key={n.notification_id} className="bg-white/80 rounded-xl px-4 py-4 text-gray-800 shadow-sm border border-gray-100">
-                  {/* Title */}
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-lg font-extrabold notif-title-bounce" style={{ color: THEME_GREEN }}>
-                      {routeId ? 'New Route Activated' : 'Company Update'}
-                    </span>
-                    <div className="text-xs text-gray-400">{new Date(n.created_at).toLocaleString()}</div>
-                  </div>
-                  
-                  {/* Status line */}
-                  <div className="flex items-center gap-2 mb-1">
-                    <Info className="w-4 h-4 text-green-700" />
-                    <span className="text-sm font-medium text-green-700">🟢 Status: Step {step} of 4</span>
-                  </div>
-                  
-                  {/* Progress bar */}
-                  <div className="w-full h-2 bg-gray-200 rounded-full mb-2">
-                    <div className="h-2 rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: THEME_GREEN }}></div>
-                  </div>
+                  {/* For completion notifications, show only the message */}
+                  {isCompletionNotification ? (
+                    <div className="text-base text-gray-700">
+                      {n.message || 'No message available'}
+                    </div>
+                  ) : (
+                    <>
+                      {/* Title */}
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-lg font-extrabold notif-title-bounce" style={{ color: THEME_GREEN }}>
+                          {routeId ? 'New Route Activated' : 'Company Update'}
+                        </span>
+                        <div className="text-xs text-gray-400">{new Date(n.created_at).toLocaleString()}</div>
+                      </div>
+                      
+                      {/* Status line */}
+                      <div className="flex items-center gap-2 mb-1">
+                        <Info className="w-4 h-4 text-green-700" />
+                        <span className="text-sm font-medium text-green-700">🟢 Status: Step {step} of 4</span>
+                      </div>
+                      
+                      {/* Progress bar */}
+                      <div className="w-full h-2 bg-gray-200 rounded-full mb-2">
+                        <div className="h-2 rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: THEME_GREEN }}></div>
+                      </div>
                   
                   {/* Info sections */}
                   <div className="flex flex-col gap-2 text-base">
@@ -233,18 +248,20 @@ const CompanyNotifications = () => {
                     </div>
                   </div>
                   
-                  {/* Action button */}
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      onClick={() => handleGoToRoute(n)}
-                      className="px-4 py-2 rounded-lg text-white text-sm bg-[#3a5f46] hover:bg-[#2e4d3a] shadow-sm transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0 notif-btn-grow"
-                    >
-                      Open Route Map
-                    </button>
-                    {isUnread && (
-                      <span className="px-2 py-1 rounded-full bg-[#3a5f46] text-white text-xs">New</span>
-                    )}
-                  </div>
+                      {/* Action button */}
+                      <div className="mt-3 flex gap-2">
+                        <button
+                          onClick={() => handleGoToRoute(n)}
+                          className="px-4 py-2 rounded-lg text-white text-sm bg-[#3a5f46] hover:bg-[#2e4d3a] shadow-sm transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0 notif-btn-grow"
+                        >
+                          Open Route Map
+                        </button>
+                        {isUnread && (
+                          <span className="px-2 py-1 rounded-full bg-[#3a5f46] text-white text-xs">New</span>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
               );
             })}
