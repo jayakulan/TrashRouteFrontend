@@ -16,8 +16,6 @@ const Reports = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [sidebarHovered, setSidebarHovered] = useState(false)
   const [filters, setFilters] = useState({
-    reportType: "All Reports",
-    dateRange: "Last 30 Days",
     status: "All Status",
   })
   const [wasteTypeData, setWasteTypeData] = useState({
@@ -72,7 +70,7 @@ const Reports = () => {
       title: "Monthly Pickup Summary",
       type: "Pickup Report",
       status: "Completed",
-      date: "2024-03-15",
+      date: new Date().toISOString().split('T')[0], // Current date
       generatedBy: "Admin",
       size: "2.3 MB",
       downloads: 15,
@@ -81,41 +79,11 @@ const Reports = () => {
       id: "#R002",
       title: "Customer Satisfaction Survey",
       type: "Feedback Report",
-      status: "Completed",
+      status: "In Progress",
       date: "2024-03-14",
-      generatedBy: "Admin",
+      generatedBy: "System",
       size: "1.8 MB",
       downloads: 8,
-    },
-    {
-      id: "#R003",
-      title: "Revenue Analysis Q1 2024",
-      type: "Financial Report",
-      status: "In Progress",
-      date: "2024-03-13",
-      generatedBy: "System",
-      size: "4.1 MB",
-      downloads: 12,
-    },
-    {
-      id: "#R004",
-      title: "Company Performance Metrics",
-      type: "Performance Report",
-      status: "Completed",
-      date: "2024-03-12",
-      generatedBy: "Admin",
-      size: "3.2 MB",
-      downloads: 22,
-    },
-    {
-      id: "#R005",
-      title: "Waste Collection Statistics",
-      type: "Statistics Report",
-      status: "Failed",
-      date: "2024-03-11",
-      generatedBy: "System",
-      size: "1.5 MB",
-      downloads: 5,
     },
   ]
 
@@ -281,13 +249,9 @@ const Reports = () => {
         report.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         report.type.toLowerCase().includes(searchQuery.toLowerCase())
 
-      const matchesReportType = filters.reportType === "All Reports" || report.type === filters.reportType
       const matchesStatus = filters.status === "All Status" || report.status === filters.status
-      
-      // For dateRange filter, we'll implement basic logic (you can enhance this later)
-      const matchesDateRange = filters.dateRange === "Last 30 Days" || true // Placeholder for date filtering
 
-      return matchesSearch && matchesReportType && matchesStatus && matchesDateRange
+      return matchesSearch && matchesStatus
     }
   )
 
@@ -300,16 +264,68 @@ const Reports = () => {
 
   const resetFilters = () => {
     setFilters({
-      reportType: "All Reports",
-      dateRange: "Last 30 Days",
       status: "All Status",
     })
     setSearchQuery("")
   }
 
-  const handleDownloadReport = (reportId) => {
-    console.log("Download report:", reportId)
-    // Handle download logic
+  const handleDownloadReport = async (reportId) => {
+    try {
+      console.log("Download report:", reportId)
+      
+      // For the first report (Monthly Pickup Summary), download the monthly report
+      if (reportId === "#R001") {
+        const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/generate_monthly_report.php', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            ...getAuthHeaders(),
+          },
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to download report')
+        }
+
+        // Check if the response is actually a PDF
+        const contentType = response.headers.get('content-type')
+        if (!contentType || !contentType.includes('application/pdf')) {
+          // If it's not a PDF, it might be an error message
+          const text = await response.text()
+          throw new Error('Server returned an error: ' + text)
+        }
+
+        // Get the PDF blob from the response
+        const blob = await response.blob()
+        
+        // Create a download link
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        
+        // Generate filename with current date
+        const currentDate = new Date()
+        const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
+        const filename = `Monthly_Pickup_Summary_${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}.pdf`
+        
+        link.download = filename
+        document.body.appendChild(link)
+        link.click()
+        
+        // Clean up
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(url)
+        
+        console.log("Report downloaded successfully!")
+      } else {
+        // For other reports, show a message that download is not available
+        alert('Download not available for this report yet.')
+      }
+      
+    } catch (error) {
+      console.error('Error downloading report:', error)
+      alert('Failed to download report. Please try again.')
+    }
   }
 
   const handleViewReport = (reportId) => {
@@ -593,42 +609,19 @@ const Reports = () => {
           {/* Filters */}
           <div className="mb-4 sm:mb-6 lg:mb-8">
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-              {Object.entries(filters).map(([key, value]) => (
-                <div key={key} className="relative flex-1">
-                  <select
-                    value={value}
-                    onChange={(e) => handleFilterChange(key, e.target.value)}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-2 bg-white border border-[#d0e9d6] rounded-lg text-[#3a5f46] font-semibold focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] appearance-none pr-8 sm:pr-10 text-sm shadow"
-                  >
-                    <option value={value}>{value}</option>
-                    {key === "reportType" && (
-                      <>
-                        <option value="Pickup Report">Pickup Report</option>
-                        <option value="Feedback Report">Feedback Report</option>
-                        <option value="Financial Report">Financial Report</option>
-                        <option value="Performance Report">Performance Report</option>
-                        <option value="Statistics Report">Statistics Report</option>
-                      </>
-                    )}
-                    {key === "dateRange" && (
-                      <>
-                        <option value="Last 7 Days">Last 7 Days</option>
-                        <option value="Last 30 Days">Last 30 Days</option>
-                        <option value="Last 90 Days">Last 90 Days</option>
-                        <option value="This Year">This Year</option>
-                      </>
-                    )}
-                    {key === "status" && (
-                      <>
-                        <option value="Completed">Completed</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Failed">Failed</option>
-                      </>
-                    )}
-                  </select>
-                  <ChevronDown className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-[#3a5f46] pointer-events-none" />
-                </div>
-              ))}
+              <div className="relative flex-1">
+                <select
+                  value={filters.status}
+                  onChange={(e) => handleFilterChange("status", e.target.value)}
+                  className="w-full px-3 sm:px-4 py-2 sm:py-2 bg-white border border-[#d0e9d6] rounded-lg text-[#3a5f46] font-semibold focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:border-[#3a5f46] appearance-none pr-8 sm:pr-10 text-sm shadow"
+                >
+                  <option value="All Status">All Status</option>
+                  <option value="Completed">Completed</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Failed">Failed</option>
+                </select>
+                <ChevronDown className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-[#3a5f46] pointer-events-none" />
+              </div>
               <button
                 onClick={resetFilters}
                 className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors text-sm shadow"
@@ -675,20 +668,18 @@ const Reports = () => {
                       <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#618170]">{report.size}</td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#3a5f46] font-semibold">{report.downloads}</td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4">
-                        <div className="flex space-x-2">
-          <button
-                            onClick={() => handleViewReport(report.id)}
-                            className="bg-[#3a5f46] hover:bg-[#2e4d3a] text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
-          >
-                            View
-          </button>
-          <button
-                            onClick={() => handleDownloadReport(report.id)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
-          >
-                            Download
-          </button>
-                        </div>
+                        {report.id === "#R001" ? (
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handleDownloadReport(report.id)}
+                              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1 rounded-full shadow transition text-xs"
+                            >
+                              Download
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-xs">No actions</span>
+                        )}
                       </td>
                     </tr>
                   ))}
