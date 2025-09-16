@@ -25,6 +25,11 @@ const MinimumWastePopup = ({ isOpen, onClose, onLearnMore, onDontShowAgain, clos
         justifyContent: 'center',
         animation: 'minwaste-fadein 0.3s',
       }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
     >
       <style>{`
         @keyframes minwaste-fadein {

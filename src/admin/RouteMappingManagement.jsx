@@ -128,8 +128,8 @@ const RouteMappingManagement = () => {
         </div>
       )}
       {/* Main Content Area */}
-      <div className={`flex-1 min-w-0 ml-0 sm:ml-20 transition-all duration-300 ${sidebarHovered ? 'lg:ml-64' : 'lg:ml-20'}`}>
-        <main className="p-4 sm:p-6 md:p-8">
+      <div className={`flex-1 min-w-0 ml-0 sm:ml-20 transition-all duration-300 flex flex-col ${sidebarHovered ? 'lg:ml-64' : 'lg:ml-20'}`}>
+        <main className="p-4 sm:p-6 md:p-8 flex-1">
           {/* Page Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-[#3a5f46]">Route Mapping Management</h1>
