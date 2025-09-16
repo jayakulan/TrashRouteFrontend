@@ -11,7 +11,7 @@ const LIGHT_GRAY = "#f7faf7";
 
 // simple colors
 
-export default function CustomerNotification({ userId, iconOnly = false }) {
+export default function CustomerNotification({ userId, iconOnly = false, refreshTrigger }) {
   const [open, setOpen] = useState(false);
   const bellRef = useRef();
   const dropdownRef = useRef();
@@ -22,59 +22,64 @@ export default function CustomerNotification({ userId, iconOnly = false }) {
   const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
   const [selectedRequestId, setSelectedRequestId] = useState(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!userId) return;
-      try {
-        setLoading(true);
-        const res = await fetch(`http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/notifications.php?user_id=${userId}&limit=25`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        if (!json.success) throw new Error(json.message || 'Failed to fetch');
-        const data = json.data || [];
-        setItems(data);
-        setHasNew(data.some(n => (n.seen === 0 || String(n.seen) === '0')));
-
-        // Fallback: if no notifications yet, synthesize from latest pickup requests
-        if ((data || []).length === 0) {
-          const token = getCookie('token');
-          const headers = { 'Content-Type': 'application/json' };
-          if (token) headers['Authorization'] = `Bearer ${token}`;
-          const tr = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Customer/trackPickup.php', {
-            method: 'GET',
-            credentials: 'include',
-            headers
-          });
-          if (tr.ok) {
-            const trJson = await tr.json();
-            if (trJson.success) {
-              const reqs = trJson.data?.pickup_requests || [];
-              const synthesized = reqs.slice(0, 5).map(r => ({
-                notification_id: `syn-${r.request_id}`,
-                message: `Pickup ${r.status || 'Request received'}`,
-                created_at: r.timestamp,
-                request_id: r.request_id,
-                request_waste_type: r.waste_type,
-                request_quantity: r.quantity,
-                request_status: r.status,
-                request_otp: r.otp,
-                request_timestamp: r.timestamp,
-                seen: 1
-              }));
-              if (synthesized.length > 0) setItems(synthesized);
-            }
-          }
-        }
-      } catch (e) {
-        setError(e.message);
-      } finally {
-        setLoading(false);
+  const fetchData = async () => {
+    if (!userId) return;
+    try {
+      setLoading(true);
+      const res = await fetch(`http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/notifications.php?user_id=${userId}&limit=25`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      
+      // Get response text first
+      const text = await res.text();
+      
+      // Check if response is JSON
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('Non-JSON response:', text);
+        throw new Error('Server returned non-JSON response');
       }
-    };
+      if (!text) {
+        throw new Error('Empty response from server');
+      }
+      
+      let json;
+      try {
+        json = JSON.parse(text);
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        console.error('Response text:', text);
+        throw new Error('Invalid JSON response from server');
+      }
+      
+      if (!json.success) throw new Error(json.message || 'Failed to fetch');
+      const data = json.data || [];
+      setItems(data);
+      setHasNew(data.some(n => (n.seen === 0 || String(n.seen) === '0')));
+    } catch (e) {
+      console.error('Notification fetch error:', e);
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
+  }, [userId, refreshTrigger]);
+
+  // Listen for custom refresh events
+  useEffect(() => {
+    const handleRefresh = () => {
+      fetchData();
+    };
+
+    window.addEventListener('refreshNotifications', handleRefresh);
+    return () => {
+      window.removeEventListener('refreshNotifications', handleRefresh);
+    };
   }, [userId]);
 
   const dismissNotification = async (notificationId) => {
@@ -191,19 +196,17 @@ export default function CustomerNotification({ userId, iconOnly = false }) {
               
               // Transform the message for display - remove request ID and add "company" prefix
               const transformMessage = (message) => {
-                console.log('Original message:', message); // Debug log
                 // Check if it's an "accepted by" message
                 const acceptedPattern = /Your pickup request #\d+ has been accepted by (.+)\./;
                 const match = message.match(acceptedPattern);
                 if (match) {
                   const companyName = match[1];
-                  console.log('Matched accepted pattern, company:', companyName); // Debug log
                   return `Your request accepted by ${companyName}`;
                 }
                 // For old notifications, show simple "Pickup request received"
-                console.log('Using fallback message'); // Debug log
                 return "Pickup request received";
               };
+              
               
               // Determine the title text and status based on notification type
               let titleText;
@@ -220,16 +223,35 @@ export default function CustomerNotification({ userId, iconOnly = false }) {
                 titleText = transformMessage(msg);
                 displayStatus = "Accepted";
                 progressPercent = 50;
+              } else if (msg.includes('marked as completed')) {
+                // For completion notifications - prioritize this check
+                titleText = "Pickup completed successfully";
+                displayStatus = "Completed";
+                progressPercent = 100;
+              } else if (msg.includes('has been completed')) {
+                // For completion notifications with different pattern
+                titleText = "Pickup completed successfully";
+                displayStatus = "Completed";
+                progressPercent = 100;
               } else if (n.request_status === 'Accepted') {
                 // For accepted requests, show the transformed message
                 titleText = transformMessage(msg);
                 displayStatus = "Accepted";
                 progressPercent = 50;
               } else if (n.request_status === 'Completed') {
-                // For completed requests
-                titleText = "Pickup completed successfully";
-                displayStatus = "Completed";
-                progressPercent = 100;
+                // For completed requests - distinguish between old and new notifications
+                const originalTitle = transformMessage(msg);
+                if (originalTitle === "Pickup request received") {
+                  // Keep original title and status for old notifications
+                  titleText = "Pickup request received";
+                  displayStatus = "Request received";
+                  progressPercent = 25;
+                } else {
+                  // Use completion title and status for new notifications
+                  titleText = "Pickup completed successfully";
+                  displayStatus = "Completed";
+                  progressPercent = 100;
+                }
               } else if (msg.includes('OTPs generated') || msg.includes('Pickup schedule confirmed')) {
                 // For OTP/schedule confirmation
                 titleText = "Pickup schedule confirmed";

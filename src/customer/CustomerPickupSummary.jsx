@@ -37,9 +37,6 @@ const ConfirmPickup = () => {
         const token = getCookie('token');
         const user = getCookie('user');
         
-        console.log('Token exists:', !!token);
-        console.log('User exists:', !!user);
-        
         if (!token || !user) {
           setError('Please log in to view pickup summary.');
           setLoading(false);
@@ -67,11 +64,8 @@ const ConfirmPickup = () => {
             'Content-Type': 'application/json',
           },
         });
-
-        console.log('Response status:', response.status);
         
         const data = await response.json();
-        console.log('Response data:', data);
 
         if (data.success) {
           // Deduplicate waste types if it's an array
@@ -137,7 +131,11 @@ const ConfirmPickup = () => {
         setOtpList(data.data.otp_list || []);
         setConfirmed(true);
         setShowPopup(true); // Only show popup for new confirmations
-        console.log("OTPs generated successfully:", data.data.otp_list);
+        
+        // Trigger notification refresh after a short delay to ensure database is updated
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('refreshNotifications'));
+        }, 1000);
       } else {
         setError(data.message || 'Failed to generate OTPs');
       }
@@ -159,19 +157,19 @@ const ConfirmPickup = () => {
       <main className="container mx-auto px-6 py-8 max-w-4xl">
         {/* Breadcrumb */}
         <div className="flex items-center space-x-2 text-sm text-gray-600 mb-8">
-          <Link to="/request-pickup" className="text-theme-color hover:text-theme-color-dark font-medium">
+          <Link to="/customer/trash-type" className="text-[#3a5f46] hover:text-[#2e4d3a] hover:underline font-medium">
             Request Pickup
           </Link>
           <span>/</span>
-          <Link to="/select-waste-type" className="text-theme-color hover:text-theme-color-dark font-medium">
+          <Link to="/customer/trash-type" className="text-[#3a5f46] hover:text-[#2e4d3a] hover:underline font-medium">
             Select Waste Type
           </Link>
           <span>/</span>
-          <Link to="/pin-location" className="text-theme-color hover:text-theme-color-dark font-medium">
+          <Link to="/customer/location-pin" className="text-[#3a5f46] hover:text-[#2e4d3a] hover:underline font-medium">
             Pin Location
           </Link>
           <span>/</span>
-          <span className="text-gray-900 font-medium">Confirm Pickup Schedule</span>
+          <Link to="/customer/pickup-summary" className="text-gray-900 font-medium">Confirm Pickup Schedule</Link>
         </div>
 
         {/* Progress */}

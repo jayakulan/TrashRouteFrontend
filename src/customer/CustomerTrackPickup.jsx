@@ -586,30 +586,31 @@ export default function CustomerTrackPickup() {
           ) : (groupedByWasteType[selectedWaste]?.length === 0 ? (
             <div className="text-center text-gray-600">No submissions for this waste type yet.</div>
           ) : (
-            groupedByWasteType[selectedWaste]?.map((req, idx) => {
-              const reqStep = computeStepForRequest(req);
-              const reqBlink = (reqStep === 1 || reqStep === 2) && (req?.status === 'Accepted');
+            // Show only the most recent pickup request for this waste type
+            (() => {
+              const mostRecentRequest = groupedByWasteType[selectedWaste]?.[0]; // First item is already sorted by newest
+              if (!mostRecentRequest) return null;
+              
+              const reqStep = computeStepForRequest(mostRecentRequest);
+              const reqBlink = (reqStep === 1 || reqStep === 2) && (mostRecentRequest?.status === 'Accepted');
+              
               return (
-                <div key={req.request_id} className="mb-8">
+                <div key={mostRecentRequest.request_id} className="mb-8">
                   <div className="flex items-center justify-between mb-3">
                     <div className="text-sm flex items-center gap-2">
-                      {idx === 0 ? (
-                        <span className="inline-flex items-center gap-2">
-                          <span className="px-2 py-0.5 rounded-full text-white text-xs font-semibold" style={{background:'#3a5f46'}}>New</span>
-                          <span className="px-2 py-0.5 rounded-full text-[#2e4d3a] text-xs font-semibold border border-[#cfe0d6] bg-[#eaf3ee]">Submission #1</span>
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded-full text-[#2e4d3a] text-xs font-semibold border border-[#cfe0d6] bg-[#eaf3ee]">Submission #{idx + 1}</span>
-                      )}
-                      {typeof req?.quantity !== 'undefined' && req?.quantity !== null && (
-                        <span className="px-2 py-0.5 rounded-full text-[#2e4d3a] text-xs font-semibold border border-[#cfe0d6] bg-[#f3f8f5]">{req.quantity}kg</span>
+                      <span className="inline-flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded-full text-white text-xs font-semibold" style={{background:'#3a5f46'}}>Current</span>
+                        <span className="px-2 py-0.5 rounded-full text-[#2e4d3a] text-xs font-semibold border border-[#cfe0d6] bg-[#eaf3ee]">Latest Request</span>
+                      </span>
+                      {typeof mostRecentRequest?.quantity !== 'undefined' && mostRecentRequest?.quantity !== null && (
+                        <span className="px-2 py-0.5 rounded-full text-[#2e4d3a] text-xs font-semibold border border-[#cfe0d6] bg-[#f3f8f5]">{mostRecentRequest.quantity}kg</span>
                       )}
                     </div>
                     <div className="text-sm">
-                      {req.timestamp && (
+                      {mostRecentRequest.timestamp && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium border border-[#cfe0d6] text-[#2e4d3a] bg-[#f3f8f5]">
                           <span role="img" aria-label="time">🕒</span>
-                          {new Date(req.timestamp).toLocaleString()}
+                          {new Date(mostRecentRequest.timestamp).toLocaleString()}
                         </span>
                       )}
                     </div>
@@ -621,7 +622,7 @@ export default function CustomerTrackPickup() {
                   />
                 </div>
               );
-            })
+            })()
           ))}
         </div>
       </main>

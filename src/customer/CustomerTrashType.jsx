@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { Recycle, Bell, Minus, Plus, ArrowLeft } from "lucide-react"
 import MinimumWastePopup from "./MinimumWastePopup"
 import UserProfileDropdown from "./UserProfileDropdown"
-import { setCookie, getCookie } from "../utils/cookieUtils";
+import { setCookie, getCookie, deleteCookie } from "../utils/cookieUtils";
 import Footer from "../footer.jsx"
 import CustomerHeader from "./CustomerHeader";
 
@@ -19,18 +19,17 @@ const CustomerTrashType = () => {
   const [message, setMessage] = useState({ type: "", text: "" })
   const navigate = useNavigate()
 
-  // Debug: Log state changes
-  useEffect(() => {
-    console.log('Waste types state updated:', wasteTypes);
-  }, [wasteTypes]);
-
   // Popup state
   const [isPopupOpen, setIsPopupOpen] = useState(() => {
-    const hide = getCookie("hideMinimumWastePopup") === "true"
+    const hideCookie = getCookie("hideMinimumWastePopup");
+    const hide = hideCookie === "true" || hideCookie === true;
     return !hide;
   })
 
-  const handleClosePopup = () => setIsPopupOpen(false)
+
+  const handleClosePopup = () => {
+    setIsPopupOpen(false)
+  }
   const handleLearnMore = () => {
     // You can navigate to a help page or show more info here
     setIsPopupOpen(false)
@@ -38,6 +37,7 @@ const CustomerTrashType = () => {
   const handleDontShowAgain = () => {
     setCookie("hideMinimumWastePopup", "true")
   }
+
 
   const updateQuantity = (type, newQuantity) => {
     if (newQuantity >= 3 && newQuantity <= 50) {
@@ -53,14 +53,9 @@ const CustomerTrashType = () => {
   }
 
   const toggleWasteType = (type) => {
-    console.log('Toggling waste type:', type);
-    console.log('Current state before toggle:', wasteTypes);
-    
     setWasteTypes((prev) => {
       const currentSelected = prev[type].selected;
       const newSelected = !currentSelected;
-      
-      console.log(`Changing ${type} from ${currentSelected} to ${newSelected}`);
       
       const newState = {
         ...prev,
@@ -70,7 +65,6 @@ const CustomerTrashType = () => {
         },
       };
       
-      console.log('New waste types state:', newState);
       return newState;
     });
   }
@@ -99,11 +93,8 @@ const CustomerTrashType = () => {
         selected: data.selected
       }));
 
-      console.log('Sending waste types data:', wasteTypesData);
-
       // Get token from cookies
       const token = getCookie('token');
-      console.log('Token from cookies:', token ? 'Token exists' : 'No token found');
       
       const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Customer/CustomerTrashType.php", {
         method: "POST",
@@ -125,11 +116,6 @@ const CustomerTrashType = () => {
         totalUpdated: result.data.total_updated
       }));
       
-      console.log('Response from server:', result);
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
-      console.log('Backend result:', result);
-
       if (result.success) {
         setMessage({ type: "success", text: "Waste types saved successfully!" });
         
@@ -247,11 +233,13 @@ const CustomerTrashType = () => {
       <main className="container mx-auto px-6 py-8 max-w-4xl">
         {/* Breadcrumb */}
         <div className="flex items-center space-x-2 text-sm text-gray-600 mb-8">
-          <Link to="/customer/trash-type" className="text-theme-color hover:text-theme-color-dark">
+          <Link to="/customer/trash-type" className="text-[#3a5f46] hover:text-[#2e4d3a] hover:underline">
             Request Pickup
           </Link>
           <span>/</span>
-          <span className="text-gray-900 font-medium">Select Waste Types</span>
+          <Link to="/customer/trash-type" className="text-gray-900 font-medium">
+            Select Waste Types
+          </Link>
         </div>
 
         {/* Progress */}
@@ -301,7 +289,6 @@ const CustomerTrashType = () => {
                   tabIndex={0}
                   onClick={(e) => {
                     e.stopPropagation();
-                    console.log('Toggle button clicked:', wasteType.id);
                     toggleWasteType(wasteType.id);
                   }}
                   style={{

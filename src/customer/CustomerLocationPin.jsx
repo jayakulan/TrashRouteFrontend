@@ -138,11 +138,6 @@ const PinLocation = () => {
     // Also wait for existing location to be fetched
     const initializeMap = () => {
       if (mapContainer.current && !mapInitialized && mapboxgl && mapboxgl.Map && !fetchingExistingLocation) {
-        console.log('Initializing Mapbox map...');
-        console.log('Map container:', mapContainer.current);
-        console.log('Mapbox GL available:', !!mapboxgl);
-        console.log('Mapbox Map constructor available:', !!mapboxgl.Map);
-        
         try {
           const newMap = new mapboxgl.Map({
             container: mapContainer.current,
@@ -151,8 +146,6 @@ const PinLocation = () => {
             zoom: mapZoom,
             attributionControl: false
           });
-
-          console.log('Map instance created:', newMap);
 
           // Add navigation controls
           newMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
@@ -167,7 +160,6 @@ const PinLocation = () => {
 
           // Add load event
           newMap.on('load', () => {
-            console.log('Map loaded successfully');
             setMap(newMap);
             setMapInitialized(true);
           });
