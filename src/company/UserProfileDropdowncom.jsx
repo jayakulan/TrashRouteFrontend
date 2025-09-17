@@ -9,7 +9,7 @@ const UserProfileDropdowncom = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editData, setEditData] = useState({
     name: user?.name || "",
-    contact_number: user?.contact_number || "",
+    phone: user?.contact_number || user?.phone || "",
     address: user?.address || "",
   });
   const [editError, setEditError] = useState("");
@@ -45,7 +45,7 @@ const UserProfileDropdowncom = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          user_id: user.user_id,
+          user_id: user?.id || user?.user_id || user?.company_id,
           ...editData,
         }),
         credentials: "include",
@@ -116,8 +116,8 @@ const UserProfileDropdowncom = () => {
                 <label className="block text-gray-700 font-medium mb-1">Contact Number</label>
                 <input
                   type="text"
-                  name="contact_number"
-                  value={editData.contact_number}
+                  name="phone"
+                  value={editData.phone}
                   onChange={handleEditChange}
                   required
                   className="w-full border rounded-lg px-3 py-2"

@@ -13,6 +13,26 @@ const AdminDashboard = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef(null);
 
+  // Function to calculate time ago
+  const getTimeAgo = (timestamp) => {
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffInMs = now - time;
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+    if (diffInDays > 0) {
+      return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+    } else if (diffInHours > 0) {
+      return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+    } else if (diffInMinutes > 0) {
+      return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
+    } else {
+      return 'Just now';
+    }
+  };
+
   useEffect(() => {
     function handleClickOutside(event) {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
@@ -84,6 +104,7 @@ const AdminDashboard = () => {
               id: index + 1,
               title: activity.title,
               time: activity.time,
+              timestamp: activity.timestamp || new Date().toISOString(), // Use provided timestamp or current time
             })));
           }
         } else {
@@ -103,6 +124,19 @@ const AdminDashboard = () => {
     const interval = setInterval(fetchDashboardData, 5 * 60 * 1000);
     
     return () => clearInterval(interval);
+  }, []);
+
+  // Update timestamps every minute to keep them current
+  useEffect(() => {
+    const timestampInterval = setInterval(() => {
+      setRecentActivity(prev => prev.map(activity => ({
+        ...activity,
+        // Keep the same timestamp but trigger re-render
+        _lastUpdate: Date.now()
+      })));
+    }, 60000); // Update every minute
+
+    return () => clearInterval(timestampInterval);
   }, []);
 
   const [stats, setStats] = useState([
@@ -314,7 +348,7 @@ const AdminDashboard = () => {
                   recentActivity.map((activity) => (
                     <div key={activity.id} className="bg-white rounded-lg p-3 sm:p-4 border border-[#d0e9d6] shadow-sm hover:shadow-md transition">
                       <div className="text-[#2e4d3a] font-semibold mb-1 text-sm sm:text-base">{activity.title}</div>
-                      <div className="text-xs sm:text-sm text-[#3a5f46]">{activity.time}</div>
+                      <div className="text-xs sm:text-sm text-[#3a5f46]">{getTimeAgo(activity.timestamp)}</div>
                     </div>
                   ))
                 ) : (

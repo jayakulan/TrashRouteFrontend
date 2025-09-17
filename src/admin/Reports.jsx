@@ -80,7 +80,7 @@ const Reports = () => {
       title: "Customer Satisfaction Survey",
       type: "Feedback Report",
       status: "In Progress",
-      date: "2024-03-14",
+      date: new Date().toISOString().split('T')[0], // Current date
       generatedBy: "System",
       size: "1.8 MB",
       downloads: 8,
@@ -333,58 +333,6 @@ const Reports = () => {
     // Handle view logic
   }
 
-  const handleGenerateReport = async () => {
-    try {
-      console.log("Generating last month report...")
-      
-      const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/generate_monthly_report.php', {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          ...getAuthHeaders(),
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to generate report')
-      }
-
-      // Check if the response is actually a PDF
-      const contentType = response.headers.get('content-type')
-      if (!contentType || !contentType.includes('application/pdf')) {
-        // If it's not a PDF, it might be an error message
-        const text = await response.text()
-        throw new Error('Server returned an error: ' + text)
-      }
-
-      // Get the PDF blob from the response
-      const blob = await response.blob()
-      
-      // Create a download link
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      
-      // Generate filename with current date
-      const currentDate = new Date()
-      const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
-      const filename = `TrashRoute_Monthly_Report_${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}.pdf`
-      
-      link.download = filename
-      document.body.appendChild(link)
-      link.click()
-      
-      // Clean up
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
-      
-      console.log("Report generated and downloaded successfully!")
-      
-    } catch (error) {
-      console.error('Error generating report:', error)
-      alert('Failed to generate report. Please try again.')
-    }
-  }
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -582,15 +530,6 @@ const Reports = () => {
             </div>
           </div>
 
-          {/* Generate Report Button */}
-          <div className="mb-4 sm:mb-6 lg:mb-8 flex justify-center">
-            <button
-              onClick={() => handleGenerateReport()}
-              className="bg-[#3a5f46] hover:bg-[#2e4d3a] text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#3a5f46] focus:ring-opacity-50"
-            >
-              Generate Last Month Report
-            </button>
-          </div>
 
           {/* Search Bar */}
           <div className="mb-4 sm:mb-6">

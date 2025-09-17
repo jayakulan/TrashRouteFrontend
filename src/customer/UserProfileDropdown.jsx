@@ -88,7 +88,7 @@ const UserProfileDropdown = ({ mode = "default" }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...editData,
-          user_id: user?.id || user?.user_id || user?.customer_id
+          user_id: user?.id || user?.user_id || user?.customer_id || user?.company_id
         }),
         credentials: "include",
       });
