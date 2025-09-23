@@ -206,13 +206,6 @@ const CompanyNotifications = () => {
                 n.message.includes('has been completed')
               );
               
-              // Determine progress based on notification type
-              let step = 1;
-              let progress = 25;
-              if (routeId) {
-                step = 3;
-                progress = 75;
-              }
               
               return (
                 <div key={n.notification_id} className="bg-white/80 rounded-xl px-4 py-4 text-gray-800 shadow-sm border border-gray-100">
@@ -256,16 +249,6 @@ const CompanyNotifications = () => {
                         <div className="text-xs text-gray-400">{new Date(n.created_at).toLocaleString()}</div>
                       </div>
                       
-                      {/* Status line */}
-                      <div className="flex items-center gap-2 mb-1">
-                        <Info className="w-4 h-4 text-green-700" />
-                        <span className="text-sm font-medium text-green-700">🟢 Status: Step {step} of 4</span>
-                      </div>
-                      
-                      {/* Progress bar */}
-                      <div className="w-full h-2 bg-gray-200 rounded-full mb-2">
-                        <div className="h-2 rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: THEME_GREEN }}></div>
-                      </div>
                   
                   {/* Info sections */}
                   <div className="flex flex-col gap-2 text-base">

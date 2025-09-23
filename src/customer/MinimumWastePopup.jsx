@@ -17,12 +17,18 @@ const MinimumWastePopup = ({ isOpen, onClose, onLearnMore, onDontShowAgain, clos
     <div
       style={{
         position: 'fixed',
-        inset: 0,
-        zIndex: 1000,
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 10000,
         background: 'rgba(0,0,0,0.55)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        overflow: 'hidden',
         animation: 'minwaste-fadein 0.3s',
       }}
       onClick={(e) => {

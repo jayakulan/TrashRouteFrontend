@@ -137,6 +137,9 @@ export default function CustomerTrackPickup() {
         } else {
           throw new Error(result.error || 'Failed to fetch tracking data');
         }
+
+        // Note: Waste types with feedback will be loaded when feedback is submitted
+        // No need for separate API call since it's integrated into submitFeedback.php
       } catch (err) {
         console.error('Error fetching tracking data:', err);
         setError(err.message);
@@ -365,8 +368,8 @@ export default function CustomerTrackPickup() {
     return (
       <>
         {/* Accent bar at the very top */}
-        <div className="absolute top-0 left-0 right-0 w-screen h-1 bg-[#26a360] rounded-t-2xl z-50"></div>
-        <nav className="w-full bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-40 shadow-xl transition-all duration-300 relative">
+        <div className="absolute top-0 left-0 right-0 w-screen h-1 bg-[#26a360] rounded-t-2xl z-[10001]"></div>
+        <nav className="w-full bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-[10000] shadow-xl transition-all duration-300 relative">
           <div className="w-full flex items-center justify-between h-20 px-4 md:px-8">
             {/* Logo with animation */}
             <div className="flex items-center">
@@ -453,7 +456,7 @@ export default function CustomerTrackPickup() {
   );
 
   const [showThankYouPopup, setShowThankYouPopup] = useState(false);
-  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [feedbackSubmittedForWasteType, setFeedbackSubmittedForWasteType] = useState(new Set());
 
   // Handle loading state
   if (loading) {
@@ -567,8 +570,8 @@ export default function CustomerTrackPickup() {
                       ? 'bg-[#e5e7eb] text-[#3a5f46] hover:bg-[#d1d5db]' 
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
-                onClick={() => hasData && !feedbackSubmitted && setSelectedWaste(wt.key)}
-                disabled={!hasData || feedbackSubmitted}
+                 onClick={() => hasData && !feedbackSubmittedForWasteType.has(wt.key) && setSelectedWaste(wt.key)}
+                 disabled={!hasData || feedbackSubmittedForWasteType.has(wt.key)}
               >
                 {wt.label}
               </button>
@@ -579,7 +582,7 @@ export default function CustomerTrackPickup() {
           <h2 className="text-lg font-bold mb-6 text-center">
             {wasteTypes.find(wt => wt.key === selectedWaste)?.label} Pickup Timeline
           </h2>
-          {feedbackSubmitted ? (
+           {feedbackSubmittedForWasteType.has(selectedWaste) ? (
             <div className="text-center text-[#2e4d3a]">
               Tracking is disabled after feedback submission. Thank you!
             </div>
@@ -630,16 +633,37 @@ export default function CustomerTrackPickup() {
       {showFeedbackPopup && (
         <div style={{
           position: 'fixed',
-          inset: 0,
-          zIndex: 1000,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100vw',
+          height: '100vh',
+          zIndex: 10000,
           background: 'rgba(0,0,0,0.55)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          overflow: 'hidden',
         }}>
           <FeedbackFormModal 
             onClose={() => setShowFeedbackPopup(false)} 
-            onThankYou={() => { setShowFeedbackPopup(false); setShowThankYouPopup(true); setFeedbackSubmitted(true); }}
+            onFeedbackSubmitted={(wasteType, allWasteTypesWithFeedback) => {
+              if (allWasteTypesWithFeedback) {
+                // Update with the complete set of waste types that have feedback
+                setFeedbackSubmittedForWasteType(allWasteTypesWithFeedback);
+              } else if (wasteType) {
+                // Fallback: add just the current waste type
+                const wasteTypeKey = wasteTypes.find(wt => wt.label.toLowerCase() === wasteType.toLowerCase())?.key;
+                if (wasteTypeKey) {
+                  setFeedbackSubmittedForWasteType(prev => new Set([...prev, wasteTypeKey]));
+                }
+              }
+            }}
+             onThankYou={() => { 
+               setShowFeedbackPopup(false); 
+               setShowThankYouPopup(true); 
+             }}
             requestId={(() => {
               // Handle case-insensitive waste type mapping
               const wasteTypeKey = trackingData?.waste_types ? Object.keys(trackingData.waste_types).find(
@@ -654,12 +678,18 @@ export default function CustomerTrackPickup() {
       {showThankYouPopup && (
         <div style={{
           position: 'fixed',
-          inset: 0,
-          zIndex: 1100,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100vw',
+          height: '100vh',
+          zIndex: 10000,
           background: 'rgba(0,0,0,0.55)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          overflow: 'hidden',
         }}>
           <div style={{
             background: '#fff',
@@ -705,7 +735,7 @@ export default function CustomerTrackPickup() {
 }
 
 // FeedbackFormModal component
-function FeedbackFormModal({ onClose, onThankYou, requestId }) {
+function FeedbackFormModal({ onClose, onThankYou, requestId, onFeedbackSubmitted }) {
   const [feedback, setFeedback] = React.useState("");
   const [rating, setRating] = React.useState(5);
   const [submitted, setSubmitted] = React.useState(false);
@@ -753,6 +783,23 @@ function FeedbackFormModal({ onClose, onThankYou, requestId }) {
       
       if (result.success) {
         setSubmitted(true);
+        // Call the callback with waste type information and update the feedback state
+        if (onFeedbackSubmitted && result.data) {
+          if (result.data.waste_type) {
+            onFeedbackSubmitted(result.data.waste_type);
+          }
+          // Update the feedback state with all waste types that have feedback
+          if (result.data.waste_types_with_feedback) {
+            const wasteTypeKeys = result.data.waste_types_with_feedback.map(backendWasteType => {
+              return wasteTypes.find(wt => wt.label.toLowerCase() === backendWasteType.toLowerCase())?.key;
+            }).filter(Boolean);
+            
+            // Update the parent component's feedback state
+            if (onFeedbackSubmitted) {
+              onFeedbackSubmitted(null, new Set(wasteTypeKeys));
+            }
+          }
+        }
         setTimeout(() => {
           if (onThankYou) onThankYou();
         }, 500);

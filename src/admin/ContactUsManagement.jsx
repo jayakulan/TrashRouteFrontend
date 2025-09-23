@@ -7,6 +7,7 @@ import SidebarLinks from "./SidebarLinks";
 import AdminProfileDropdown from "./AdminProfileDropdown";
 import Footer from "../footer";
 import { getCookie } from "../utils/cookieUtils";
+import DeleteWarningPopup from "./components/DeleteWarningPopup";
 
 const ContactUsManagement = () => {
   const [searchQuery, setSearchQuery] = useState("")
@@ -14,6 +15,9 @@ const ContactUsManagement = () => {
   const [contactData, setContactData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [deletingContact, setDeletingContact] = useState(null);
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [contactToDelete, setContactToDelete] = useState(null);
 
   // Fetch contact data from backend
   useEffect(() => {
@@ -89,9 +93,62 @@ const ContactUsManagement = () => {
     }
   }
 
-  const handleView = (contactId) => {
-    console.log("View contact:", contactId)
-    // Handle view contact logic
+  const handleDeleteClick = (contact) => {
+    setContactToDelete(contact);
+    setShowDeletePopup(true);
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!contactToDelete) return;
+    
+    try {
+      setDeletingContact(contactToDelete.id);
+      
+      const token = getCookie('token');
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch(`http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/admin/managecontactus.php?action=delete`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          contactId: contactToDelete.id
+        }),
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Remove the contact from the local state
+        setContactData(prevContacts => 
+          prevContacts.filter(contact => contact.id !== contactToDelete.id)
+        );
+        setShowDeletePopup(false);
+        setContactToDelete(null);
+      } else {
+        throw new Error(result.error || 'Failed to delete contact');
+      }
+    } catch (err) {
+      console.error('Error deleting contact:', err);
+    } finally {
+      setDeletingContact(null);
+    }
+  }
+
+  const handleDeleteCancel = () => {
+    setShowDeletePopup(false);
+    setContactToDelete(null);
   }
 
   return (
@@ -192,12 +249,19 @@ const ContactUsManagement = () => {
                          </td>
                          <td className="px-6 py-4 text-sm text-[#618170]">{contact.receivedDate}</td>
                          <td className="px-6 py-4">
-                           <button
-                             onClick={() => handleView(index)}
-                             className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                           >
-                             View
-                           </button>
+                           <div className="flex space-x-2">
+                             <button
+                               onClick={() => handleDeleteClick(contact)}
+                               disabled={deletingContact === contact.id}
+                               className={`font-semibold px-3 py-1 rounded-full shadow transition text-xs ${
+                                 deletingContact === contact.id
+                                   ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                   : 'bg-red-600 hover:bg-red-700 text-white'
+                               }`}
+                             >
+                               {deletingContact === contact.id ? 'Deleting...' : 'Delete'}
+                             </button>
+                           </div>
                          </td>
                        </tr>
                      ))}
@@ -223,6 +287,17 @@ const ContactUsManagement = () => {
         <div className="mb-32"></div>
         <Footer admin={true} />
       </div>
+
+      {/* Delete Warning Popup */}
+      <DeleteWarningPopup
+        isOpen={showDeletePopup}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Contact"
+        message="Are you sure you want to delete this contact inquiry?"
+        itemName={contactToDelete?.sender || ""}
+        isLoading={deletingContact !== null}
+      />
     </div>
   )
 }
