@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Bell } from "lucide-react";
 import UserProfileDropdown from "./UserProfileDropdown";
@@ -293,34 +293,6 @@ export default function CustomerTrackPickup() {
   const bellRef = useRef(null);
   const dropdownRef = useRef(null);
 
-  // Group all pickup requests by waste type to support multiple submissions per type
-  const groupedByWasteType = useMemo(() => {
-    const map = {};
-    const list = trackingData?.pickup_requests || [];
-    for (const req of list) {
-      const key = (req.waste_type || '').toLowerCase();
-      if (!map[key]) map[key] = [];
-      map[key].push(req);
-    }
-    // Ensure newest first per type
-    Object.keys(map).forEach(k => {
-      map[k].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    });
-    return map;
-  }, [trackingData]);
-
-  // Helper: compute current step for an individual request (mirror backend logic)
-  const computeStepForRequest = (request) => {
-    const status = request?.status;
-    if (status === 'Completed') return 3;
-    if (status === 'Accepted') {
-      if (request?.otp && !request?.otp_verified) return 2;
-      return 1;
-    }
-    // Default to Request received
-    return 0;
-  };
-
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
@@ -413,19 +385,6 @@ export default function CustomerTrackPickup() {
         <span className="text-xl font-bold text-green-900">{notification.title}</span>
       </div>
       <div className="text-gray-700 text-base mb-3">{notification.message}</div>
-      {(() => {
-        const wKey = trackingData?.waste_types ? Object.keys(trackingData.waste_types).find(k => k.toLowerCase() === selectedWaste.toLowerCase()) : null;
-        const data = wKey ? trackingData.waste_types[wKey] : null;
-        const otpVal = data?.otp;
-        return otpVal ? (
-          <div className="mb-2">
-            <span className="inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs font-semibold border border-[#cfe0d6] text-[#2e4d3a] bg-[#eaf3ee]">
-              <span role="img" aria-label="otp">🔑</span>
-              OTP: {otpVal}
-            </span>
-          </div>
-        ) : null;
-      })()}
       <div className="mb-2">
         <div className="w-full bg-gray-200 rounded-full h-2">
           <div className="h-2 rounded-full" style={{ width: `${notification.progress}%`, background: '#3a5f46' }}></div>
@@ -439,7 +398,6 @@ export default function CustomerTrackPickup() {
   );
 
   const [showThankYouPopup, setShowThankYouPopup] = useState(false);
-  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
   // Handle loading state
   if (loading) {
@@ -553,10 +511,10 @@ export default function CustomerTrackPickup() {
                       ? 'bg-[#e5e7eb] text-[#3a5f46] hover:bg-[#d1d5db]' 
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
-                onClick={() => hasData && !feedbackSubmitted && setSelectedWaste(wt.key)}
-                disabled={!hasData || feedbackSubmitted}
+                onClick={() => hasData && setSelectedWaste(wt.key)}
+                disabled={!hasData}
               >
-                {wt.label}
+                {wt.label} {hasData && `(${hasData.quantity}kg)`}
               </button>
             );
           })}
@@ -565,50 +523,11 @@ export default function CustomerTrackPickup() {
           <h2 className="text-lg font-bold mb-6 text-center">
             {wasteTypes.find(wt => wt.key === selectedWaste)?.label} Pickup Timeline
           </h2>
-          {feedbackSubmitted ? (
-            <div className="text-center text-[#2e4d3a]">
-              Tracking is disabled after feedback submission. Thank you!
-            </div>
-          ) : ( (groupedByWasteType[selectedWaste] || [trackingData?.waste_types?.[selectedWaste]]).length === 0 ? (
-            <div className="text-center text-gray-600">No submissions for this waste type yet.</div>
-          ) : (
-            (groupedByWasteType[selectedWaste] || []).map((req, idx) => {
-              const reqStep = computeStepForRequest(req);
-              const reqBlink = (reqStep === 1 || reqStep === 2) && (req?.status === 'Accepted');
-              return (
-                <div key={req.request_id} className="mb-8">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="text-sm flex items-center gap-2">
-                      {idx === 0 ? (
-                        <span className="inline-flex items-center gap-2">
-                          <span className="px-2 py-0.5 rounded-full text-white text-xs font-semibold" style={{background:'#3a5f46'}}>New</span>
-                          <span className="px-2 py-0.5 rounded-full text-[#2e4d3a] text-xs font-semibold border border-[#cfe0d6] bg-[#eaf3ee]">Submission #1</span>
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded-full text-[#2e4d3a] text-xs font-semibold border border-[#cfe0d6] bg-[#eaf3ee]">Submission #{idx + 1}</span>
-                      )}
-                      {typeof req?.quantity !== 'undefined' && req?.quantity !== null && (
-                        <span className="px-2 py-0.5 rounded-full text-[#2e4d3a] text-xs font-semibold border border-[#cfe0d6] bg-[#f3f8f5]">{req.quantity}kg</span>
-                      )}
-                    </div>
-                    <div className="text-sm">
-                      {req.timestamp && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium border border-[#cfe0d6] text-[#2e4d3a] bg-[#f3f8f5]">
-                          <span role="img" aria-label="time">🕒</span>
-                          {new Date(req.timestamp).toLocaleString()}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <ZigzagTimeline
-                    steps={steps}
-                    currentStep={reqStep}
-                    isBlinking={reqBlink}
-                  />
-                </div>
-              );
-            })
-          ))}
+          <ZigzagTimeline 
+            steps={steps} 
+            currentStep={currentStep} 
+            isBlinking={isBlinking}
+          />
         </div>
       </main>
       {/* Feedback Popup Modal */}
@@ -624,7 +543,7 @@ export default function CustomerTrackPickup() {
         }}>
           <FeedbackFormModal 
             onClose={() => setShowFeedbackPopup(false)} 
-            onThankYou={() => { setShowFeedbackPopup(false); setShowThankYouPopup(true); setFeedbackSubmitted(true); }}
+            onThankYou={() => { setShowFeedbackPopup(false); setShowThankYouPopup(true); }}
             requestId={(() => {
               // Handle case-insensitive waste type mapping
               const wasteTypeKey = trackingData?.waste_types ? Object.keys(trackingData.waste_types).find(
