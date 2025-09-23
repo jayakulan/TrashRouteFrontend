@@ -19,7 +19,6 @@ const ManageCompanies = () => {
   const [filters, setFilters] = useState({
     status: "All Status",
   })
-  const [autoRevertMsg, setAutoRevertMsg] = useState("");
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState(null);
 
@@ -164,28 +163,6 @@ const ManageCompanies = () => {
     setCompanyToDelete(null);
   }
 
-  const handleAutoRevert = async () => {
-    setAutoRevertMsg("Running auto-revert...");
-    try {
-      const token = getCookie('token');
-      const headers = {
-        'Content-Type': 'application/json'
-      };
-      
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      
-      const res = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/auto_revert_pickup_status.php", {
-        headers,
-        credentials: 'include'
-      });
-      const data = await res.json();
-      setAutoRevertMsg(data.message || "Done.");
-    } catch (err) {
-      setAutoRevertMsg("Error: " + err.message);
-    }
-  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -350,15 +327,6 @@ const ManageCompanies = () => {
               <div className="mt-4 text-xs sm:text-sm text-[#618170]">
                 Showing {filteredCompanies.length} of {companiesData.length} companies
               </div>
-              <button
-                onClick={handleAutoRevert}
-                className="px-4 py-2 bg-green-700 text-white rounded shadow hover:bg-green-800 mt-4"
-              >
-                Run Auto-Revert for Stale Pickup Requests
-              </button>
-              {autoRevertMsg && (
-                <div className="mt-2 text-sm text-green-700">{autoRevertMsg}</div>
-              )}
             </>
           )}
         </main>

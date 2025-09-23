@@ -5,6 +5,7 @@ import { Link } from "react-router-dom"
 import { Search, ChevronDown, Star, Diamond, Bell, Menu, X, Users, Building, Truck, MessageSquare, BarChart3 } from "lucide-react"
 import SidebarLinks from "./SidebarLinks"
 import AdminProfileDropdown from "./AdminProfileDropdown"
+import Footer from "../footer"
 
 const FeedbackRatings = () => {
   const [searchQuery, setSearchQuery] = useState("")
@@ -275,6 +276,7 @@ const FeedbackRatings = () => {
           {/* Customer Feedback Table */}
           {renderFeedbackTable(filteredCustomerFeedback, "Customer Feedback", "customer")}
         </main>
+        <Footer admin={true} />
       </div>
     </div>
   )

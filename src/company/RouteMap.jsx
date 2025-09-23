@@ -602,7 +602,7 @@ const RouteMap = () => {
             <div className="flex items-center space-x-8 ml-auto">
               <button
                 type="button"
-                onClick={() => navigate("/")}
+                onClick={() => navigate("/company/home")}
                 className="relative group px-4 py-2 rounded-lg transition-all duration-300 hover:text-[#3a5f46] hover:bg-[#3a5f46]/10 focus:outline-none bg-transparent nav-link-text"
               >
                 <span className="relative z-10">Home</span>

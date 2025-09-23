@@ -24,8 +24,10 @@ import ContactUsManagement from './admin/ContactUsManagement.jsx'
 import PickupRequests from './admin/Requests.jsx'
 import CustomerTrackPickup from './customer/CustomerTrackPickup.jsx'
 import CustomerHistoryLog from './customer/CustomerHistoryLog.jsx'
+import CustomerHome from './customer/CustomerHome.jsx'
 import OtpVerification from './OtpVerification.jsx'
 import CompanyHistoryLog from './company/CompanyHistoryLog';
+import CompanyHome from './company/CompanyHome.jsx'
 import NotificationManagement from './admin/NotificationManagement.jsx';
 import RoutesManagement from './admin/RoutesManagement.jsx';
 import RouteMappingManagement from './admin/RouteMappingManagement.jsx';
@@ -113,6 +115,20 @@ function App() {
           <ScrollToTop />
           <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/company/home" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="company">
+                <CompanyHome />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
+          <Route path="/customer/home" element={
+            <URLProtection>
+              <ProtectedRoute requiredRole="customer">
+                <CustomerHome />
+              </ProtectedRoute>
+            </URLProtection>
+          } />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<CustomerSignUp />} />
           <Route path="/company-signup" element={<CompanySignUp />} />
