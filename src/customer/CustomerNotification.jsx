@@ -448,12 +448,18 @@ export default function CustomerNotification({ userId, iconOnly = false, refresh
     {showFeedbackPopup && (
       <div style={{
         position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 10000,
         background: 'rgba(0,0,0,0.55)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        overflow: 'hidden',
       }}>
         <FeedbackFormModal 
           onClose={() => setShowFeedbackPopup(false)} 

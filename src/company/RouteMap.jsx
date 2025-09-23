@@ -871,7 +871,7 @@ const RouteMap = () => {
         </div>
       </main>
       {showFeedbackPopup && feedbackHousehold && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 1000 }}>
           {/* Animated Backdrop */}
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity animate-fadeIn" aria-hidden="true"></div>
           {/* Animated Popup */}

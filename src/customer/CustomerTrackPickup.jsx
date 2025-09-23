@@ -365,8 +365,8 @@ export default function CustomerTrackPickup() {
     return (
       <>
         {/* Accent bar at the very top */}
-        <div className="absolute top-0 left-0 right-0 w-screen h-1 bg-[#26a360] rounded-t-2xl z-50"></div>
-        <nav className="w-full bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-40 shadow-xl transition-all duration-300 relative">
+        <div className="absolute top-0 left-0 right-0 w-screen h-1 bg-[#26a360] rounded-t-2xl z-[10001]"></div>
+        <nav className="w-full bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-[10000] shadow-xl transition-all duration-300 relative">
           <div className="w-full flex items-center justify-between h-20 px-4 md:px-8">
             {/* Logo with animation */}
             <div className="flex items-center">
@@ -656,7 +656,7 @@ export default function CustomerTrackPickup() {
           position: 'fixed',
           inset: 0,
           zIndex: 1100,
-          background: 'rgba(0,0,0,0.55)',
+         // background: 'rgba(0,0,0,0.55)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
