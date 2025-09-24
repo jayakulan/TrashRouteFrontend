@@ -740,18 +740,6 @@ const RouteMap = () => {
           </div>
         )}
 
-        {/* No Route ID Warning */}
-        {!route_id && !loadingCustomers && !customersError && (
-          <div className="bg-blue-50 border-l-4 border-blue-400 text-blue-700 px-4 py-3 rounded mb-6">
-            <p className="font-semibold">No Specific Route ID Provided</p>
-            <p>The system will automatically find and display your latest route.</p>
-            <div className="mt-2">
-              <p className="text-sm">Current parameters:</p>
-              <p className="text-xs">Company ID: {company_id || 'Not found'}</p>
-              <p className="text-xs">Route ID: {route_id || 'Will be auto-detected'}</p>
-            </div>
-          </div>
-        )}
 
 
 

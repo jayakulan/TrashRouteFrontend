@@ -45,11 +45,11 @@ export class CompanyValidator {
     phoneNumber: {
       required: true,
       exactLength: 10,
-      pattern: /^\d{10}$/,
+      pattern: /^0[27]\d{8}$/,
       messages: {
         required: 'Phone number is required',
         exactLength: 'Phone number must be exactly 10 digits',
-        pattern: 'Phone number must contain only digits'
+        pattern: 'Phone number must start with 07 or 02 and be exactly 10 digits'
       }
     },
     address: {
