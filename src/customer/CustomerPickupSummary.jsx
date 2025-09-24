@@ -132,10 +132,15 @@ const ConfirmPickup = () => {
         setConfirmed(true);
         setShowPopup(true); // Only show popup for new confirmations
         
-        // Trigger notification refresh after a short delay to ensure database is updated
+        // Trigger notification refresh immediately and after a delay
+        console.log('Dispatching refreshNotifications event immediately...');
+        window.dispatchEvent(new CustomEvent('refreshNotifications'));
+        
+        // Also trigger after a short delay to ensure database is updated
         setTimeout(() => {
+          console.log('Dispatching refreshNotifications event after delay...');
           window.dispatchEvent(new CustomEvent('refreshNotifications'));
-        }, 1000);
+        }, 2000);
       } else {
         setError(data.message || 'Failed to generate OTPs');
       }

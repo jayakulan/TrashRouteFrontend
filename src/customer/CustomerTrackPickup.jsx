@@ -40,7 +40,7 @@ function ZigzagTimeline({ steps, currentStep, isBlinking = false }) {
           
           // Animation classes
           const slideClass = isLeft ? `animate-slide-in-left` : `animate-slide-in-right`;
-          const blinkClass = shouldBlink ? 'animate-pulse' : '';
+          const blinkClass = shouldBlink ? 'green-blink bg-[#e6f4ea] border-[#3a5f46] border-2' : '';
           const delayStyle = { animationDelay: `${0.15 * idx}s` };
           
           return (
@@ -82,6 +82,30 @@ export default function CustomerTrackPickup() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
+  // Add custom CSS for blinking animation
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes greenBlink {
+        0%, 100% { 
+          background-color: #e6f4ea; 
+          border-color: #3a5f46;
+          opacity: 1;
+        }
+        50% { 
+          background-color: #d4edda; 
+          border-color: #2e4d3a;
+          opacity: 0.8;
+        }
+      }
+      .green-blink {
+        animation: greenBlink 1.5s ease-in-out infinite;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
+  }, []);
+
   // Fetch tracking data from backend
   const fetchTrackingData = async () => {
       try {
@@ -89,7 +113,6 @@ export default function CustomerTrackPickup() {
         
         // Get the JWT token from cookies
         const token = getCookie('token');
-        console.log('Token found:', !!token); // Debug log
         
         const headers = {
           'Content-Type': 'application/json',
@@ -98,9 +121,6 @@ export default function CustomerTrackPickup() {
         // Add Authorization header if token exists
         if (token) {
           headers['Authorization'] = `Bearer ${token}`;
-          console.log('Authorization header added'); // Debug log
-        } else {
-          console.log('No token found, proceeding without Authorization header'); // Debug log
         }
         
         const response = await fetch('http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Customer/trackPickup.php', {
@@ -108,8 +128,6 @@ export default function CustomerTrackPickup() {
           credentials: 'include',
           headers: headers,
         });
-
-        console.log('Response status:', response.status); // Debug log
 
         if (!response.ok) {
           if (response.status === 401) {
@@ -124,7 +142,6 @@ export default function CustomerTrackPickup() {
         const result = await response.json();
         
         if (result.success) {
-          console.log('Tracking data received:', result.data);
           setTrackingData(result.data);
           // Set the first available waste type as selected
           if (result.data.waste_types && Object.keys(result.data.waste_types).length > 0) {
@@ -180,7 +197,7 @@ export default function CustomerTrackPickup() {
   const currentWasteData = wasteTypeKey ? trackingData.waste_types[wasteTypeKey] : null;
   
   // Blink both Scheduled and Ongoing steps when status is "Accepted"
-  const isBlinking = currentWasteData?.status === 'Accepted';
+  const isBlinking = (currentStep === 1 || currentStep === 2) && (currentWasteData?.status === 'Accepted');
 
   // Map step to progress percent
   const progressPercents = [25, 50, 75, 100];

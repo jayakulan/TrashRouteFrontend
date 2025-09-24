@@ -56,6 +56,7 @@ export default function CustomerNotification({ userId, iconOnly = false, refresh
       
       if (!json.success) throw new Error(json.message || 'Failed to fetch');
       const data = json.data || [];
+      console.log('Fetched notifications:', data);
       setItems(data);
       setHasNew(data.some(n => (n.seen === 0 || String(n.seen) === '0')));
     } catch (e) {
@@ -73,6 +74,7 @@ export default function CustomerNotification({ userId, iconOnly = false, refresh
   // Listen for custom refresh events
   useEffect(() => {
     const handleRefresh = () => {
+      console.log('Received refreshNotifications event, fetching data...');
       fetchData();
     };
 
