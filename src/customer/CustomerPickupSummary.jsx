@@ -236,7 +236,7 @@ const ConfirmPickup = () => {
                 {/* OTP Display (only if pickup is confirmed) */}
                 {confirmed && otpList.length > 0 && (
                   <div className="px-6 py-6 bg-green-50 border-t border-green-200">
-                    <div className="text-sm font-medium text-theme-color mb-3">Pickup OTPs</div>
+                    <div className="text-sm font-medium text-theme-color mb-3">Pickup Reference Numbers</div>
                     <div className="space-y-2">
                       {otpList.map((otpItem, index) => (
                         <div key={index} className="flex justify-between items-center bg-white p-3 rounded border">
@@ -252,7 +252,7 @@ const ConfirmPickup = () => {
                     <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                       <div className="text-sm text-blue-800 font-medium mb-1">📱 Important:</div>
                       <div className="text-xs text-blue-700">
-                        Please provide these OTPs to the pickup company when they arrive at your location.
+                        Please provide these pickup reference numbers to the pickup company when they arrive at your location.
                       </div>
                     </div>
                   </div>
@@ -270,7 +270,7 @@ const ConfirmPickup = () => {
               disabled={schedulingLoading}
               className={`next-btn py-4 px-12 rounded-full text-lg ${schedulingLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              {schedulingLoading ? 'Generating OTPs...' : 'Confirm Pickup Schedule'}
+              {schedulingLoading ? 'Generating Reference Numbers...' : 'Confirm Pickup Schedule'}
             </button>
           ) : (
             <div className="text-center">
@@ -280,8 +280,8 @@ const ConfirmPickup = () => {
                 </div>
                 <div className="text-green-700 text-sm">
                   {isPickupAlreadyConfirmed 
-                    ? 'Your pickup has already been scheduled and OTPs are available above.'
-                    : 'Your pickup has been scheduled and OTPs have been generated. Please keep the OTPs safe and provide them to the pickup company when they arrive.'
+                    ? 'Your pickup has already been scheduled and reference numbers are available above.'
+                    : 'Your pickup has been scheduled and reference numbers have been generated. Please keep the reference numbers safe and provide them to the pickup company when they arrive.'
                   }
                 </div>
               </div>
@@ -348,7 +348,7 @@ const ConfirmPickup = () => {
               <img src="/images/close.png" alt="Close" style={{ width: '1.5rem', height: '1.5rem', objectFit: 'contain', display: 'block', margin: 0 }} />
             </button>
             <div style={{ fontSize: '2.2rem', marginBottom: '0.5rem', animation: 'popIn 0.4s' }}>✅</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#3a5f46', marginBottom: '0.25rem' }}>OTPs Generated Successfully!</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#3a5f46', marginBottom: '0.25rem' }}>Reference Numbers Generated Successfully!</div>
             
             {otpList.length > 0 && (
               <div style={{ 
@@ -360,7 +360,7 @@ const ConfirmPickup = () => {
                 textAlign: 'center'
               }}>
                 <div style={{ fontSize: '1rem', color: '#3a5f46', fontWeight: 600, marginBottom: '0.5rem' }}>
-                  Your Pickup OTPs:
+                  Your Pickup Reference Numbers:
                 </div>
                 <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
                   {otpList.map((otpItem, index) => (
@@ -400,7 +400,7 @@ const ConfirmPickup = () => {
               <div style={{ fontSize: '0.8rem', color: '#666', marginBottom: '0.7rem' }}>
                 Coordinates: {pickupSummary.coordinates.latitude}, {pickupSummary.coordinates.longitude}
               </div>
-              Please provide these OTPs to the pickup company when they arrive.<br/>
+              Please provide these pickup reference numbers to the pickup company when they arrive.<br/>
               Thank you for choosing TrashRoute!
             </div>
             

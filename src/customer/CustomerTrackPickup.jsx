@@ -274,7 +274,7 @@ export default function CustomerTrackPickup() {
             Your pickup is now on the way!<br/>
             <b>Waste Type:</b> {currentWasteData?.waste_type || 'N/A'}<br/>
             <b>Quantity:</b> {currentWasteData?.quantity || 'N/A'} kg<br/>
-            <b>OTP:</b> {currentWasteData?.otp || 'Not generated yet'}<br/>
+            <b>Reference Number:</b> {currentWasteData?.otp || 'Not generated yet'}<br/>
             <b>Company:</b> {currentWasteData?.company_name || 'TBD'}<br/>
             <b>Live Location:</b> Tracking Enabled<br/>
             <b>Estimated Arrival:</b> {getEstimatedArrival()} (4:00 PM - 6:00 PM)

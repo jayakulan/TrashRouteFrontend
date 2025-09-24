@@ -240,6 +240,12 @@ const RouteMap = () => {
   useEffect(() => {
     if (isMapboxLoaded && mapboxMapRef.current && !mapboxMap) {
       console.log('Initializing Mapbox map');
+      
+      // Clear the container to ensure it's empty
+      if (mapboxMapRef.current) {
+        mapboxMapRef.current.innerHTML = '';
+      }
+      
       const mapboxMapInstance = new mapboxgl.Map({
         container: mapboxMapRef.current,
         style: 'mapbox://styles/mapbox/streets-v12',
@@ -1025,17 +1031,17 @@ const RouteMap = () => {
               {feedback.pickup_completed && (
                 <div>
                   <label className="block mb-1 font-semibold text-[#3a5f46]">
-                    Customer OTP Verification
+                    Customer pickup referencence number Verification
                     <span className="text-red-500 ml-1">*</span>
                   </label>
                   <div className="text-sm text-gray-600 mb-2">
-                    Ask the customer for their OTP to verify the pickup request
+                    Ask the customer for their pickup reference number to verify the pickup request
                   </div>
                   <input
                     type="text"
                     value={feedback.entered_otp}
                     onChange={e => setFeedback(f => ({ ...f, entered_otp: e.target.value }))}
-                    placeholder="Enter 6-digit OTP"
+                    placeholder="Enter 6-digit reference number"
                     maxLength={6}
                     className="w-full border border-[#e6f4ea] rounded-lg p-3 focus:ring-2 focus:ring-[#3a5f46] focus:outline-none transition"
                     required={feedback.pickup_completed}
@@ -1105,7 +1111,7 @@ const RouteMap = () => {
       <Footer />
       
       {/* Mapbox Styles */}
-      <style jsx>{`
+      <style>{`
         .mapboxgl-map {
           border-radius: 16px;
         }

@@ -299,8 +299,8 @@ export default function CustomerNotification({ userId, iconOnly = false, refresh
                   displayStatus = "Completed";
                   progressPercent = 100;
                 }
-              } else if (msg.includes('OTPs generated') || msg.includes('Pickup schedule confirmed')) {
-                // For OTP/schedule confirmation
+              } else if (msg.includes('Reference numbers generated') || msg.includes('Pickup schedule confirmed')) {
+                // For reference number/schedule confirmation
                 titleText = "Pickup schedule confirmed";
                 displayStatus = "Pickup Scheduled";
                 progressPercent = 25;
@@ -397,7 +397,7 @@ export default function CustomerNotification({ userId, iconOnly = false, refresh
                   <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
                     <div className="flex flex-wrap items-center gap-2">
                       {displayStatus && <span className="px-2 py-0.5 rounded-full bg-[#eaf3ee] border border-[#cfe0d6] text-[#2e4d3a]">{displayStatus}</span>}
-                      {n.request_otp && <span className="px-2 py-0.5 rounded-full bg-[#f3f8f5] border border-[#cfe0d6] text-[#2e4d3a] font-medium">OTP: {n.request_otp}</span>}
+                      {n.request_otp && <span className="px-2 py-0.5 rounded-full bg-[#f3f8f5] border border-[#cfe0d6] text-[#2e4d3a] font-medium">Refnumber: {n.request_otp}</span>}
                       {n.seen ? null : <span className="px-2 py-0.5 rounded-full bg-[#3a5f46] text-white">New</span>}
                     </div>
                     <div className="flex items-center gap-2">

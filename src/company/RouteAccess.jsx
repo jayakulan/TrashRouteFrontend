@@ -177,9 +177,16 @@ const RouteActivation = () => {
   }
   
   const handleCardNumberChange = (e) => {
-    const formatted = formatCardNumber(e.target.value)
-    setCardNumber(formatted)
-  }
+    const formatted = formatCardNumber(e.target.value);
+    setCardNumber(formatted);
+  };
+
+  const handleCvvChange = (e) => {
+    const value = e.target.value;
+    // Only allow digits and limit to 3 characters
+    const digitsOnly = value.replace(/\D/g, '').slice(0, 3);
+    setCvv(digitsOnly);
+  };
   const handleProceed = async (e) => {
     e.preventDefault();
     setPaymentMessage("");
@@ -643,7 +650,7 @@ const RouteActivation = () => {
                 </div>
                 <div className="flex-1">
                   <label className="block text-gray-700 font-medium mb-1">CVV</label>
-                  <input type="password" value={cvv} onChange={e => setCvv(e.target.value)} required maxLength={4} className="w-full border rounded-lg px-3 py-2" placeholder="CVV" />
+                  <input type="password" value={cvv} onChange={handleCvvChange} required maxLength={3} className="w-full border rounded-lg px-3 py-2" placeholder="CVV" />
                 </div>
               </div>
               <div>
