@@ -83,8 +83,7 @@ export default function CustomerTrackPickup() {
   const navigate = useNavigate();
 
   // Fetch tracking data from backend
-  useEffect(() => {
-    const fetchTrackingData = async () => {
+  const fetchTrackingData = async () => {
       try {
         setLoading(true);
         
@@ -146,8 +145,10 @@ export default function CustomerTrackPickup() {
       } finally {
         setLoading(false);
       }
-    };
+  };
 
+  // Fetch tracking data on component mount
+  useEffect(() => {
     fetchTrackingData();
   }, [navigate]);
 
@@ -219,7 +220,32 @@ export default function CustomerTrackPickup() {
         ),
         progress: 25,
         stepLabel: "Step 1 of 4 — Request Received",
-        extra: null,
+        extra: (
+          <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center' }}>
+            <button
+              style={{
+                background: '#dc2626',
+                color: 'white',
+                border: 'none',
+                padding: '0.5rem 1.5rem',
+                borderRadius: '0.5rem',
+                fontWeight: 600,
+                fontSize: '1rem',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px 0 rgba(220, 38, 38, 0.10)',
+                transition: 'background 0.2s',
+              }}
+              onMouseDown={e => {
+                e.stopPropagation();
+                cancelRequest();
+              }}
+              onMouseOver={e => e.currentTarget.style.background = '#b91c1c'}
+              onMouseOut={e => e.currentTarget.style.background = '#dc2626'}
+            >
+              Cancel Request
+            </button>
+          </div>
+        ),
       },
       {
         icon: "📅",
@@ -268,7 +294,7 @@ export default function CustomerTrackPickup() {
             <b>Quantity:</b> {currentWasteData?.quantity || 'N/A'} kg<br/>
             <b>Collected By:</b> {currentWasteData?.company_name || 'TBD'}<br/>
             <b>Date & Time:</b> {currentWasteData?.timestamp ? new Date(currentWasteData.timestamp).toLocaleString() : 'TBD'}<br/>
-            <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center' }}>
+            <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
               <button
                 style={{
                   background: '#3a5f46',
@@ -457,6 +483,54 @@ export default function CustomerTrackPickup() {
 
   const [showThankYouPopup, setShowThankYouPopup] = useState(false);
   const [feedbackSubmittedForWasteType, setFeedbackSubmittedForWasteType] = useState(new Set());
+
+  // Cancel request function
+  const cancelRequest = async () => {
+    if (!trackingData || !trackingData.waste_types) return;
+    
+    // Get current request ID
+    const wasteTypeKey = Object.keys(trackingData.waste_types).find(
+      key => key.toLowerCase() === selectedWaste.toLowerCase()
+    );
+    
+    if (!wasteTypeKey) return;
+    
+    const requestId = trackingData.waste_types[wasteTypeKey]?.request_id;
+    if (!requestId) return;
+    
+    // Show confirmation dialog
+    if (!window.confirm('Are you sure you want to cancel this pickup request? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const token = getCookie('token');
+      const response = await fetch(`http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Customer/cancelRequest.php`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ request_id: requestId }),
+        credentials: "include"
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        // Show success message
+        alert('Request cancelled successfully!');
+        
+        // Refresh tracking data
+        window.location.reload();
+      } else {
+        alert(result.message || 'Failed to cancel request');
+      }
+    } catch (error) {
+      console.error('Error cancelling request:', error);
+      alert('Error cancelling request. Please try again.');
+    }
+  };
 
   // Handle loading state
   if (loading) {
@@ -652,11 +726,31 @@ export default function CustomerTrackPickup() {
               if (allWasteTypesWithFeedback) {
                 // Update with the complete set of waste types that have feedback
                 setFeedbackSubmittedForWasteType(allWasteTypesWithFeedback);
+                
+                // Reset tracking data to initial state after feedback submission
+                setTrackingData(null);
+                setSelectedWaste("plastic"); // Reset to default waste type
+                setLoading(true);
+                
+                // Re-fetch tracking data to get updated state
+                setTimeout(() => {
+                  fetchTrackingData();
+                }, 1000); // Small delay to ensure backend has processed the feedback
               } else if (wasteType) {
                 // Fallback: add just the current waste type
                 const wasteTypeKey = wasteTypes.find(wt => wt.label.toLowerCase() === wasteType.toLowerCase())?.key;
                 if (wasteTypeKey) {
                   setFeedbackSubmittedForWasteType(prev => new Set([...prev, wasteTypeKey]));
+                  
+                  // Reset tracking data to initial state after feedback submission
+                  setTrackingData(null);
+                  setSelectedWaste("plastic"); // Reset to default waste type
+                  setLoading(true);
+                  
+                  // Re-fetch tracking data to get updated state
+                  setTimeout(() => {
+                    fetchTrackingData();
+                  }, 1000); // Small delay to ensure backend has processed the feedback
                 }
               }
             }}
