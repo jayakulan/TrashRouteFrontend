@@ -102,6 +102,53 @@ export default function CustomerNotification({ userId, iconOnly = false, refresh
     }
   };
 
+  const cancelRequest = async (requestId) => {
+    if (!requestId || !userId) return;
+    
+    // Show confirmation dialog
+    if (!window.confirm('Are you sure you want to cancel this pickup request? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const token = getCookie('token');
+      const headers = { "Content-Type": "application/json" };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch(`http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Customer/cancelRequest.php`, {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify({ request_id: requestId }),
+        credentials: "include"
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        // Show success message
+        alert('Request cancelled successfully!');
+        
+        // Remove notifications related to this request
+        setItems(prev => prev.filter(item => (item.display_request_id || item.request_id) !== requestId));
+        
+        // Update hasNew state
+        setHasNew(items.some(n => n.seen === 0 && (n.display_request_id || n.request_id) !== requestId));
+        
+        // Trigger refresh for other components
+        window.dispatchEvent(new CustomEvent('refreshNotifications'));
+        window.dispatchEvent(new CustomEvent('refreshTrackingData'));
+      } else {
+        alert(result.message || 'Failed to cancel request');
+      }
+    } catch (error) {
+      console.error('Error cancelling request:', error);
+      alert('Error cancelling request. Please try again.');
+    }
+  };
+
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
@@ -274,11 +321,26 @@ export default function CustomerNotification({ userId, iconOnly = false, refresh
               // Remove waste type and quantity details from the message
               const detailsLine = '';
               // Try to parse Request # from message if request_id absent
-              let derivedRequestId = n.request_id;
+              let derivedRequestId = n.display_request_id || n.request_id;
               if (!derivedRequestId && /request\s*#(\d+)/i.test(msg)) {
                 const m = msg.match(/request\s*#(\d+)/i);
                 if (m) derivedRequestId = m[1];
               }
+              
+              // Additional fallback: try to extract from message content
+              if (!derivedRequestId && /#(\d+)/i.test(msg)) {
+                const m = msg.match(/#(\d+)/i);
+                if (m) derivedRequestId = m[1];
+              }
+              
+              // Debug: Log notification data
+              console.log('Notification data:', {
+                notification_id: n.notification_id,
+                request_id: n.request_id,
+                display_request_id: n.display_request_id,
+                derivedRequestId: derivedRequestId,
+                message: msg
+              });
               return (
                 <div key={n.notification_id} className="bg-white/80 rounded-xl px-4 py-4 text-gray-800 shadow-sm border border-gray-100">
                   {/* Title */}
@@ -314,7 +376,7 @@ export default function CustomerNotification({ userId, iconOnly = false, refresh
                     <div className="flex items-center gap-2">
                       <Link2 className="w-5 h-5 text-gray-500 notif-icon-glow" />
                       <span className="font-semibold">Request ID:</span>
-                      <span className="text-gray-700 font-mono">#req-{n.request_id || 'N/A'}</span>
+                      <span className="text-gray-700 font-mono">#req-{derivedRequestId || 'N/A'}</span>
                     </div>
                     {n.request_waste_type && (
                       <div className="flex items-center gap-2">
@@ -343,13 +405,23 @@ export default function CustomerNotification({ userId, iconOnly = false, refresh
                       {displayStatus === 'Completed' && (
                         <button
                           onClick={() => {
-                            setSelectedRequestId(n.request_id);
+                            setSelectedRequestId(derivedRequestId);
                             setShowFeedbackPopup(true);
                           }}
                           className="px-3 py-1 rounded-full bg-[#3a5f46] hover:bg-[#2e4d3a] text-white text-xs transition-colors duration-200"
                           title="Give Feedback"
                         >
                           Give Feedback
+                        </button>
+                      )}
+                      {/* Cancel Request button only for Request received and Pickup Scheduled status */}
+                      {(displayStatus === 'Request received' || displayStatus === 'Pickup Scheduled') && (
+                        <button
+                          onClick={() => cancelRequest(derivedRequestId)}
+                          className="px-3 py-1 rounded-full bg-red-600 hover:bg-red-700 text-white text-xs transition-colors duration-200"
+                          title="Cancel Request"
+                        >
+                          Cancel Request
                         </button>
                       )}
                       <button
