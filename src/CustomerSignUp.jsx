@@ -439,6 +439,7 @@ const SignUp = () => {
             <div className="group">
               <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
                 Phone Number
+                <span className="text-xs text-gray-500 ml-2">(Must start with 07 or 02)</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -456,7 +457,7 @@ const SignUp = () => {
                       ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
                       : 'border-gray-200 focus:ring-[#3a5f46] focus:border-[#3a5f46]'
                   }`}
-                  placeholder="Enter your phone number"
+                  placeholder="07xxxxxxxx or 02xxxxxxxx"
                   value={formData.phoneNumber}
                   onChange={handleChange}
                   maxLength={10}
