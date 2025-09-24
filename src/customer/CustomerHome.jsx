@@ -275,6 +275,10 @@ export default function CustomerHome() {
                   Instead of collecting and storing waste, our system allows local users to simply notify the platform when they have recyclable items. TrashRoute then creates an optimized and categorized route for these materials and offers it to registered industries. When an industry accepts a route, they collect the materials directly from the listed locations.<br />
                   By removing the need for middle collection points, we reduce costs, save time, and contribute to a cleaner environment. TrashRoute empowers communities and industries to work together toward a sustainable future—turning everyday waste into valuable resources.
                 </p>
+                <div role="dialog" aria-labelledby="districtNoticeTitleCustomer" className="mt-4 rounded-lg border border-[#3a5f46]/30 bg-white shadow p-3">
+                  <div id="districtNoticeTitleCustomer" className="font-semibold text-[#3a5f46] mb-1">Notice</div>
+                  <p className="text-gray-700 text-sm">This system now only works for Badulla district.</p>
+                </div>
               </div>
             </div>
           </div>

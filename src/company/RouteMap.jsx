@@ -161,7 +161,7 @@ const RouteMap = () => {
         const result = await res.json();
         console.log('API Response:', result);
         
-        if (result.success) {
+          if (result.success) {
           setHouseholds(result.households);
           setCustomersError(""); // Clear error on success
           
@@ -176,12 +176,14 @@ const RouteMap = () => {
             
             if (useMapboxOptimization && isMapboxLoaded) {
               // Use Mapbox optimization
-              const mapboxOptimized = await getMapboxOptimizedRoute(locations);
+              const points = currentLocation ? [{ lng: currentLocation.lng, lat: currentLocation.lat }, ...locations] : locations;
+              const mapboxOptimized = await getMapboxOptimizedRoute(points);
               setMapboxRoute(mapboxOptimized);
               setOptimizedLocations(locations); // Keep original order for markers
             } else {
               // Use simple optimization
-              const optimized = getOptimizedPath(locations);
+              const points = currentLocation ? [{ lat: currentLocation.lat, lng: currentLocation.lng }, ...locations] : locations;
+              const optimized = getOptimizedPath(points);
               setOptimizedLocations(optimized);
             }
           } else {
@@ -214,18 +216,20 @@ const RouteMap = () => {
       
       if (useMapboxOptimization && isMapboxLoaded) {
         // Use Mapbox optimization
-        getMapboxOptimizedRoute(locations).then(mapboxOptimized => {
+        const points = currentLocation ? [{ lng: currentLocation.lng, lat: currentLocation.lat }, ...locations] : locations;
+        getMapboxOptimizedRoute(points).then(mapboxOptimized => {
           setMapboxRoute(mapboxOptimized);
           setOptimizedLocations(locations); // Keep original order for markers
         });
       } else {
         // Use simple optimization
-        const optimized = getOptimizedPath(locations);
+        const points = currentLocation ? [{ lat: currentLocation.lat, lng: currentLocation.lng }, ...locations] : locations;
+        const optimized = getOptimizedPath(points);
         setOptimizedLocations(optimized);
         setMapboxRoute(null);
       }
     }
-  }, [useMapboxOptimization, isMapboxLoaded, households]);
+  }, [useMapboxOptimization, isMapboxLoaded, households, currentLocation]);
 
   // Google Maps onLoad removed
 
@@ -276,6 +280,22 @@ const RouteMap = () => {
       const existingMarkers = document.querySelectorAll('.mapboxgl-marker');
       existingMarkers.forEach(marker => marker.remove());
       
+      // Add marker for user's current location if available
+      if (currentLocation) {
+        const userEl = document.createElement('div');
+        userEl.className = 'user-marker';
+        userEl.style.width = '16px';
+        userEl.style.height = '16px';
+        userEl.style.borderRadius = '50%';
+        userEl.style.backgroundColor = '#2b6cb0';
+        userEl.style.border = '3px solid white';
+        userEl.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+        new mapboxgl.Marker(userEl)
+          .setLngLat([currentLocation.lng, currentLocation.lat])
+          .setPopup(new mapboxgl.Popup({ offset: 12 }).setText('Your Location'))
+          .addTo(mapboxMap);
+      }
+
       // Add markers for customer locations
       optimizedLocations.forEach((location, index) => {
         // Create marker element
@@ -339,12 +359,15 @@ const RouteMap = () => {
       
       // Fit bounds to show all markers
       const bounds = new mapboxgl.LngLatBounds();
+      if (currentLocation) {
+        bounds.extend([currentLocation.lng, currentLocation.lat]);
+      }
       optimizedLocations.forEach(location => {
         bounds.extend([location.lng, location.lat]);
       });
       mapboxMap.fitBounds(bounds, { padding: 50 });
     }
-  }, [mapboxMap, optimizedLocations, mapboxRoute]);
+  }, [mapboxMap, optimizedLocations, mapboxRoute, currentLocation]);
 
   // Update route when mapboxRoute changes
   useEffect(() => {
@@ -499,16 +522,33 @@ const RouteMap = () => {
       }));
       
       if (useMapboxOptimization && isMapboxLoaded) {
-        const mapboxOptimized = await getMapboxOptimizedRoute(locations);
+        const points = currentLocation ? [{ lng: currentLocation.lng, lat: currentLocation.lat }, ...locations] : locations;
+        const mapboxOptimized = await getMapboxOptimizedRoute(points);
         setMapboxRoute(mapboxOptimized);
         setOptimizedLocations(locations); // Keep original order for markers
       } else {
-        const optimized = getOptimizedPath(locations);
+        const points = currentLocation ? [{ lat: currentLocation.lat, lng: currentLocation.lng }, ...locations] : locations;
+        const optimized = getOptimizedPath(points);
         setOptimizedLocations(optimized);
         setMapboxRoute(null);
       }
     }
   }
+
+  // Auto-detect company user's device location once on mount
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && navigator.geolocation && !currentLocation) {
+      navigator.geolocation.getCurrentPosition(
+        ({ coords }) => {
+          setCurrentLocation({ lat: coords.latitude, lng: coords.longitude });
+        },
+        (err) => {
+          console.warn('Geolocation unavailable:', err);
+        },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 }
+      );
+    }
+  }, [currentLocation]);
 
   const toggleCollected = (requestId) => {
     setHouseholds(prev =>
