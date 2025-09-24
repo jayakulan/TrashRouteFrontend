@@ -132,6 +132,29 @@ const PinLocation = () => {
     fetchExistingLocation();
   }, []);
 
+  // If no existing location, try to default to device geolocation
+  useEffect(() => {
+    if (!fetchingExistingLocation && !hasExistingLocation) {
+      if (typeof navigator !== 'undefined' && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords;
+            if (latitude && longitude) {
+              setCoordinates({ latitude, longitude });
+              setMessage({ type: 'success', text: 'Auto-detected your current location.' });
+            }
+          },
+          (err) => {
+            console.warn('Geolocation error:', err);
+            // Keep default coordinates silently; optional gentle info message
+            setMessage(prev => prev.text ? prev : { type: 'error', text: 'Could not access device location. Using default.' });
+          },
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 }
+        );
+      }
+    }
+  }, [fetchingExistingLocation, hasExistingLocation]);
+
   // Initialize Mapbox map
   useEffect(() => {
     // Wait for the component to be fully mounted and the container to be available

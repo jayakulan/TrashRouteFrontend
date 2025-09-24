@@ -14,6 +14,7 @@ import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 // Google Maps removed; Mapbox-only
+const API_BASE = "http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend";
 
 // Simple nearest neighbor optimization
 function getOptimizedPath(points) {
@@ -92,7 +93,6 @@ const RouteMap = () => {
   const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
   const [feedbackHousehold, setFeedbackHousehold] = useState(null);
   const [feedback, setFeedback] = useState({
-    pickup_completed: true,
     rating: 5,
     comment: "",
     entered_otp: ""
@@ -106,6 +106,7 @@ const RouteMap = () => {
   const company_id = location.state?.company_id || getCookie("company_id");
   const route_id = location.state?.route_id || params.route_id || null;
   const waste_type = location.state?.waste_type || null;
+  const originating_notification_id = location.state?.notification_id || null;
 
   const navigate = useNavigate();
 
@@ -700,6 +701,18 @@ const RouteMap = () => {
           </div>
         )}
 
+        {/* No Route ID Warning */}
+        {!route_id && !loadingCustomers && !customersError && (
+          <div className="bg-blue-50 border-l-4 border-blue-400 text-blue-700 px-4 py-3 rounded mb-6">
+            <p className="font-semibold">No Specific Route ID Provided</p>
+            <p>The system will automatically find and display your latest route.</p>
+            <div className="mt-2">
+              <p className="text-sm">Current parameters:</p>
+              <p className="text-xs">Company ID: {company_id || 'Not found'}</p>
+              <p className="text-xs">Route ID: {route_id || 'Will be auto-detected'}</p>
+            </div>
+          </div>
+        )}
 
 
 
@@ -849,7 +862,39 @@ const RouteMap = () => {
                 <span className="font-bold text-[#3a5f46]">{collectedCount} of {totalCount} customers collected</span>
             </div>
             <button
-              onClick={() => navigate("/company-waste-prefer")}
+              onClick={async () => {
+                try {
+                  if (originating_notification_id && company_id) {
+                    await fetch(`${API_BASE}/api/notifications.php`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        action: "dismiss",
+                        user_id: Number(company_id),
+                        notification_id: originating_notification_id
+                      })
+                    });
+                  }
+                  // Fallback: dismiss any remaining route-activation notifications for this route
+                  if (company_id && route_id) {
+                    const res = await fetch(`${API_BASE}/api/notifications.php?user_id=${Number(company_id)}&limit=50`, { credentials: 'include' });
+                    const data = await res.json();
+                    if (data && data.success && Array.isArray(data.data)) {
+                      const routeNotifs = data.data.filter(n => typeof n.message === 'string' && n.message.includes(`#${route_id}`));
+                      for (const n of routeNotifs) {
+                        try {
+                          await fetch(`${API_BASE}/api/notifications.php`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ action: 'dismiss', user_id: Number(company_id), notification_id: n.notification_id })
+                          });
+                        } catch (_) {}
+                      }
+                    }
+                  }
+                } catch (_) {}
+                navigate("/company-waste-prefer");
+              }}
               disabled={collectedCount !== totalCount}
               className={`px-8 py-3 rounded-full font-bold text-lg flex items-center gap-2 shadow transition-colors duration-200
                 ${collectedCount === totalCount
@@ -910,30 +955,28 @@ const RouteMap = () => {
                     return;
                   }
                   
-                  // OTP verification if pickup is completed
-                  if (feedback.pickup_completed) {
-                    if (!feedback.entered_otp) {
-                      setFeedbackError("Please enter the customer's OTP to verify the pickup.");
-                      setFeedbackSubmitting(false);
-                      return;
-                    }
-                    const otpResponse = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/verifyotpcus.php", {
-                      method: "POST",
-                      headers: { 
-                        "Content-Type": "application/json",
-                        "Authorization": "Bearer " + token
-                      },
-                      body: JSON.stringify({
-                        request_id: feedbackHousehold.request_id,
-                        entered_otp: feedback.entered_otp
-                      })
-                    });
-                    const otpResult = await otpResponse.json();
-                    if (!otpResult.success) {
-                      setFeedbackError(otpResult.message);
-                      setFeedbackSubmitting(false);
-                      return;
-                    }
+                  // OTP verification (always required)
+                  if (!feedback.entered_otp) {
+                    setFeedbackError("Please enter the customer's OTP to verify the pickup.");
+                    setFeedbackSubmitting(false);
+                    return;
+                  }
+                  const otpResponse = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/Company/verifyotpcus.php", {
+                    method: "POST",
+                    headers: { 
+                      "Content-Type": "application/json",
+                      "Authorization": "Bearer " + token
+                    },
+                    body: JSON.stringify({
+                      request_id: feedbackHousehold.request_id,
+                      entered_otp: feedback.entered_otp
+                    })
+                  });
+                  const otpResult = await otpResponse.json();
+                  if (!otpResult.success) {
+                    setFeedbackError(otpResult.message);
+                    setFeedbackSubmitting(false);
+                    return;
                   }
                   const request_id = feedbackHousehold.request_id || 1;
                   const company_id = getCookie("company_id");
@@ -945,7 +988,7 @@ const RouteMap = () => {
                   const payload = {
                     request_id,
                     company_id,
-                    pickup_completed: feedback.pickup_completed,
+                    pickup_completed: true,
                     rating: feedback.rating,
                     comment: feedback.comment,
                     entered_otp: feedback.entered_otp
@@ -973,7 +1016,7 @@ const RouteMap = () => {
                     setTimeout(() => {
                       setShowFeedbackPopup(false);
                       setFeedbackHousehold(null);
-                      setFeedback({ pickup_completed: true, rating: 5, comment: "", entered_otp: "" });
+                      setFeedback({ rating: 5, comment: "", entered_otp: "" });
                       setFeedbackMessage('');
                     }, 2000);
                   } else {
@@ -988,73 +1031,42 @@ const RouteMap = () => {
                 }
               }}
             >
+              {/* OTP Verification Field */}
               <div>
-                <label className="block mb-1 font-semibold text-[#3a5f46]">Pickup Completed</label>
-                <div className="flex gap-4">
-                  <label className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${feedback.pickup_completed ? 'bg-[#e6f4ea] border-[#3a5f46] text-[#3a5f46]' : 'bg-gray-50 border-gray-200 text-gray-500'}`}> 
-                    <input
-                      type="radio"
-                      className="accent-[#3a5f46]"
-                      name="pickup_completed"
-                      value="yes"
-                      checked={feedback.pickup_completed}
-                      onChange={() => setFeedback(f => ({ ...f, pickup_completed: true }))}
-                    />
-                    Yes
-                  </label>
-                  <label className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${!feedback.pickup_completed ? 'bg-[#e6f4ea] border-[#3a5f46] text-[#3a5f46]' : 'bg-gray-50 border-gray-200 text-gray-500'}`}> 
-                    <input
-                      type="radio"
-                      className="accent-[#3a5f46]"
-                      name="pickup_completed"
-                      value="no"
-                      checked={!feedback.pickup_completed}
-                      onChange={() => setFeedback(f => ({ ...f, pickup_completed: false }))}
-                    />
-                    No
-                  </label>
+                <label className="block mb-1 font-semibold text-[#3a5f46]">
+                  Customer pickup referencence number Verification
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
+                <div className="text-sm text-gray-600 mb-2">
+                  Ask the customer for their pickup reference number to verify the pickup request
+                </div>
+                <input
+                  type="text"
+                  value={feedback.entered_otp}
+                  onChange={e => setFeedback(f => ({ ...f, entered_otp: e.target.value }))}
+                  placeholder="Enter 6-digit reference number"
+                  maxLength={6}
+                  className="w-full border border-[#e6f4ea] rounded-lg p-3 focus:ring-2 focus:ring-[#3a5f46] focus:outline-none transition"
+                  required
+                />
+              </div>
+              {/* Rating Field */}
+              <div>
+                <label className="block mb-1 font-semibold text-[#3a5f46]">Rating</label>
+                <div className="flex gap-2">
+                  {[1,2,3,4,5].map(n => (
+                    <button
+                      type="button"
+                      key={n}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center border text-lg font-bold transition-colors focus:outline-none ${feedback.rating === n ? 'bg-[#3a5f46] text-white border-[#3a5f46] scale-110 shadow' : 'bg-gray-100 text-[#3a5f46] border-gray-200 hover:bg-[#e6f4ea]'}`}
+                      onClick={() => setFeedback(f => ({ ...f, rating: n }))}
+                      aria-label={`Rate ${n}`}
+                    >
+                      {n}
+                    </button>
+                  ))}
                 </div>
               </div>
-              {/* OTP Verification Field - Only show if pickup is completed */}
-              {feedback.pickup_completed && (
-                <div>
-                  <label className="block mb-1 font-semibold text-[#3a5f46]">
-                    Customer pickup referencence number Verification
-                    <span className="text-red-500 ml-1">*</span>
-                  </label>
-                  <div className="text-sm text-gray-600 mb-2">
-                    Ask the customer for their pickup reference number to verify the pickup request
-                  </div>
-                  <input
-                    type="text"
-                    value={feedback.entered_otp}
-                    onChange={e => setFeedback(f => ({ ...f, entered_otp: e.target.value }))}
-                    placeholder="Enter 6-digit reference number"
-                    maxLength={6}
-                    className="w-full border border-[#e6f4ea] rounded-lg p-3 focus:ring-2 focus:ring-[#3a5f46] focus:outline-none transition"
-                    required={feedback.pickup_completed}
-                  />
-                </div>
-              )}
-              {/* Rating Field - Only show if pickup is completed */}
-              {feedback.pickup_completed && (
-                <div>
-                  <label className="block mb-1 font-semibold text-[#3a5f46]">Rating</label>
-                  <div className="flex gap-2">
-                    {[1,2,3,4,5].map(n => (
-                      <button
-                        type="button"
-                        key={n}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center border text-lg font-bold transition-colors focus:outline-none ${feedback.rating === n ? 'bg-[#3a5f46] text-white border-[#3a5f46] scale-110 shadow' : 'bg-gray-100 text-[#3a5f46] border-gray-200 hover:bg-[#e6f4ea]'}`}
-                        onClick={() => setFeedback(f => ({ ...f, rating: n }))}
-                        aria-label={`Rate ${n}`}
-                      >
-                        {n}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
               <div>
                 <label className="block mb-1 font-semibold text-[#3a5f46]">Comment</label>
                 <textarea

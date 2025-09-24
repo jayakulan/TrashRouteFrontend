@@ -136,7 +136,7 @@ const CompanyNotifications = () => {
   const handleGoToRoute = async (notif) => {
     const routeId = notif.request_id ? null : parseRouteIdFromMessage(notif.message);
     await markSeen([notif.notification_id]);
-    navigate("/company/route-map", { state: { company_id: companyId, route_id: routeId } });
+    navigate("/company/route-map", { state: { company_id: companyId, route_id: routeId, notification_id: notif.notification_id } });
     setOpen(false);
   };
 
