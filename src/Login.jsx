@@ -103,12 +103,21 @@ const Login = () => {
     setForgotError("")
     setForgotSuccess("")
     try {
+      if (!forgotEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotEmail)) {
+        setForgotError("Enter a valid email address")
+        return
+      }
       const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/forgetpassword.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "send_otp", email: forgotEmail }),
         credentials: "include",
       })
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}))
+        setForgotError(err?.message || "Failed to send OTP")
+        return
+      }
       const result = await response.json()
       if (result.success) {
         setForgotSuccess("OTP sent to your email.")
@@ -128,6 +137,14 @@ const Login = () => {
     setForgotError("")
     setForgotSuccess("")
     try {
+      if (!forgotEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotEmail)) {
+        setForgotError("Enter a valid email address")
+        return
+      }
+      if (!otp || otp.trim().length !== 6) {
+        setForgotError("Enter the 6-digit OTP")
+        return
+      }
       const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/forgetpassword.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -138,6 +155,11 @@ const Login = () => {
         }),
         credentials: "include",
       })
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}))
+        setForgotError(err?.message || "Invalid OTP")
+        return
+      }
       const result = await response.json()
       if (result.success) {
         setShowOtpModal(false)
@@ -156,6 +178,22 @@ const Login = () => {
     setForgotError("")
     setForgotSuccess("")
     try {
+      if (!forgotEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotEmail)) {
+        setForgotError("Enter a valid email address")
+        return
+      }
+      if (!otp || otp.trim().length !== 6) {
+        setForgotError("Enter the 6-digit OTP")
+        return
+      }
+      if (!newPassword || newPassword.length < 6) {
+        setForgotError("New password must be at least 6 characters")
+        return
+      }
+      if (newPassword !== confirmPassword) {
+        setForgotError("Passwords do not match")
+        return
+      }
       const response = await fetch("http://localhost/Trashroutefinal1/Trashroutefinal/TrashRouteBackend/api/forgetpassword.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -168,6 +206,11 @@ const Login = () => {
         }),
         credentials: "include",
       })
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}))
+        setForgotError(err?.message || "Failed to reset password")
+        return
+      }
       const result = await response.json()
       if (result.success) {
         setForgotSuccess("Password reset successful! You can now log in.")

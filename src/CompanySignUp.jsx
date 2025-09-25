@@ -77,6 +77,8 @@ const CompanySignUp = () => {
   const [showContactModal, setShowContactModal] = useState(false)
   const navigate = useNavigate()
   const [passwordStrength, setPasswordStrength] = useState({ strength: 'weak', color: 'text-red-500' })
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -323,7 +325,7 @@ const CompanySignUp = () => {
                 <input
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
                   className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:bg-white transition-all duration-300 ${
                     errors.password 
@@ -334,6 +336,18 @@ const CompanySignUp = () => {
                   value={formData.password}
                   onChange={handleChange}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(v => !v)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-[#3a5f46]"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3l18 18"/><path d="M10.58 10.58a2 2 0 102.83 2.83"/><path d="M16.68 16.68A8.94 8.94 0 0112 18c-5 0-9-6-9-6a16.3 16.3 0 014.62-4.62"/><path d="M14.12 5.12A9 9 0 0121 12s-1.64 2.46-4.32 4.24"/></svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                  )}
+                </button>
               </div>
               {formData.password && (
                 <div className="mt-2">
@@ -383,7 +397,7 @@ const CompanySignUp = () => {
                 <input
                   id="confirmPassword"
                   name="confirmPassword"
-                  type="password"
+                  type={showConfirmPassword ? 'text' : 'password'}
                   required
                   className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:bg-white transition-all duration-300 ${
                     errors.confirmPassword 
@@ -394,6 +408,18 @@ const CompanySignUp = () => {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(v => !v)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-[#3a5f46]"
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showConfirmPassword ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3l18 18"/><path d="M10.58 10.58a2 2 0 102.83 2.83"/><path d="M16.68 16.68A8.94 8.94 0 0112 18c-5 0-9-6-9-6a16.3 16.3 0 014.62-4.62"/><path d="M14.12 5.12A9 9 0 0121 12s-1.64 2.46-4.32 4.24"/></svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                  )}
+                </button>
               </div>
               {errors.confirmPassword && (
                 <p className="text-red-600 text-xs mt-1">{errors.confirmPassword}</p>
